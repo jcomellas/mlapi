@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<!-- saved from url=(0046)https://api.mercadolibre.com/items/MLA98251174 -->
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script type="text/javascript">
+            document.addEventListener('DOMContentLoaded', function() {
+              // Click handler for collapsing and expanding objects and arrays
+              function collapse(evt) {
+                var collapser = evt.target;
+               
+                var target = collapser.parentNode.getElementsByClassName('collapsible');
+                
+                if ( ! target.length ) {
+                  return;
+                }
+                
+                target = target[0];
+
+                if ( target.style.display == 'none' ) {
+                  var ellipsis = target.parentNode.getElementsByClassName('ellipsis')[0];
+                  target.parentNode.removeChild(ellipsis);
+                  target.style.display = '';
+                } else {
+                  target.style.display = 'none';
+                  
+                  var ellipsis = document.createElement('span');
+                  ellipsis.className = 'ellipsis';
+                  ellipsis.innerHTML = ' &hellip; ';
+                  target.parentNode.insertBefore(ellipsis, target);
+                }
+                
+                collapser.innerHTML = ( collapser.innerHTML == '-' ) ? '+' : '-';
+              }
+              
+              function addCollapser(item) {
+                // This mainly filters out the root object (which shouldn't be collapsible)
+                if ( item.nodeName != 'LI' ) {
+                  return;
+                }
+                
+                var collapser = document.createElement('div');
+                collapser.className = 'collapser';
+                collapser.innerHTML = '-';
+                collapser.addEventListener('click', collapse, false);
+                item.insertBefore(collapser, item.firstChild);
+              }
+              
+              var items = document.getElementsByClassName('collapsible');
+              for( var i = 0; i < items.length; i++) {
+                addCollapser(items[i].parentNode);
+              }
+            }, false);
+        </script>
+        <style>
+          body { font-family: "Helvetica Neue", sans-serif; font-size: 12px; margin: 0; padding: 15px 15px 15px 550px; line-height: 1.4em; } 
+          .json-name { font-weight: bold; } 
+          .json-null { color: red; } 
+          .json-boolean { color: blue; } 
+          .json-number { color: blue; } 
+          .json-string { color: green; white-space: pre-wrap; } 
+          .collapser { position: absolute; left: -1em; cursor: pointer; } 
+          .code li { position: relative; } 
+          .code li:after { content: ','; } 
+          .code li:last-child:after { content: ''; } 
+          .code ul { list-style: none; margin: 0 0 0 2em; padding: 0; } 
+          .code { background-color: #f0f0f0; border-color:#D8DFEA; border-style:solid; border-width:1px 1px 1px 3px; margin: 0; overflow:auto; padding: 15px 10px; font-family: "Menlo", "Monaco", monospace; clear: both; line-height: 16px;
+          } 
+
+          h1 {
+            font-size: 26px;
+          }
+
+          h2 {
+            font-size: 18px;
+          }
+
+          h3 {
+            font-size: 15px;
+            margin-bottom: 5px;
+          }
+
+          section {
+            display: block;
+          }
+
+          body > section {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 50%;
+            overflow: auto;
+          }
+
+          body > section:first-child {
+            left: 0;
+          }
+          
+          body > section:last-child {
+            right: 0;
+          }
+
+          section.text {
+
+          }
+
+          section.text > * {
+            margin-left: 20px;
+            margin-right: 20px;
+          }
+
+          table {
+            border-collapse: collapse;
+            border-width: 0;
+          }
+
+          table td {
+            vertical-align: top;
+            padding: 4px 6px;
+            text-align: left;
+          }
+
+          table td {
+            border: 1px solid #ccc;
+          }
+          
+          table.attributes td:first-child {
+            font-family: "Menlo", "Monaco", monospace;
+            font-weight: bold;
+          }
+
+          ul h3 {
+            font-family: "Menlo", "Monaco", monospace;
+          }
+          
+          ul h3 span {
+            color: #999;
+          }
+          a {
+            font-weight: bold;
+          }
+       </style>
+       <title>Ítems</title>
+    <script>window["_GOOG_TRANS_EXT_VER"] = "1";</script></head>
+    <body>
+        <section>
+            <div class="code">{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string">"MLA98251174"</span></li><li id="site_id"><span class="json-name">site_id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/sites/MLA">"MLA"</a></span></li><li id="title"><span class="json-name">title</span>: <span class="json-string">"Apple Ipod Classic 160gb 8° Generacion 40.000 Canciones!"</span></li><li id="subtitle"><span class="json-name">subtitle</span>: <span class="json-string">"Local A La Calle En Caballito! Envios En El Dia! Envios Al Interior!"</span></li><li id="seller_id"><span class="json-name">seller_id</span>: <span class="json-number"><a href="https://api.mercadolibre.com/users/84689862">84689862</a></span></li><li id="category_id"><span class="json-name">category_id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/categories/MLA31594">"MLA31594"</a></span></li><li id="price"><span class="json-name">price</span>: <span class="">329.99</span></li><li id="base_price"><span class="json-name">base_price</span>: <span class="">329.99</span></li><li id="currency_id"><span class="json-name">currency_id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/currencies/USD">"USD"</a></span></li><li id="initial_quantity"><span class="json-name">initial_quantity</span>: <span class="">323</span></li><li id="available_quantity"><span class="json-name">available_quantity</span>: <span class="">261</span></li><li id="sold_quantity"><span class="json-name">sold_quantity</span>: <span class="">120</span></li><li id="buying_mode"><span class="json-name">buying_mode</span>: <span class="json-string">"buy_it_now"</span></li><li id="listing_type_id"><span class="json-name">listing_type_id</span>: <span class="json-string">"gold"</span></li><li id="start_time"><span class="json-name">start_time</span>: <span class="json-string">"2010-10-17T01:13:39.000Z"</span></li><li id="stop_time"><span class="json-name">stop_time</span>: <span class="json-string">"2010-12-16T01:13:39.000Z"</span></li><li id="condition"><span class="json-name">condition</span>: <span class="json-string">"new"</span></li><li id="permalink"><span class="json-name">permalink</span>: <span class="json-string"><a href="http://articulo.mercadolibre.com.ar/MLA-98251174-apple-ipod-classic-160gb-8-generacion-40000-canciones-_JM">"http://articulo.mercadolibre.com.ar/MLA-98251174-apple-ipod-classic-160gb-8-generacion-40000-canciones-_JM"</a></span></li><li id="thumbnail"><span class="json-name">thumbnail</span>: <span class="json-string"><a href="http://img1.mlstatic.com/s_MLA_v_I_f_62634838_9736.jpg">"http://img1.mlstatic.com/s_MLA_v_I_f_62634838_9736.jpg"</a></span></li><li id="pictures"><div class="collapser">-</div><span class="json-name">pictures</span>: [<ul class="json-array collapsible"><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/pictures/MLA62634838_9736">"MLA62634838_9736"</a></span></li><li id="url"><span class="json-name">url</span>: <span class="json-string"><a href="http://img1.mlstatic.com/s_MLA_v_O_f_62634838_9736.jpg">"http://img1.mlstatic.com/s_MLA_v_O_f_62634838_9736.jpg"</a></span></li><li id="quality"><span class="json-name">quality</span>: <span class="json-string">""</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/pictures/MLA62634838_3135">"MLA62634838_3135"</a></span></li><li id="url"><span class="json-name">url</span>: <span class="json-string"><a href="http://img2.mlstatic.com/s_MLA_v_O_f_62634838_3135.jpg">"http://img2.mlstatic.com/s_MLA_v_O_f_62634838_3135.jpg"</a></span></li><li id="quality"><span class="json-name">quality</span>: <span class="json-string">""</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/pictures/MLA62634838_2534">"MLA62634838_2534"</a></span></li><li id="url"><span class="json-name">url</span>: <span class="json-string"><a href="http://img2.mlstatic.com/s_MLA_v_O_f_62634838_2534.jpg">"http://img2.mlstatic.com/s_MLA_v_O_f_62634838_2534.jpg"</a></span></li><li id="quality"><span class="json-name">quality</span>: <span class="json-string">""</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/pictures/MLA62634838_6784">"MLA62634838_6784"</a></span></li><li id="url"><span class="json-name">url</span>: <span class="json-string"><a href="http://img1.mlstatic.com/s_MLA_v_O_f_62634838_6784.jpg">"http://img1.mlstatic.com/s_MLA_v_O_f_62634838_6784.jpg"</a></span></li><li id="quality"><span class="json-name">quality</span>: <span class="json-string">""</span></li></ul>}</li></ul>]</li><li id="video_id"><span class="json-name">video_id</span>: <span class="json-string">""</span></li><li id="descriptions"><div class="collapser">-</div><span class="json-name">descriptions</span>: [<ul class="json-array collapsible"><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string">"MLA98251174-59121422"</span></li></ul>}</li></ul>]</li><li id="accepts_mercadopago"><span class="json-name">accepts_mercadopago</span>: <span class="">true</span></li><li id="non_mercado_pago_payment_methods"><div class="collapser">-</div><span class="json-name">non_mercado_pago_payment_methods</span>: [<ul class="json-array collapsible"><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string">"MLATB"</span></li><li id="description"><span class="json-name">description</span>: <span class="json-string">"Transferencia Bancaria"</span></li><li id="type"><span class="json-name">type</span>: <span class="json-string">"G"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string">"MLAWC"</span></li><li id="description"><span class="json-name">description</span>: <span class="json-string">"A convenir"</span></li><li id="type"><span class="json-name">type</span>: <span class="json-string">"G"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string">"MLAMO"</span></li><li id="description"><span class="json-name">description</span>: <span class="json-string">"Efectivo"</span></li><li id="type"><span class="json-name">type</span>: <span class="json-string">"G"</span></li></ul>}</li></ul>]</li><li id="shipping"><span class="json-name">shipping</span>: </li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="profile_id"><span class="json-name">profile_id</span>: <span class="json-string">""</span></li><li id="local_pick_up"><span class="json-name">local_pick_up</span>: <span class="">true</span></li><li id="free_shipping"><span class="json-name">free_shipping</span>: <span class="">false</span></li></ul>}</li><li id="address"><div class="collapser">-</div><span class="json-name">address</span>: {<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string">""</span></li><li id="country_id"><span class="json-name">country_id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/countries/AR">"AR"</a></span></li><li id="country_name"><span class="json-name">country_name</span>: <span class="json-string">"Argentina"</span></li><li id="state_id"><span class="json-name">state_id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUENBUGw3M2E1">"TUxBUENBUGw3M2E1"</a></span></li><li id="state_name"><span class="json-name">state_name</span>: <span class="json-string">"CAPITAL FEDERAL"</span></li><li id="city_id"><span class="json-name">city_id</span>: <span class="json-string">""</span></li><li id="city_name"><span class="json-name">city_name</span>: <span class="json-string">"Caballito"</span></li><li id="neighborhood_id"><span class="json-name">neighborhood_id</span>: <span class="json-string">""</span></li><li id="neighborhood_name"><span class="json-name">neighborhood_name</span>: <span class="json-string">""</span></li><li id="zip_code"><span class="json-name">zip_code</span>: <span class="json-string">""</span></li><li id="street"><span class="json-name">street</span>: <span class="json-string">""</span></li><li id="contact"><span class="json-name">contact</span>: <span class="json-string">""</span></li><li id="area_code"><span class="json-name">area_code</span>: <span class="json-string">""</span></li><li id="phone1"><span class="json-name">phone1</span>: <span class="json-string">""</span></li><li id="phone2"><span class="json-name">phone2</span>: <span class="json-string">""</span></li><li id="webpage"><span class="json-name">webpage</span>: <span class="json-string">""</span></li><li id="latitude"><span class="json-name">latitude</span>: <span class="json-string">""</span></li><li id="longitude"><span class="json-name">longitude</span>: <span class="json-string">""</span></li></ul>}</li><li id="coverage_areas"><div class="collapser">-</div><span class="json-name">coverage_areas</span>: [<ul class="json-array collapsible"></ul>]</li><li id="attributes"><div class="collapser">-</div><span class="json-name">attributes</span>: [<ul class="json-array collapsible"></ul>]</li><li id="varying_attributes"><div class="collapser">-</div><span class="json-name">varying_attributes</span>: [<ul class="json-array collapsible"></ul>]</li><li id="variations"><div class="collapser">-</div><span class="json-name">variations</span>: [<ul class="json-array collapsible"></ul>]</li><li id="status"><span class="json-name">status</span>: <span class="json-string">"closed"</span></li><li id="sub_status"><div class="collapser">-</div><span class="json-name">sub_status</span>: [<ul class="json-array collapsible"><li><span class="json-string">"deleted"</span></li></ul>]</li><li id="warranty"><span class="json-name">warranty</span>: <span class="json-string">"12 (doce) Meses"</span></li><li id="catalog_product_id"><span class="json-name">catalog_product_id</span>: <span class="json-string">""</span></li><li id="parent_item_id"><span class="json-name">parent_item_id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/items/MLA93707042">"MLA93707042"</a></span></li><li id="date_created"><span class="json-name">date_created</span>: <span class="json-string">"2010-10-17T01:13:48.000Z"</span></li><li id="last_updated"><span class="json-name">last_updated</span>: <span class="json-string">"2010-12-16T11:15:38.000Z"</span></li></ul>}</div>
+        </section>
+        <section class="text">
+            <h1>Ítems</h1>
+            <p>Retorna y maneja la información acerca de los ítems en MercadoLibre</p>
+            <h2>Attributes</h2>
+            
+            
+            
+                <table class="attributes">
+                  
+                  
+                      <tbody><tr>
+                        <td>id</td>
+                        <td>Unique identification for item
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>site_id</td>
+                        <td>ID del Site donde se creó el ítem
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>title</td>
+                        <td>Título del ítem
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>subtitle</td>
+                        <td>Subtítulo del ítem
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>seller_id</td>
+                        <td>Seller ID from item
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>category_id</td>
+                        <td>Category id where item is listed
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>price</td>
+                        <td>Current price from item
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>currency_id</td>
+                        <td>Currency ID from item
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>initial_quantity</td>
+                        <td>Initial listed quantity for item
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>available_quantity</td>
+                        <td>Quantity available of item
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>sold_quantity</td>
+                        <td>Sold quantity of item
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>buying_mode</td>
+                        <td>
+                <ul>
+                  
+                    <li>auction: Subasta</li>
+                  
+                    <li>buy_it_now: Compra inmediata</li>
+                  
+                </ul>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>listing_type_id</td>
+                        <td>Listing type of item
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>start_time</td>
+                        <td>Date item shows up in MercadoLibre
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>stop_time</td>
+                        <td>Date item stops appearing in MercadoLibre
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>condition</td>
+                        <td>
+                <ul>
+                  
+                    <li>new: Nuevo</li>
+                  
+                    <li>used: Usado</li>
+                  
+                    <li>unespecified: Sin especificar</li>
+                  
+                </ul>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>permalink</td>
+                        <td>Link permanente a la página del ítem en MercadoLibre
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>thumbnail</td>
+                        <td>Vista previa del ítem que se usa en los listados de MercadoLibre
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>pictures</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <tr><th colspan="2">Pictures associated with the item</th>
+                    </tr></thead>
+                  
+                  
+                      <tbody><tr>
+                        <td>id</td>
+                        <td>Identificador único de la foto
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>url</td>
+                        <td>URL de la foto de tamaño del listado de MercadoLibre
+
+                        </td>
+                      </tr>
+                  
+                </tbody></table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>video_id</td>
+                        <td>Video ID from youtube
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>descriptions</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <tr><th colspan="2">Items descriptions</th>
+                    </tr></thead>
+                  
+                  
+                      <tbody><tr>
+                        <td>id</td>
+                        <td>Identificador único de la descripción
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>created</td>
+                        <td>Fecha de creación de la descripción
+
+                        </td>
+                      </tr>
+                  
+                </tbody></table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>accepts_mercadopago</td>
+                        <td>Indicates if item accepts MercadoPago
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>non_mercado_pago_payment_methods</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <tr><th colspan="2">Other payment methods beside MercadoPago associated with the item</th>
+                    </tr></thead>
+                  
+                  
+                      <tbody><tr>
+                        <td>id</td>
+                        <td>Identificador único del medio de pago
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>description</td>
+                        <td>Descripción del medio de pago
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>type</td>
+                        <td>Tipo del medio de pago
+
+                        </td>
+                      </tr>
+                  
+                </tbody></table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>shipping</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <tr><th colspan="2">Propiedades del envío del ítem</th>
+                    </tr></thead>
+                  
+                  
+                      <tbody><tr>
+                        <td>profile_id</td>
+                        <td>Perfil del envío del ítem seleccionado por el vendedor
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>local_pick_up</td>
+                        <td>Indica si el ítem se puede retirar por el local del vendedor
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>free_shipping</td>
+                        <td>Indica si el ítem tiene envío gratis
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>costs</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <tr><th colspan="2">Costos por zona del envío</th>
+                    </tr></thead>
+                  
+                  
+                      <tbody><tr>
+                        <td>description</td>
+                        <td>Descripción
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>cost</td>
+                        <td>Costo
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>time</td>
+                        <td>Tiempo estimado de envío
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>shipping_rule_id</td>
+                        <td>Identificación única de la regla del envío
+
+                        </td>
+                      </tr>
+                  
+                </tbody></table>
+            
+                        </td>
+                      </tr>
+                  
+                </tbody></table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>address</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <tr><th colspan="2">Item localization data</th>
+                    </tr></thead>
+                  
+                  
+                      <tbody><tr>
+                        <td>id</td>
+                        <td>Identificador único para la localización
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>country_id</td>
+                        <td>Identificador único del país
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>country_name</td>
+                        <td>Nombre del país
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>state_id</td>
+                        <td>Identificador único del estado
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>state_name</td>
+                        <td>Nombre del estado
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>city_id</td>
+                        <td>Identificador único de la ciudad
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>city_name</td>
+                        <td>Nombre de la ciudad
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>neighborhood_id</td>
+                        <td>Identificador único del barrio
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>neighborhood_name</td>
+                        <td>Nombre del barrio
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>zip_code</td>
+                        <td>Código postal
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>street</td>
+                        <td>Dirección del ítem
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>contact</td>
+                        <td>Datos de contacto del vendedor
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>area_code</td>
+                        <td>Código de área del teléfono del vendedor
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>phone1</td>
+                        <td>Teléfono del vendedor
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>phone2</td>
+                        <td>Teléfono alternativo del vendedor
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>webpage</td>
+                        <td>Sitio web del vendedor
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>latitude</td>
+                        <td>Coordenada latitudinal de la localización del ítem
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>longitude</td>
+                        <td>Coordenada longitudinal de la localización del ítem
+
+                        </td>
+                      </tr>
+                  
+                </tbody></table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>coverage_areas</td>
+                        <td>Áreas de cobertura del servicio del ítem
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>attributes</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <tr><th colspan="2">Special attributes from item</th>
+                    </tr></thead>
+                  
+                  
+                      <tbody><tr>
+                        <td>id</td>
+                        <td>Identificador único del atributo
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>name</td>
+                        <td>Nombre del atributo
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>value_id</td>
+                        <td>Identificador único del valor del atributo
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>value_name</td>
+                        <td>Nombre del valor del atributo
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>attribute_group_id</td>
+                        <td>Identificador único del grupo al que pertenece el atributo
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>attribute_group_name</td>
+                        <td>Nombre del grupo al que pertenece el atributo
+
+                        </td>
+                      </tr>
+                  
+                </tbody></table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>varying_attributes</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <tr><th colspan="2">Resume of varying attributes of item</th>
+                    </tr></thead>
+                  
+                  
+                      <tbody><tr>
+                        <td>attribute_id</td>
+                        <td>Identificador único del atributo que varía
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>attribute_name</td>
+                        <td>Nombre del atributo que varía
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>values</td>
+                        <td>Valores en los que varía el atributo
+
+                        </td>
+                      </tr>
+                  
+                </tbody></table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>variations</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <tr><th colspan="2">Información de las posibles combinaciones que ofrece el ítem</th>
+                    </tr></thead>
+                  
+                  
+                      <tbody><tr>
+                        <td>id</td>
+                        <td>Identificador único de la variación
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>attribute_combinations</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <tr><th colspan="2">Posibles combinaciones de la variación</th>
+                    </tr></thead>
+                  
+                  
+                      <tbody><tr>
+                        <td>id</td>
+                        <td>Identificador único del atributo que varía
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>name</td>
+                        <td>Nombre del atributo que varía
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>value_id</td>
+                        <td>Identificador único del valor de la variación
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>value_name</td>
+                        <td>Nombre del valor de la variación
+
+                        </td>
+                      </tr>
+                  
+                </tbody></table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>price</td>
+                        <td>Precio de la variación del ítem
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>available_quantity</td>
+                        <td>Cantidad disponible de ítems de la variación
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>picture_id</td>
+                        <td>Identificador único de la foto de la variación
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>seller_custom_field</td>
+                        <td>Identificador del vendedor de la variación
+
+                        </td>
+                      </tr>
+                  
+                </tbody></table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>status</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <tr><th colspan="2">Item publication status</th>
+                    </tr></thead>
+                  
+                  
+                      <tbody><tr>
+                        <td>not_yet_active</td>
+                        <td>Pendiente
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>paused</td>
+                        <td>Pausado por el vendedor después de estar activado el ítem
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>active</td>
+                        <td>Activo
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>closed</td>
+                        <td>Finalizado
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>deleted</td>
+                        <td>Borrado
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>invisible</td>
+                        <td>Invisible
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>under_review</td>
+                        <td>Bajo revisión por MercadoLibre
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>suspended_by_user</td>
+                        <td>Suspendido por el vendedor previa a la activación del ítem
+
+                        </td>
+                      </tr>
+                  
+                </tbody></table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>warranty</td>
+                        <td>Item warranty
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>catalog_product_id</td>
+                        <td>Catalog product ID asociated with item
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>seller_custom_field</td>
+                        <td>Field for internal use for items seller
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>parent_item_id</td>
+                        <td>Parent item ID from which item was relisted
+
+                        </td>
+                      </tr>
+                  
+                </tbody></table>
+            
+            <h2>Allowed methods</h2>
+            <ul class="methods">
+              
+                  <li>
+                    <h3>GET <span>/items/:id</span></h3>
+                    <p>Returns an item </p>
+                  </li>
+              
+                  <li>
+                    <h3>GET <span>/items?ids=:ids</span></h3>
+                    <p>Returns all requested items with a maximum limit </p>
+                  </li>
+              
+                  <li>
+                    <h3>POST <span>/items</span></h3>
+                    <p>Creates an item </p>
+                  </li>
+              
+                  <li>
+                    <h3>POST <span>/items/validate</span></h3>
+                    <p>Validates JSON for posting an item </p>
+                  </li>
+              
+                  <li>
+                    <h3>PUT <span>/items/:id</span></h3>
+                    <p>Updates an item </p>
+                  </li>
+              
+                  <li>
+                    <h3>GET <span>/items/:id/shipping/search</span></h3>
+                    <p>Muestra la información del envío de un ítem </p>
+                  </li>
+              
+                  <li>
+                    <h3>POST <span>/items/:id/pictures</span></h3>
+                    <p>Adds a picture to an item </p>
+                  </li>
+              
+                  <li>
+                    <h3>DELETE <span>/items/:id/pictures/:id</span></h3>
+                    <p>Removes a picture from an item </p>
+                  </li>
+              
+                  <li>
+                    <h3>POST <span>/items/:id/listing_type</span></h3>
+                    <p>Changes publication type of item </p>
+                  </li>
+              
+                  <li>
+                    <h3>GET <span>/items/:id/descriptions</span></h3>
+                    <p>Show item descriptions </p>
+                  </li>
+              
+                  <li>
+                    <h3>GET <span>/items/:id/descriptions/:descrpition_id</span></h3>
+                    <p>Show an item description in particular </p>
+                  </li>
+              
+                  <li>
+                    <h3>POST <span>/items/:id/descriptions</span></h3>
+                    <p>Add a description to an item </p>
+                  </li>
+              
+                  <li>
+                    <h3>PUT <span>/items/:id/descriptions/:description_id</span></h3>
+                    <p>Updates description of an item </p>
+                  </li>
+              
+                  <li>
+                    <h3>GET <span>/items/:id/available_upgrades</span></h3>
+                    <p>Show possible publication types for an item </p>
+                  </li>
+              
+                  <li>
+                    <h3>POST <span>/items/:id/relist</span></h3>
+                    <p>Republica un ítem </p>
+                  </li>
+              
+            </ul>
+            <h2>Related resources</h2>
+            <ul class="related">
+              
+                <li><h3><span>/sites</span></h3></li>
+              
+                <li><h3><span>/currencies</span></h3></li>
+              
+                <li><h3><span>/users</span></h3></li>
+              
+                <li><h3><span>/categories</span></h3></li>
+              
+                <li><h3><span>/listing_types</span></h3></li>
+              
+                <li><h3><span>/pictures</span></h3></li>
+              
+                <li><h3><span>/descriptions</span></h3></li>
+              
+                <li><h3><span>/catalog_products</span></h3></li>
+              
+            </ul>
+            
+                <table class="variables">
+                    <tbody>
+                        <tr>
+                            <th>Variable</th>
+                            <th>Value</th>
+                        </tr>
+                        <tr>
+                            <td>Host</td>
+                            <td>slvmx152.melilocal.com</td>
+                        </tr>
+                        <tr>
+                            <td>Total Time</td>
+                            <td>301</td>
+                        </tr>
+                        <tr>
+                            <td># DB Statements</td>
+                            <td>1</td>
+                        </tr>
+                    </tbody>
+                </table>
+            
+        </section>
+    
+
+</body></html>

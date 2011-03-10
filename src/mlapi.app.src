@@ -1,0 +1,9 @@
+{application, mlapi,
+ [
+  {description, "MercadoLibre API Client Library"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {applications, [kernel, stdlib, ibrowse]},
+  {mod, {mlapi_app, []}},
+  {env, []}
+ ]}.

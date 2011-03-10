@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<!-- saved from url=(0041)https://api.mercadolibre.com/countries/AR -->
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script type="text/javascript">
+            document.addEventListener('DOMContentLoaded', function() {
+              // Click handler for collapsing and expanding objects and arrays
+              function collapse(evt) {
+                var collapser = evt.target;
+               
+                var target = collapser.parentNode.getElementsByClassName('collapsible');
+                
+                if ( ! target.length ) {
+                  return;
+                }
+                
+                target = target[0];
+
+                if ( target.style.display == 'none' ) {
+                  var ellipsis = target.parentNode.getElementsByClassName('ellipsis')[0];
+                  target.parentNode.removeChild(ellipsis);
+                  target.style.display = '';
+                } else {
+                  target.style.display = 'none';
+                  
+                  var ellipsis = document.createElement('span');
+                  ellipsis.className = 'ellipsis';
+                  ellipsis.innerHTML = ' &hellip; ';
+                  target.parentNode.insertBefore(ellipsis, target);
+                }
+                
+                collapser.innerHTML = ( collapser.innerHTML == '-' ) ? '+' : '-';
+              }
+              
+              function addCollapser(item) {
+                // This mainly filters out the root object (which shouldn't be collapsible)
+                if ( item.nodeName != 'LI' ) {
+                  return;
+                }
+                
+                var collapser = document.createElement('div');
+                collapser.className = 'collapser';
+                collapser.innerHTML = '-';
+                collapser.addEventListener('click', collapse, false);
+                item.insertBefore(collapser, item.firstChild);
+              }
+              
+              var items = document.getElementsByClassName('collapsible');
+              for( var i = 0; i < items.length; i++) {
+                addCollapser(items[i].parentNode);
+              }
+            }, false);
+        </script>
+        <style>
+          body { font-family: "Helvetica Neue", sans-serif; font-size: 12px; margin: 0; padding: 15px 15px 15px 550px; line-height: 1.4em; } 
+          .json-name { font-weight: bold; } 
+          .json-null { color: red; } 
+          .json-boolean { color: blue; } 
+          .json-number { color: blue; } 
+          .json-string { color: green; white-space: pre-wrap; } 
+          .collapser { position: absolute; left: -1em; cursor: pointer; } 
+          .code li { position: relative; } 
+          .code li:after { content: ','; } 
+          .code li:last-child:after { content: ''; } 
+          .code ul { list-style: none; margin: 0 0 0 2em; padding: 0; } 
+          .code { background-color: #f0f0f0; border-color:#D8DFEA; border-style:solid; border-width:1px 1px 1px 3px; margin: 0; overflow:auto; padding: 15px 10px; font-family: "Menlo", "Monaco", monospace; clear: both; line-height: 16px;
+          } 
+
+          h1 {
+            font-size: 26px;
+          }
+
+          h2 {
+            font-size: 18px;
+          }
+
+          h3 {
+            font-size: 15px;
+            margin-bottom: 5px;
+          }
+
+          section {
+            display: block;
+          }
+
+          body > section {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 50%;
+            overflow: auto;
+          }
+
+          body > section:first-child {
+            left: 0;
+          }
+          
+          body > section:last-child {
+            right: 0;
+          }
+
+          section.text {
+
+          }
+
+          section.text > * {
+            margin-left: 20px;
+            margin-right: 20px;
+          }
+
+          table {
+            border-collapse: collapse;
+            border-width: 0;
+          }
+
+          table td {
+            vertical-align: top;
+            padding: 4px 6px;
+            text-align: left;
+          }
+
+          table td {
+            border: 1px solid #ccc;
+          }
+          
+          table.attributes td:first-child {
+            font-family: "Menlo", "Monaco", monospace;
+            font-weight: bold;
+          }
+
+          ul h3 {
+            font-family: "Menlo", "Monaco", monospace;
+          }
+          
+          ul h3 span {
+            color: #999;
+          }
+          a {
+            font-weight: bold;
+          }
+       </style>
+       <title>Countries</title>
+    <script>window["_GOOG_TRANS_EXT_VER"] = "1";</script></head>
+    <body>
+        <section>
+            <div class="code">{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="./countries_files/countries.html">"AR"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Argentina"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li><li id="locale"><span class="json-name">locale</span>: <span class="json-string">"es_AR"</span></li><li id="currency_id"><span class="json-name">currency_id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/currencies/ARS">"ARS"</a></span></li><li id="decimal_separator"><span class="json-name">decimal_separator</span>: <span class="json-string">","</span></li><li id="thousands_separator"><span class="json-name">thousands_separator</span>: <span class="json-string">"."</span></li><li id="time_zone"><span class="json-name">time_zone</span>: <span class="">"GMT-03:00"</span></li><li id="lat_lon_boxes"><div class="collapser">-</div><span class="json-name">lat_lon_boxes</span>: [<ul class="json-array collapsible"></ul>]</li><li id="states"><div class="collapser">-</div><span class="json-name">states</span>: [<ul class="json-array collapsible"><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUENBUGw3M2E1">"TUxBUENBUGw3M2E1"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-C"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Bs.As. Cap. Federal"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUENPU2ExMmFkMw">"TUxBUENPU2ExMmFkMw"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-null">null</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Bs.As. Costa Atlántica"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUENBVGFiY2Fm">"TUxBUENBVGFiY2Fm"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-K"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Catamarca"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUENIQW8xMTNhOA">"TUxBUENIQW8xMTNhOA"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-H"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Chaco"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUENIVXQxNDM1MQ">"TUxBUENIVXQxNDM1MQ"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-U"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Chubut"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUENPUmFkZGIw">"TUxBUENPUmFkZGIw"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-X"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Córdoba"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUENPUnM5MjI0">"TUxBUENPUnM5MjI0"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-W"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Corrientes"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUEVOVHMzNTdm">"TUxBUEVOVHMzNTdm"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-E"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Entre Ríos"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUEZPUmE1OTk5">"TUxBUEZPUmE1OTk5"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-P"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Formosa"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUEdSQWU4ZDkz">"TUxBUEdSQWU4ZDkz"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-null">null</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Bs.As. G.B.A. Norte"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUEdSQWVmNTVm">"TUxBUEdSQWVmNTVm"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-null">null</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Bs.As. G.B.A. Oeste"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUEdSQXJlMDNm">"TUxBUEdSQXJlMDNm"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-null">null</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Bs.As. G.B.A. Sur"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUEpVSnk3YmUz">"TUxBUEpVSnk3YmUz"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-Y"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Jujuy"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUExBWmEyNzY0">"TUxBUExBWmEyNzY0"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-F"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"La Rioja"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUExBWmE1OWMy">"TUxBUExBWmE1OWMy"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-L"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"La Pampa"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUE1FTmE5OWQ4">"TUxBUE1FTmE5OWQ4"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-M"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Mendoza"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUE1JU3MzNjIx">"TUxBUE1JU3MzNjIx"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-N"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Misiones"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUE5FVW4xMzMzNQ">"TUxBUE5FVW4xMzMzNQ"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-Q"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Neuquén"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUFLNT29iZmZm">"TUxBUFLNT29iZmZm"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-R"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Río Negro"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUFNBTGFjMTJi">"TUxBUFNBTGFjMTJi"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-A"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Salta"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUFNBTmU5Nzk2">"TUxBUFNBTmU5Nzk2"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-S"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Santa Fe"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUFNBTm5lYjU4">"TUxBUFNBTm5lYjU4"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-J"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"San Juan"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUFNBTm9lOTlk">"TUxBUFNBTm9lOTlk"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-G"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Santiago del Estero"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUFNBTnM0ZTcz">"TUxBUFNBTnM0ZTcz"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-D"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"San Luis"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUFNBTno3ZmY5">"TUxBUFNBTno3ZmY5"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-Z"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Santa Cruz"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUFRJRVoxM2M5YQ">"TUxBUFRJRVoxM2M5YQ"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-V"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Tierra del Fuego "</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUFRVQ244NmM3">"TUxBUFRVQ244NmM3"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-string">"AR-T"</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Tucumán"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUFVTQWl1cXdlMg">"TUxBUFVTQWl1cXdlMg"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-null">null</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"USA"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUFpPTmFpbnRl">"TUxBUFpPTmFpbnRl"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-null">null</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Bs.As. Zona Interior"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUEJSQWwyMzA1">"TUxBUEJSQWwyMzA1"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-null">null</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Brasil"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUFVSVXllZDVl">"TUxBUFVSVXllZDVl"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-null">null</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"Uruguay"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li><li><div class="collapser">-</div>{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string"><a href="https://api.mercadolibre.com/states/TUxBUFJFUDQyMjQ4Ng">"TUxBUFJFUDQyMjQ4Ng"</a></span></li><li id="iso_code"><span class="json-name">iso_code</span>: <span class="json-null">null</span></li><li id="name"><span class="json-name">name</span>: <span class="json-string">"República Dominicana"</span></li><li id="status"><span class="json-name">status</span>: <span class="json-string">"active"</span></li></ul>}</li></ul>]</li></ul>}</div>
+        </section>
+        <section class="text">
+            <h1>Countries</h1>
+            <p>List of countries</p>
+            <h2>Attributes</h2>
+            
+            
+            
+                <table class="attributes">
+                  
+                  
+                      <tbody><tr>
+                        <td>id</td>
+                        <td>Country ID (ISO 3166-1 alpha-2)
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>iso_code</td>
+                        <td>Country ID (ISO 3166-1 alpha-2)
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>name</td>
+                        <td>Country name
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>status</td>
+                        <td>Active / Inactive status of the country in ML
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>locale</td>
+                        <td>Language ID (ISO code)
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>currency_id</td>
+                        <td>Currency ID (ISO code)
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>decimal_separator</td>
+                        <td>Decimal separator
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>thousands_separator</td>
+                        <td>Thousands separator
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>time_zone</td>
+                        <td>Time zone
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>lat_lon_boxes</td>
+                        <td>State location in latitude and longitude boxes
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>states</td>
+                        <td>List of states in country
+
+                        </td>
+                      </tr>
+                  
+                </tbody></table>
+            
+            <h2>Allowed methods</h2>
+            <ul class="methods">
+              
+                  <li>
+                    <h3>GET <span>/countries</span></h3>
+                    <p>Returns all countries </p>
+                  </li>
+              
+                  <li>
+                    <h3>GET <span>/countries/:id</span></h3>
+                    <p>Returns detailed information (list of provinces, etc.) of a country </p>
+                  </li>
+              
+            </ul>
+            <h2>Related resources</h2>
+            <ul class="related">
+              
+                <li><h3><span>currencies</span></h3></li>
+              
+                <li><h3><span>states</span></h3></li>
+              
+            </ul>
+            
+        </section>
+    
+
+</body></html>
