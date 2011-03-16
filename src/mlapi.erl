@@ -13,17 +13,50 @@
 
 %%-export([query/2, query_category/2, query_seller_id/2, query_seller_nick]).
 
--export([request/1]).
+-export([get_sites/0, get_countries/0, get_item/1]).
+-export([start/0, stop/0, request/1]).
 
 -define(PROTOCOL, "https://").
 -define(HOST, "api.mercadolibre.com").
 -define(CONTENT_TYPE, "Content-Type").
+
+-define(SITES, "/sites").
+-define(COUNTRIES, "/countries").
+-define(STATES, "/states").
+-define(CURRENCIES, "/currencies").
+-define(PAYMENT_METHODS, "/payment_methods").
+-define(USERS, "/users").
+-define(ITEMS, "/items").
 
 %% -type url() :: string().
 -type url_path() :: string().
 -type key() :: binary().
 -type value() :: any().
 -type proplist() :: [{key(), value() | proplist()}].
+
+
+start() ->
+    application:start(sasl),
+    application:start(crypto),
+    application:start(public_key),
+    application:start(ssl),
+    application:start(ibrowse),
+    application:start(mlapi).
+
+
+stop() ->
+    application:stop(mlapi).
+
+
+get_sites() ->
+    request(?SITES).
+
+
+get_countries() ->
+    request(?COUNTRIES).
+
+get_item(Item) ->
+    request(?ITEMS ++ "/" ++ Item).
 
 
 -spec request(url_path()) -> {ok, proplist()} | {error, Reason :: any()}.
