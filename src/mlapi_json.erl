@@ -16,21 +16,23 @@
 
 -type key() :: binary().
 -type value() :: binary() | boolean() | integer() | float() | 'null'.
--type ejson() :: [{key(), value() | ejson()}].
+-type ejson() :: {[{key(), value() | ejson()}]}.
 -type json() :: binary().
+-type path() :: [key() | {index, non_neg_integer()} | {key(), value()}].
 
 -define(IS_SPACE(Char), (Char) =:= $\s orelse (Char) =:= $\t orelse (Char) =:= $\r orelse (Char) =:= $\n).
 
--spec encode(ejson()) -> json().
+-spec encode(ejson()) -> {ok, json()}.
 encode(EJson) ->
     json:encode(EJson).
 
 
--spec decode(json()) -> ejson().
+-spec decode(json()) -> {ok, ejson()}.
 decode(Json) ->
     json:decode(Json).
 
 
+-spec get(binary() | path(), ejson()) -> ejson() | value().
 get([{index, Index} | Tail], Json) when is_integer(Index), is_list(Json) ->
     get(Tail, get_index(Index, Json));
 get([{Key, Value} | Tail], Json) when is_list(Json) ->
@@ -43,7 +45,6 @@ get([], Json) ->
     Json;
 get(Path, Json) when is_binary(Path) ->
     get(compile_path(Path), Json).
-
 
 get_value(Key, Value, [{Head} = Element | Tail]) ->
     case lists:keyfind(Key, 1, Head) of
@@ -157,10 +158,3 @@ compile_index(<<$], Tail/binary>>, Acc, IndexAcc) ->
     compile_path(Tail, [{index, IndexAcc} | Acc], <<>>);
 compile_index(_Tail, _Acc, _IndexAcc) ->
     throw(badarg).
-
-
-
-
-
-
-
