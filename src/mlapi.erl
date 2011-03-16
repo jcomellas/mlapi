@@ -13,26 +13,41 @@
 
 %%-export([query/2, query_category/2, query_seller_id/2, query_seller_nick]).
 
--export([get_sites/0, get_countries/0, get_item/1]).
+-export([get_sites/0, get_site/1,
+         get_countries/0, get_country/1,
+         get_state/1, get_city/1, get_neighborhood/1,
+         get_currencies/0, get_currency/1,
+         get_payment_methods/0, get_payment_method/1,
+         get_categories/1, get_subcategories/1,
+         get_user/1,
+         get_item/1,
+         get_picture/1,
+         search/2, search/4,
+         search_category/2, search_category/4,
+         search_seller_id/2, search_seller_id/4,
+         search_nickname/2, search_nickname/4]).
 -export([start/0, stop/0, request/1]).
 
 -define(PROTOCOL, "https://").
 -define(HOST, "api.mercadolibre.com").
 -define(CONTENT_TYPE, "Content-Type").
+-define(JSON_MIME_TYPE, "application/json").
 
--define(SITES, "/sites").
--define(COUNTRIES, "/countries").
--define(STATES, "/states").
--define(CURRENCIES, "/currencies").
+-define(SITES,           "/sites").
+-define(COUNTRIES,       "/countries").
+-define(STATES,          "/states").
+-define(CITIES,          "/cities").
+-define(NEIGHBORHOODS,   "/neighborhoods").
+-define(CURRENCIES,      "/currencies").
 -define(PAYMENT_METHODS, "/payment_methods").
--define(USERS, "/users").
--define(ITEMS, "/items").
+-define(CATEGORIES,      "/categories").
+-define(USERS,           "/users").
+-define(ITEMS,           "/items").
+-define(PICTURES,        "/pictures").
+-define(SEARCH,          "/search").
 
-%% -type url() :: string().
 -type url_path() :: string().
--type key() :: binary().
--type value() :: any().
--type proplist() :: [{key(), value() | proplist()}].
+-type error() :: {error, Reason :: atom() | {atom(), any()}}.
 
 
 start() ->
@@ -48,24 +63,137 @@ stop() ->
     application:stop(mlapi).
 
 
+-spec get_sites() -> {ok, mlapi_json:ejson()} | error().
 get_sites() ->
     request(?SITES).
 
+-spec get_site(SiteId :: string()) -> {ok, mlapi_json:ejson()} | error().
+get_site(SiteId) ->
+    request(?SITES ++ "/" ++ SiteId).
 
+
+-spec get_countries() -> {ok, mlapi_json:ejson()} | error().
 get_countries() ->
     request(?COUNTRIES).
 
-get_item(Item) ->
-    request(?ITEMS ++ "/" ++ Item).
+-spec get_country(CountryId :: string()) -> {ok, mlapi_json:ejson()} | error().
+get_country(CountryId) ->
+    request(?COUNTRIES ++ "/" ++ CountryId).
 
 
--spec request(url_path()) -> {ok, proplist()} | {error, Reason :: any()}.
+-spec get_state(StateId :: string()) -> {ok, mlapi_json:ejson()} | error().
+get_state(StateId) ->
+    request(?STATES ++ "/" ++ StateId).
+
+
+-spec get_city(CityId :: string()) -> {ok, mlapi_json:ejson()} | error().
+get_city(CityId) ->
+    request(?CITIES ++ "/" ++ CityId).
+
+
+-spec get_neighborhood(NeighborhoodId :: string()) -> {ok, mlapi_json:ejson()} | error().
+get_neighborhood(NeighborhoodId) ->
+    request(?NEIGHBORHOODS ++ "/" ++ NeighborhoodId).
+
+
+-spec get_currencies() -> {ok, mlapi_json:ejson()} | error().
+get_currencies() ->
+    request(?CURRENCIES).
+
+-spec get_currency(CurrencyId :: string()) -> {ok, mlapi_json:ejson()} | error().
+get_currency(CurrencyId) ->
+    request(?CURRENCIES ++ "/" ++ CurrencyId).
+
+
+-spec get_payment_methods() -> {ok, mlapi_json:ejson()} | error().
+get_payment_methods() ->
+    request(?PAYMENT_METHODS).
+
+-spec get_payment_method(PaymentMethodId :: string()) -> {ok, mlapi_json:ejson()} | error().
+get_payment_method(PaymentMethodId) ->
+    request(?PAYMENT_METHODS ++ "/" ++ PaymentMethodId).
+
+
+-spec get_categories(SiteId :: string()) -> {ok, mlapi_json:ejson() | mlapi_json:value()} | error().
+get_categories(SiteId) ->
+    case get_site(SiteId) of
+        {ok, Site} ->
+            {ok, mlapi_json:get([<<"categories">>], Site)};
+        Error ->
+            Error
+    end.
+
+-spec get_subcategories(ParentCategoryId :: string()) -> {ok, mlapi_json:ejson()} | error().
+get_subcategories(ParentCategoryId) ->
+    request(?CATEGORIES ++ "/" ++ ParentCategoryId).
+
+
+-spec get_user(UserId :: string()) -> {ok, mlapi_json:ejson()} | error().
+get_user(UserId) ->
+    request(?USERS ++ "/" ++ UserId).
+
+
+-spec get_item(ItemId :: string()) -> {ok, mlapi_json:ejson()} | error().
+get_item(ItemId) ->
+    request(?ITEMS ++ "/" ++ ItemId).
+
+
+-spec get_picture(PictureId :: string()) -> {ok, mlapi_json:ejson()} | error().
+get_picture(PictureId) ->
+    request(?PICTURES ++ "/" ++ PictureId).
+
+
+-spec search(SiteId :: string(), Query :: string()) -> {ok, mlapi_json:ejson()} | error().
+search(SiteId, Query) ->
+    request(?SITES ++ "/" ++ SiteId ++ ?SEARCH ++ "?q=" ++ ibrowse_lib:url_encode(Query)).
+
+-spec search(SiteId :: string(), Query :: string(),
+             Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> {ok, mlapi_json:ejson()} | error().
+search(SiteId, Query, Offset, Limit) ->
+    request(io_lib:format(?SITES "/~s" ?SEARCH "?q=~s&offset=~B&limit=~B",
+                          [SiteId, ibrowse_lib:url_encode(Query), Offset, Limit])).
+
+
+-spec search_category(SiteId :: string(), CategoryId :: string()) -> {ok, mlapi_json:ejson()} | error().
+search_category(SiteId, CategoryId) ->
+    request(?SITES ++ "/" ++ SiteId ++ ?SEARCH ++ "?category=" ++ ibrowse_lib:url_encode(CategoryId)).
+
+-spec search_category(SiteId :: string(), CategoryId :: string(),
+                      Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> {ok, mlapi_json:ejson()} | error().
+search_category(SiteId, CategoryId, Offset, Limit) ->
+    request(io_lib:format(?SITES "/~s" ?SEARCH "?category=~s&offset=~B&limit=~B",
+                          [SiteId, ibrowse_lib:url_encode(CategoryId), Offset, Limit])).
+
+
+-spec search_seller_id(SiteId :: string(), SellerId :: string()) -> {ok, mlapi_json:ejson()} | error().
+search_seller_id(SiteId, SellerId) ->
+    request(?SITES ++ "/" ++ SiteId ++ ?SEARCH ++ "?seller_id=" ++ ibrowse_lib:url_encode(SellerId)).
+
+-spec search_seller_id(SiteId :: string(), SellerId :: string(),
+                       Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> {ok, mlapi_json:ejson()} | error().
+search_seller_id(SiteId, SellerId, Offset, Limit) ->
+    request(io_lib:format(?SITES "/~s" ?SEARCH "?seller_id=~s&offset=~B&limit=~B",
+                          [SiteId, ibrowse_lib:url_encode(SellerId), Offset, Limit])).
+
+
+-spec search_nickname(SiteId :: string(), Nickname :: string()) -> {ok, mlapi_json:ejson()} | error().
+search_nickname(SiteId, Nickname) ->
+    request(?SITES ++ "/" ++ SiteId ++ ?SEARCH ++ "?nickname=" ++ ibrowse_lib:url_encode(Nickname)).
+
+-spec search_nickname(SiteId :: string(), Nickname :: string(),
+                      Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> {ok, mlapi_json:ejson()} | error().
+search_nickname(SiteId, Nickname, Offset, Limit) ->
+    request(io_lib:format(?SITES "/~s" ?SEARCH "?nickname=~s&offset=~B&limit=~B",
+                          [SiteId, ibrowse_lib:url_encode(Nickname), Offset, Limit])).
+
+
+-spec request(url_path()) -> {ok, mlapi_json:ejson()} | error().
 request(Path) ->
     case ibrowse:send_req(?PROTOCOL ++ ?HOST ++ Path, [], get) of
         {ok, "200", Headers, Body} ->
             case lists:keyfind(?CONTENT_TYPE, 1, Headers) of
-                {_ContentType, "application/json" ++ _CharSet} ->
-                    json:decode(Body);
+                {_ContentType, ?JSON_MIME_TYPE ++ _CharSet} ->
+                    mlapi_json:decode(Body);
                 InvalidContentType ->
                     {error, {invalid_content_type, InvalidContentType}}
             end;
