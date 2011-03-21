@@ -165,7 +165,7 @@ get([Key | Tail], Json) ->
 get([], Json) ->
     Json;
 get(Path, Json) when is_binary(Path) ->
-    get(compile_xpath(Path), Json).
+    get(compile(Path), Json).
 
 get_attr(Name, [{Head} = Element | Tail]) ->
     case lists:keyfind(Name, 1, Head) of
