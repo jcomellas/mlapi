@@ -28,7 +28,7 @@
          search_nickname/2, search_nickname/4]).
 -export([start/0, stop/0, request/1]).
 
--define(PROTOCOL, "https://").
+-define(PROTOCOL, "https").
 -define(HOST, "api.mercadolibre.com").
 -define(CONTENT_TYPE, "Content-Type").
 -define(JSON_MIME_TYPE, "application/json").
@@ -56,6 +56,7 @@ start() ->
     application:start(public_key),
     application:start(ssl),
     application:start(ibrowse),
+    application:start(eper),
     application:start(mlapi).
 
 
@@ -189,11 +190,11 @@ search_nickname(SiteId, Nickname, Offset, Limit) ->
 
 -spec request(url_path()) -> {ok, mlapi_json:ejson()} | error().
 request(Path) ->
-    case ibrowse:send_req(?PROTOCOL ++ ?HOST ++ Path, [], get) of
+    case ibrowse:send_req(?PROTOCOL "://" ?HOST ++ Path, [], get) of
         {ok, "200", Headers, Body} ->
             case lists:keyfind(?CONTENT_TYPE, 1, Headers) of
                 {_ContentType, ?JSON_MIME_TYPE ++ _CharSet} ->
-                    mlapi_json:decode(Body);
+                    json:decode(Body);
                 InvalidContentType ->
                     {error, {invalid_content_type, InvalidContentType}}
             end;
