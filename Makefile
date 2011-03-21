@@ -32,9 +32,9 @@ dialyze: compile
 test:
 	@./rebar eunit
 
-shell: compile
+console: compile
 	$(ERL) -sname $(APPLICATION) $(EPATH) -s mlapi_deps ensure
 
-testshell: test
+test-console: test
 	$(ERL) -sname $(APPLICATION)_test $(TEST_EPATH)
 
