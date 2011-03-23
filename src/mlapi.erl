@@ -28,6 +28,12 @@
          search_nickname/2, search_nickname/4]).
 -export([start/0, stop/0, request/1]).
 
+-type url_path()  :: string().
+-type error()     :: {error, Reason :: atom() | {atom(), any()}}.
+-type response()  :: {ok, mlapi_json:ejson()} | error().
+
+-export_type([error/0, response/0]).
+
 -define(PROTOCOL, "https").
 -define(HOST, "api.mercadolibre.com").
 -define(CONTENT_TYPE, "Content-Type").
@@ -46,9 +52,6 @@
 -define(PICTURES,        "/pictures").
 -define(SEARCH,          "/search").
 
--type url_path() :: string().
--type error() :: {error, Reason :: atom() | {atom(), any()}}.
-
 
 start() ->
     application:start(sasl),
@@ -64,58 +67,58 @@ stop() ->
     application:stop(mlapi).
 
 
--spec get_sites() -> {ok, mlapi_json:ejson()} | error().
+-spec get_sites() -> response().
 get_sites() ->
     request(?SITES).
 
--spec get_site(SiteId :: string()) -> {ok, mlapi_json:ejson()} | error().
+-spec get_site(SiteId :: string() | binary()) -> response().
 get_site(SiteId) ->
-    request(?SITES ++ "/" ++ SiteId).
+    request(?SITES ++ "/" ++ to_string(SiteId)).
 
 
--spec get_countries() -> {ok, mlapi_json:ejson()} | error().
+-spec get_countries() -> response().
 get_countries() ->
     request(?COUNTRIES).
 
--spec get_country(CountryId :: string()) -> {ok, mlapi_json:ejson()} | error().
+-spec get_country(CountryId :: string() | binary()) -> response().
 get_country(CountryId) ->
-    request(?COUNTRIES ++ "/" ++ CountryId).
+    request(?COUNTRIES ++ "/" ++ to_string(CountryId)).
 
 
--spec get_state(StateId :: string()) -> {ok, mlapi_json:ejson()} | error().
+-spec get_state(StateId :: string() | binary()) -> response().
 get_state(StateId) ->
-    request(?STATES ++ "/" ++ StateId).
+    request(?STATES ++ "/" ++ to_string(StateId)).
 
 
--spec get_city(CityId :: string()) -> {ok, mlapi_json:ejson()} | error().
+-spec get_city(CityId :: string() | binary()) -> response().
 get_city(CityId) ->
-    request(?CITIES ++ "/" ++ CityId).
+    request(?CITIES ++ "/" ++ to_string(CityId)).
 
 
--spec get_neighborhood(NeighborhoodId :: string()) -> {ok, mlapi_json:ejson()} | error().
+-spec get_neighborhood(NeighborhoodId :: string() | binary()) -> response().
 get_neighborhood(NeighborhoodId) ->
-    request(?NEIGHBORHOODS ++ "/" ++ NeighborhoodId).
+    request(?NEIGHBORHOODS ++ "/" ++ to_string(NeighborhoodId)).
 
 
--spec get_currencies() -> {ok, mlapi_json:ejson()} | error().
+-spec get_currencies() -> response().
 get_currencies() ->
     request(?CURRENCIES).
 
--spec get_currency(CurrencyId :: string()) -> {ok, mlapi_json:ejson()} | error().
+-spec get_currency(CurrencyId :: string() | binary()) -> response().
 get_currency(CurrencyId) ->
-    request(?CURRENCIES ++ "/" ++ CurrencyId).
+    request(?CURRENCIES ++ "/" ++ to_string(CurrencyId)).
 
 
--spec get_payment_methods() -> {ok, mlapi_json:ejson()} | error().
+-spec get_payment_methods() -> response().
 get_payment_methods() ->
     request(?PAYMENT_METHODS).
 
--spec get_payment_method(PaymentMethodId :: string()) -> {ok, mlapi_json:ejson()} | error().
+-spec get_payment_method(PaymentMethodId :: string() | binary()) -> response().
 get_payment_method(PaymentMethodId) ->
-    request(?PAYMENT_METHODS ++ "/" ++ PaymentMethodId).
+    request(?PAYMENT_METHODS ++ "/" ++ to_string(PaymentMethodId)).
 
 
--spec get_categories(SiteId :: string()) -> {ok, mlapi_json:ejson() | mlapi_json:value()} | error().
+-spec get_categories(SiteId :: string() | binary()) -> {ok, mlapi_json:ejson() | mlapi_json:value()} | error().
 get_categories(SiteId) ->
     case get_site(SiteId) of
         {ok, Site} ->
@@ -124,71 +127,71 @@ get_categories(SiteId) ->
             Error
     end.
 
--spec get_subcategories(ParentCategoryId :: string()) -> {ok, mlapi_json:ejson()} | error().
+-spec get_subcategories(ParentCategoryId :: string() | binary()) -> response().
 get_subcategories(ParentCategoryId) ->
-    request(?CATEGORIES ++ "/" ++ ParentCategoryId).
+    request(?CATEGORIES ++ "/" ++ to_string(ParentCategoryId)).
 
 
--spec get_user(UserId :: string()) -> {ok, mlapi_json:ejson()} | error().
+-spec get_user(UserId :: string() | binary()) -> response().
 get_user(UserId) ->
-    request(?USERS ++ "/" ++ UserId).
+    request(?USERS ++ "/" ++ to_string(UserId)).
 
 
--spec get_item(ItemId :: string()) -> {ok, mlapi_json:ejson()} | error().
+-spec get_item(ItemId :: string()) -> response().
 get_item(ItemId) ->
     request(?ITEMS ++ "/" ++ ItemId).
 
 
--spec get_picture(PictureId :: string()) -> {ok, mlapi_json:ejson()} | error().
+-spec get_picture(PictureId :: string()) -> response().
 get_picture(PictureId) ->
     request(?PICTURES ++ "/" ++ PictureId).
 
 
--spec search(SiteId :: string(), Query :: string()) -> {ok, mlapi_json:ejson()} | error().
+-spec search(SiteId :: string(), Query :: string()) -> response().
 search(SiteId, Query) ->
     request(?SITES ++ "/" ++ SiteId ++ ?SEARCH ++ "?q=" ++ ibrowse_lib:url_encode(Query)).
 
 -spec search(SiteId :: string(), Query :: string(),
-             Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> {ok, mlapi_json:ejson()} | error().
+             Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> response().
 search(SiteId, Query, Offset, Limit) ->
     request(io_lib:format(?SITES "/~s" ?SEARCH "?q=~s&offset=~B&limit=~B",
                           [SiteId, ibrowse_lib:url_encode(Query), Offset, Limit])).
 
 
--spec search_category(SiteId :: string(), CategoryId :: string()) -> {ok, mlapi_json:ejson()} | error().
+-spec search_category(SiteId :: string(), CategoryId :: string()) -> response().
 search_category(SiteId, CategoryId) ->
     request(?SITES ++ "/" ++ SiteId ++ ?SEARCH ++ "?category=" ++ ibrowse_lib:url_encode(CategoryId)).
 
 -spec search_category(SiteId :: string(), CategoryId :: string(),
-                      Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> {ok, mlapi_json:ejson()} | error().
+                      Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> response().
 search_category(SiteId, CategoryId, Offset, Limit) ->
     request(io_lib:format(?SITES "/~s" ?SEARCH "?category=~s&offset=~B&limit=~B",
                           [SiteId, ibrowse_lib:url_encode(CategoryId), Offset, Limit])).
 
 
--spec search_seller_id(SiteId :: string(), SellerId :: string()) -> {ok, mlapi_json:ejson()} | error().
+-spec search_seller_id(SiteId :: string(), SellerId :: string()) -> response().
 search_seller_id(SiteId, SellerId) ->
     request(?SITES ++ "/" ++ SiteId ++ ?SEARCH ++ "?seller_id=" ++ ibrowse_lib:url_encode(SellerId)).
 
 -spec search_seller_id(SiteId :: string(), SellerId :: string(),
-                       Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> {ok, mlapi_json:ejson()} | error().
+                       Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> response().
 search_seller_id(SiteId, SellerId, Offset, Limit) ->
     request(io_lib:format(?SITES "/~s" ?SEARCH "?seller_id=~s&offset=~B&limit=~B",
                           [SiteId, ibrowse_lib:url_encode(SellerId), Offset, Limit])).
 
 
--spec search_nickname(SiteId :: string(), Nickname :: string()) -> {ok, mlapi_json:ejson()} | error().
+-spec search_nickname(SiteId :: string(), Nickname :: string()) -> response().
 search_nickname(SiteId, Nickname) ->
     request(?SITES ++ "/" ++ SiteId ++ ?SEARCH ++ "?nickname=" ++ ibrowse_lib:url_encode(Nickname)).
 
 -spec search_nickname(SiteId :: string(), Nickname :: string(),
-                      Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> {ok, mlapi_json:ejson()} | error().
+                      Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> response().
 search_nickname(SiteId, Nickname, Offset, Limit) ->
     request(io_lib:format(?SITES "/~s" ?SEARCH "?nickname=~s&offset=~B&limit=~B",
                           [SiteId, ibrowse_lib:url_encode(Nickname), Offset, Limit])).
 
 
--spec request(url_path()) -> {ok, mlapi_json:ejson()} | error().
+-spec request(url_path()) -> response().
 request(Path) ->
     case ibrowse:send_req(?PROTOCOL "://" ?HOST ++ Path, [], get) of
         {ok, "200", Headers, Body} ->
@@ -248,3 +251,16 @@ response_reason("503") -> service_unavailable;
 response_reason("504") -> gateway_timeout;
 response_reason("505") -> http_version_not_supported;
 response_reason(Code) -> Code.
+
+
+-spec to_string(string() | binary() | integer() | float() | atom()) -> string().
+to_string(Binary) when is_binary(Binary) ->
+    binary_to_list(Binary);
+to_string(Integer) when is_integer(Integer) ->
+    integer_to_list(Integer);
+to_string(Float) when is_float(Float) ->
+    float_to_list(Float);
+to_string(Atom) when is_atom(Atom) ->
+    atom_to_list(Atom);
+to_string(String) ->
+    String.
