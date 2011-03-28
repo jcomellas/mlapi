@@ -73,7 +73,7 @@ get_sites() ->
 
 -spec get_site(SiteId :: string() | binary()) -> response().
 get_site(SiteId) ->
-    request(?SITES ++ "/" ++ to_string(SiteId)).
+    request(?SITES "/" ++ to_string(SiteId)).
 
 
 -spec get_countries() -> response().
@@ -82,22 +82,22 @@ get_countries() ->
 
 -spec get_country(CountryId :: string() | binary()) -> response().
 get_country(CountryId) ->
-    request(?COUNTRIES ++ "/" ++ to_string(CountryId)).
+    request(?COUNTRIES "/" ++ to_string(CountryId)).
 
 
 -spec get_state(StateId :: string() | binary()) -> response().
 get_state(StateId) ->
-    request(?STATES ++ "/" ++ to_string(StateId)).
+    request(?STATES "/" ++ to_string(StateId)).
 
 
 -spec get_city(CityId :: string() | binary()) -> response().
 get_city(CityId) ->
-    request(?CITIES ++ "/" ++ to_string(CityId)).
+    request(?CITIES "/" ++ to_string(CityId)).
 
 
 -spec get_neighborhood(NeighborhoodId :: string() | binary()) -> response().
 get_neighborhood(NeighborhoodId) ->
-    request(?NEIGHBORHOODS ++ "/" ++ to_string(NeighborhoodId)).
+    request(?NEIGHBORHOODS "/" ++ to_string(NeighborhoodId)).
 
 
 -spec get_currencies() -> response().
@@ -106,7 +106,7 @@ get_currencies() ->
 
 -spec get_currency(CurrencyId :: string() | binary()) -> response().
 get_currency(CurrencyId) ->
-    request(?CURRENCIES ++ "/" ++ to_string(CurrencyId)).
+    request(?CURRENCIES "/" ++ to_string(CurrencyId)).
 
 
 -spec get_payment_methods() -> response().
@@ -115,7 +115,7 @@ get_payment_methods() ->
 
 -spec get_payment_method(PaymentMethodId :: string() | binary()) -> response().
 get_payment_method(PaymentMethodId) ->
-    request(?PAYMENT_METHODS ++ "/" ++ to_string(PaymentMethodId)).
+    request(?PAYMENT_METHODS "/" ++ to_string(PaymentMethodId)).
 
 
 -spec get_categories(SiteId :: string() | binary()) -> {ok, mlapi_json:ejson() | mlapi_json:value()} | error().
@@ -129,27 +129,27 @@ get_categories(SiteId) ->
 
 -spec get_subcategories(ParentCategoryId :: string() | binary()) -> response().
 get_subcategories(ParentCategoryId) ->
-    request(?CATEGORIES ++ "/" ++ to_string(ParentCategoryId)).
+    request(?CATEGORIES "/" ++ to_string(ParentCategoryId)).
 
 
 -spec get_user(UserId :: string() | binary()) -> response().
 get_user(UserId) ->
-    request(?USERS ++ "/" ++ to_string(UserId)).
+    request(?USERS "/" ++ to_string(UserId)).
 
 
 -spec get_item(ItemId :: string()) -> response().
 get_item(ItemId) ->
-    request(?ITEMS ++ "/" ++ ItemId).
+    request(?ITEMS "/" ++ ItemId).
 
 
 -spec get_picture(PictureId :: string()) -> response().
 get_picture(PictureId) ->
-    request(?PICTURES ++ "/" ++ PictureId).
+    request(?PICTURES "/" ++ PictureId).
 
 
 -spec search(SiteId :: string(), Query :: string()) -> response().
 search(SiteId, Query) ->
-    request(?SITES ++ "/" ++ SiteId ++ ?SEARCH ++ "?q=" ++ ibrowse_lib:url_encode(Query)).
+    request(?SITES "/" ++ SiteId ++ ?SEARCH ++ "?q=" ++ ibrowse_lib:url_encode(Query)).
 
 -spec search(SiteId :: string(), Query :: string(),
              Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> response().
@@ -160,7 +160,7 @@ search(SiteId, Query, Offset, Limit) ->
 
 -spec search_category(SiteId :: string(), CategoryId :: string()) -> response().
 search_category(SiteId, CategoryId) ->
-    request(?SITES ++ "/" ++ SiteId ++ ?SEARCH ++ "?category=" ++ ibrowse_lib:url_encode(CategoryId)).
+    request(?SITES "/" ++ SiteId ++ ?SEARCH "?category=" ++ ibrowse_lib:url_encode(CategoryId)).
 
 -spec search_category(SiteId :: string(), CategoryId :: string(),
                       Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> response().
@@ -171,7 +171,7 @@ search_category(SiteId, CategoryId, Offset, Limit) ->
 
 -spec search_seller_id(SiteId :: string(), SellerId :: string()) -> response().
 search_seller_id(SiteId, SellerId) ->
-    request(?SITES ++ "/" ++ SiteId ++ ?SEARCH ++ "?seller_id=" ++ ibrowse_lib:url_encode(SellerId)).
+    request(?SITES "/" ++ SiteId ++ ?SEARCH "?seller_id=" ++ ibrowse_lib:url_encode(SellerId)).
 
 -spec search_seller_id(SiteId :: string(), SellerId :: string(),
                        Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> response().
@@ -182,7 +182,7 @@ search_seller_id(SiteId, SellerId, Offset, Limit) ->
 
 -spec search_nickname(SiteId :: string(), Nickname :: string()) -> response().
 search_nickname(SiteId, Nickname) ->
-    request(?SITES ++ "/" ++ SiteId ++ ?SEARCH ++ "?nickname=" ++ ibrowse_lib:url_encode(Nickname)).
+    request(?SITES "/" ++ SiteId ++ ?SEARCH "?nickname=" ++ ibrowse_lib:url_encode(Nickname)).
 
 -spec search_nickname(SiteId :: string(), Nickname :: string(),
                       Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> response().
