@@ -12,13 +12,14 @@
 -author('Juan Jose Comellas <juanjo@comellas.org>').
 
 -export([encode/1, decode/1]).
--export([compile/1, get/3]).
+-export([compile/1, get/2]).
 
--type key() :: binary().
--type value() :: binary() | boolean() | integer() | float() | 'null'.
--type json() :: binary().
--type ejson() :: {[{key(), value() | ejson()}]}.
--type path() :: [key() | {index, non_neg_integer()} | {key(), value()}].
+-type key()        :: binary().
+-type value()      :: binary() | boolean() | integer() | float() | 'null'.
+-type operator()   :: '<' | '=' | '>' | '=<' | '>='.
+-type json()       :: binary().
+-type ejson()      :: {[{key(), value() | ejson()}]}.
+-type path()       :: [key() | {index, non_neg_integer()} | {attr, key()} | {attr, {operator(), key(), value()}}].
 
 -export_type([key/0, value/0, json/0, ejson/0, path/0]).
 
@@ -35,8 +36,10 @@ decode(Json) ->
     json:decode(Json).
 
 
-%% Path is an expression using a syntax similar to that of XPath, but
-%% restricted to the following operations:
+%% @doc
+%% Compile an expression using an XPath-like syntax into the format used
+%% internally to search for a specific element or group of elements. The syntax
+%% is restricted to the following operations:
 %%
 %% /element
 %% /element1/element2/element3
@@ -53,13 +56,16 @@ decode(Json) ->
 %% //element[@attr='value']
 %%
 %% e.g. <<"/site[@id='MLAPI']/product/component[1]/name">>
--spec compile(Path :: binary()) -> [key() | {index, non_neg_integer()} | {key(), value()}].
+%% @end
+-spec compile(Path :: binary() | list()) -> [key() | {index, non_neg_integer()} | {key(), value()}].
 compile(<<"//", Tail/binary>>) ->
     {recursive, compile_xpath(Tail, [], <<>>)};
 compile(<<"/", Tail/binary>>) ->
     compile_xpath(Tail, [], <<>>);
-compile(Path) ->
-    {relative, compile_xpath(Path, [], <<>>)}.
+compile(Path) when is_binary(Path) ->
+    {relative, compile_xpath(Path, [], <<>>)};
+compile(Path) when is_list(Path) ->
+    compile(list_to_binary(Path)).
 
 
 compile_xpath(<<"//", Tail/binary>>, Acc, FieldAcc) ->
@@ -83,8 +89,12 @@ compile_array(<<Char, Tail/binary>>, Acc) when ?IS_SPACE(Char) ->
 compile_array(Tail, Acc) ->
     compile_index(Tail, Acc, 0).
 
-compile_attr_key(<<$=, Tail/binary>>, Acc, KeyAcc) ->
-    compile_attr_value(Tail, Acc, KeyAcc);
+%% Attribute comparisons
+compile_attr_key(<<Operator:2/binary, Tail/binary>>, Acc, KeyAcc) when Operator =:= <<"<=">>; Operator =:= <<">=">>;
+                                                                       Operator =:= <<"=<">>; Operator =:= <<"=>">> ->
+    compile_attr_value(Tail, Acc, Operator, KeyAcc);
+compile_attr_key(<<Operator, Tail/binary>>, Acc, KeyAcc) when Operator =:= $=; Operator =:= $<; Operator =:= $> ->
+    compile_attr_value(Tail, Acc, Operator, KeyAcc);
 compile_attr_key(<<$], Tail/binary>>, Acc, KeyAcc) ->
     compile_xpath(Tail, [{attr, KeyAcc} | Acc], <<>>);
 %% Skip whitespace
@@ -95,30 +105,30 @@ compile_attr_key(<<Char, Tail/binary>>, Acc, KeyAcc) ->
 compile_attr_key(_Tail, _Acc, _KeyAcc) ->
     throw(badarg).
 
-compile_attr_value(<<$', Tail/binary>>, Acc, Key) ->
-    compile_attr_quoted_value(Tail, Acc, Key, <<>>);
+compile_attr_value(<<$', Tail/binary>>, Acc, Operator, Key) ->
+    compile_attr_quoted_value(Tail, Acc, Operator, Key, <<>>);
 %% Skip whitespace
-compile_attr_value(<<Char, Tail/binary>>, Acc, Key) when ?IS_SPACE(Char) ->
-    compile_attr_value(Tail, Acc, Key);
-compile_attr_value(<<Char, Tail/binary>>, Acc, Key) ->
-    compile_attr_unquoted_value(Tail, Acc, Key, <<Char>>);
-compile_attr_value(_Tail, _Acc, _Key) ->
+compile_attr_value(<<Char, Tail/binary>>, Acc, Operator, Key) when ?IS_SPACE(Char) ->
+    compile_attr_value(Tail, Acc, Operator, Key);
+compile_attr_value(<<Char, Tail/binary>>, Acc, Operator, Key) ->
+    compile_attr_unquoted_value(Tail, Acc, Operator, Key, <<Char>>);
+compile_attr_value(_Tail, _Acc, _Operator, _Key) ->
     throw(badarg).
 
-compile_attr_unquoted_value(<<$], Tail/binary>>, Acc, Key, ValueAcc) ->
-    compile_xpath(Tail, [{attr, Key, unquoted_value(ValueAcc)} | Acc], <<>>);
-compile_attr_unquoted_value(<<Char, Tail/binary>>, Acc, Key, ValueAcc) when ?IS_SPACE(Char) ->
-    compile_attr_unquoted_value(Tail, Acc, Key, ValueAcc);
-compile_attr_unquoted_value(<<Char, Tail/binary>>, Acc, Key, ValueAcc) ->
-    compile_attr_unquoted_value(Tail, Acc, Key, <<ValueAcc/binary, Char>>);
-compile_attr_unquoted_value(_Tail, _Acc, _Key, _ValueAcc) ->
+compile_attr_unquoted_value(<<$], Tail/binary>>, Acc, Operator, Key, ValueAcc) ->
+    compile_xpath(Tail, [{attr, {operator_to_atom(Operator), Key, unquoted_value(ValueAcc)}} | Acc], <<>>);
+compile_attr_unquoted_value(<<Char, Tail/binary>>, Acc, Operator, Key, ValueAcc) when ?IS_SPACE(Char) ->
+    compile_attr_unquoted_value(Tail, Acc, Operator, Key, ValueAcc);
+compile_attr_unquoted_value(<<Char, Tail/binary>>, Acc, Operator, Key, ValueAcc) ->
+    compile_attr_unquoted_value(Tail, Acc, Operator, Key, <<ValueAcc/binary, Char>>);
+compile_attr_unquoted_value(_Tail, _Acc, _Operator, _Key, _ValueAcc) ->
     throw(badarg).
 
-compile_attr_quoted_value(<<$', Tail/binary>>, Acc, Key, ValueAcc) ->
-    compile_attr_end_bracket(Tail, [{attr, Key, ValueAcc} | Acc]);
-compile_attr_quoted_value(<<Char, Tail/binary>>, Acc, Key, ValueAcc) ->
-    compile_attr_quoted_value(Tail, Acc, Key, <<ValueAcc/binary, Char>>);
-compile_attr_quoted_value(_Tail, _Acc, _Key, _ValueAcc) ->
+compile_attr_quoted_value(<<$', Tail/binary>>, Acc, Operator, Key, ValueAcc) ->
+    compile_attr_end_bracket(Tail, [{attr, {operator_to_atom(Operator), Key, ValueAcc}} | Acc]);
+compile_attr_quoted_value(<<Char, Tail/binary>>, Acc, Operator, Key, ValueAcc) ->
+    compile_attr_quoted_value(Tail, Acc, Operator, Key, <<ValueAcc/binary, Char>>);
+compile_attr_quoted_value(_Tail, _Acc, _Operator, _Key, _ValueAcc) ->
     throw(badarg).
 
 compile_attr_end_bracket(<<$], Tail/binary>>, Acc) ->
@@ -139,98 +149,43 @@ compile_index(_Tail, _Acc, _IndexAcc) ->
 
 
 
--ifdef(REC).
--spec get(binary() | path(), ejson()) -> ejson() | value().
-get([{index, Index} | Tail], Json) when is_integer(Index), is_list(Json) ->
-    get(Tail, get_index(Index, Json));
-get([{attr, Name} | Tail], Json) when is_list(Json) ->
-    get(Tail, get_attr(Name, Json));
-get([{attr, Name, Value} | Tail], Json) when is_list(Json) ->
-    get(Tail, get_attr(Name, Value, Json));
-get([Key | Tail], Json) when is_binary(Key), is_list(Json) ->
-    get(Tail, get_key(Key, Json));
-get([Key | Tail], Json) ->
-    get(Tail, get_key(Key, Json));
-get([], Json) ->
-    Json;
-get(Path, Json) when is_binary(Path) ->
-    get(compile(Path), Json).
-
-get_attr(Name, [{Head} = Element | Tail]) ->
-    case lists:keyfind(Name, 1, Head) of
-        {Name, _Value} ->
-            Element;
-        _  ->
-            get_attr(Name, Tail)
-    end;
-get_attr(_Name, []) ->
-    null.
-
-get_attr(Name, Value, [{Head} = Element | Tail]) ->
-    case lists:keyfind(Name, 1, Head) of
-        {Name, Value} ->
-            Element;
-        _  ->
-            get_attr(Name, Value, Tail)
-    end;
-get_attr(_Name, _Value, []) ->
-    null.
-
-get_index(Index, [_ | _] = Element) ->
-    lists:nth(Index + 1, Element);
-get_index(_Index, []) ->
-    null.
-
-get_key(Key, {Element}) ->
-    case lists:keyfind(Key, 1, Element) of
-        {Key, Value} ->
-            Value;
-        false ->
-            null
-    end;
-get_key([], Json) ->
-    Json.
--endif().
-
-
--spec get(binary() | path(), ejson(), Count :: non_neg_integer()) -> [ejson() | value()].
-get(Path, Json, Count) when is_binary(Path) ->
-    get(compile(Path), Json, Count);
-get(Path, Json, Count) ->
-    case match(Path, Json, Count, []) of
+-spec get(binary() | path(), ejson()) -> [ejson() | value()].
+get(Path, Json) when is_binary(Path); is_integer(hd(Path)) ->
+    get(compile(Path), Json);
+get(Path, Json) ->
+    case match(Path, Json, []) of
         undefined ->
             [];
-        {_} = Element ->
+        Element when tuple_size(Element) =:= 1 ->
             [Element];
         Element ->
             Element
     end.
 
 
-%% match([{relative, Path} | Tail], Json, _Count, Acc) ->
+match({relative, Path}, ElementList, _Acc) ->
+    rel_match(Path, ElementList, []);
 
-%% match([{recursive, Path} | Tail], Json, _Count, Acc) ->
+%% match([{recursive, Path}], ElementList, Acc) ->
 
 
-match(_Path, undefined, _Count, _Acc) ->
+match(_Path, undefined, _Acc) ->
     undefined;
-match([Head | Tail], ElementList, _Count, Acc) when is_list(hd(ElementList)) ->
+match([Head | Tail], ElementList, Acc) when is_list(hd(ElementList)) ->
     NewElementList = lists:foldl(fun (Element, Acc0) ->
-                                         case match(Head, Element, _Count, []) of
+                                         case match(Head, Element, []) of
                                              undefined ->
                                                  Acc0;
                                              ChildElement ->
                                                  [ChildElement | Acc0]
                                          end
                                  end, [], ElementList),
-    match(Tail, lists:reverse(NewElementList), _Count, Acc);
-match([{index, Index} | Tail], ElementList, _Count, Acc) ->
-    match(Tail, match_index(Index, ElementList, []), _Count, Acc);
-match([{attr, Name} | Tail], ElementList, _Count, Acc) ->
-    match(Tail, match_attr(Name, ElementList, []), _Count, Acc );
-match([{attr, Name, Value} | Tail], ElementList, _Count, Acc) ->
-    match(Tail, match_attr(Name, Value, ElementList, []), _Count, Acc);
-match([Key | Tail], ElementList, _Count, Acc) when is_list(ElementList) ->
+    match(Tail, lists:reverse(NewElementList), Acc);
+match([{index, Index} | Tail], ElementList, Acc) ->
+    match(Tail, match_index(Index, ElementList, []), Acc);
+match([{attr, Expr} | Tail], ElementList, Acc) ->
+    match(Tail, match_attr(Expr, ElementList, []), Acc );
+match([Key | Tail], ElementList, Acc) when is_list(ElementList) ->
     NewElementList = lists:foldl(fun (Element, Acc0) ->
                                          case match_key(Key, Element) of
                                              undefined ->
@@ -239,12 +194,45 @@ match([Key | Tail], ElementList, _Count, Acc) when is_list(ElementList) ->
                                                  [ChildElement | Acc0]
                                          end
                                  end, [], ElementList),
-    match(Tail, lists:reverse(NewElementList), _Count, Acc);
-match([Key | Tail], Element, _Count, Acc) ->
-    match(Tail, match_key(Key, Element), _Count, Acc);
-match([], Element, _Count, _Acc) ->
+    match(Tail, lists:reverse(NewElementList), Acc);
+match([Key | Tail], Element, Acc) ->
+    match(Tail, match_key(Key, Element), Acc);
+match([], Element, _Acc) ->
     Element.
 
+
+rel_match(Path, ElementList, Acc) when is_list(ElementList) ->
+    lists:foldl(fun (Element, Acc0) ->
+                        rel_match(Path, Element, Acc0)
+                end, Acc, ElementList);
+rel_match(Path, {[{_Key, Value} | _Tail]} = Element, Acc0) ->
+    Acc = case match(Path, Element, []) of
+              undefined ->
+                  Acc0;
+              ChildElementList when is_list(ChildElementList) ->
+                  ChildElementList ++ Acc0;
+              ChildElement ->
+                  [ChildElement | Acc0]
+          end,
+    rel_match(Path, Value, Acc);
+rel_match(_Path, _Element, _Acc) ->
+    undefined.
+
+
+
+match_attr({Operator, Name, Value2} = Expr, [{PropList} = Element | Tail], Acc0) ->
+    Acc = case lists:keyfind(Name, 1, PropList) of
+              {Name, Value1} ->
+                  case compare_attr_value(Operator, Value1, Value2) of
+                      true ->
+                          [Element | Acc0];
+                      false ->
+                          Acc0
+                  end;
+              _  ->
+                  Acc0
+          end,
+    match_attr(Expr, Tail, Acc);
 match_attr(Name, [{PropList} = Element | Tail], Acc0) ->
     Acc = case lists:keyfind(Name, 1, PropList) of
               {Name, _Value} ->
@@ -253,18 +241,7 @@ match_attr(Name, [{PropList} = Element | Tail], Acc0) ->
                   Acc0
           end,
     match_attr(Name, Tail, Acc);
-match_attr(_Name, [], Acc) ->
-    lists:reverse(Acc).
-
-match_attr(Name, Value, [{PropList} = Element | Tail], Acc0) ->
-    Acc = case lists:keyfind(Name, 1, PropList) of
-              {Name, Value} ->
-                  [Element | Acc0];
-              _  ->
-                  Acc0
-          end,
-    match_attr(Name, Value, Tail, Acc);
-match_attr(_Name, _Value, [], Acc) ->
+match_attr(_Expr, [], Acc) ->
     lists:reverse(Acc).
 
 match_index(Index, [_ | _] = Array, _Acc) ->
@@ -288,6 +265,8 @@ match_key(Key, {PropList}) ->
     end;
 match_key([], Element) ->
     Element.
+
+
 
 
 unquoted_value(<<"true">>) ->
@@ -334,3 +313,27 @@ add_if_not_empty(<<>>, Acc) ->
     Acc;
 add_if_not_empty(Acc0, Acc) ->
     [Acc0 | Acc].
+
+
+-spec operator_to_atom(char() | binary()) -> operator().
+operator_to_atom($<) -> '<';
+operator_to_atom($=) -> '=';
+operator_to_atom($>) -> '>';
+operator_to_atom(<<"<=">>) -> '=<';
+operator_to_atom(<<"=<">>) -> '=<';
+operator_to_atom(<<">=">>) -> '>=';
+operator_to_atom(<<"=>">>) -> '>='.
+
+
+-spec compare_attr_value(operator(), value(), value()) -> boolean().
+compare_attr_value('=', Value1, Value2) ->
+    Value1 == Value2;
+compare_attr_value('<', Value1, Value2) ->
+    Value1 < Value2;
+compare_attr_value('>', Value1, Value2) ->
+    Value1 > Value2;
+compare_attr_value('=<', Value1, Value2) ->
+    Value1 =< Value2;
+compare_attr_value('>=', Value1, Value2) ->
+    Value1 >= Value2.
+
