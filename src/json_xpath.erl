@@ -11,7 +11,6 @@
 -module(json_xpath).
 -author('Juan Jose Comellas <juanjo@comellas.org>').
 
--export([encode/1, decode/1]).
 -export([compile/1, get/2]).
 
 -type key()        :: binary().
@@ -24,16 +23,6 @@
 -export_type([key/0, value/0, json/0, ejson/0, path/0]).
 
 -define(IS_SPACE(Char), (Char) =:= $\s orelse (Char) =:= $\t orelse (Char) =:= $\r orelse (Char) =:= $\n).
-
-
--spec encode(ejson()) -> {ok, json()}.
-encode(EJson) ->
-    json:encode(EJson).
-
-
--spec decode(json()) -> {ok, ejson()}.
-decode(Json) ->
-    json:decode(Json).
 
 
 %% @doc
@@ -90,8 +79,8 @@ compile_array(Tail, Acc) ->
     compile_index(Tail, Acc, 0).
 
 %% Attribute comparisons
-compile_attr_key(<<Operator:2/binary, Tail/binary>>, Acc, KeyAcc) when Operator =:= <<"<=">>; Operator =:= <<">=">>;
-                                                                       Operator =:= <<"=<">>; Operator =:= <<"=>">> ->
+compile_attr_key(<<Operator:2/binary, Tail/binary>>, Acc, KeyAcc) when Operator =:= <<"<=">>; Operator =:= <<"!=">>;
+                                                                       Operator =:= <<">=">> ->
     compile_attr_value(Tail, Acc, Operator, KeyAcc);
 compile_attr_key(<<Operator, Tail/binary>>, Acc, KeyAcc) when Operator =:= $=; Operator =:= $<; Operator =:= $> ->
     compile_attr_value(Tail, Acc, Operator, KeyAcc);
@@ -153,7 +142,7 @@ compile_index(_Tail, _Acc, _IndexAcc) ->
 get(Path, Json) when is_binary(Path); is_integer(hd(Path)) ->
     get(compile(Path), Json);
 get(Path, Json) ->
-    case match(Path, Json, []) of
+    case match(Path, Json) of
         undefined ->
             [];
         Element when tuple_size(Element) =:= 1 ->
@@ -163,29 +152,29 @@ get(Path, Json) ->
     end.
 
 
-match({relative, Path}, ElementList, _Acc) ->
-    rel_match(Path, ElementList, []);
+%%match({recursive, Path}, ElementList, _Acc) ->
+%%    rec_match(Path, ElementList, []);
 
-%% match([{recursive, Path}], ElementList, Acc) ->
+%% match([{relative, Path}], ElementList, Acc) ->
 
 
-match(_Path, undefined, _Acc) ->
+match(_Path, undefined) ->
     undefined;
-match([Head | Tail], ElementList, Acc) when is_list(hd(ElementList)) ->
+match([Head | Tail], ElementList) when is_list(hd(ElementList)) ->
     NewElementList = lists:foldl(fun (Element, Acc0) ->
-                                         case match(Head, Element, []) of
+                                         case match(Head, Element) of
                                              undefined ->
                                                  Acc0;
                                              ChildElement ->
                                                  [ChildElement | Acc0]
                                          end
                                  end, [], ElementList),
-    match(Tail, lists:reverse(NewElementList), Acc);
-match([{index, Index} | Tail], ElementList, Acc) ->
-    match(Tail, match_index(Index, ElementList, []), Acc);
-match([{attr, Expr} | Tail], ElementList, Acc) ->
-    match(Tail, match_attr(Expr, ElementList, []), Acc );
-match([Key | Tail], ElementList, Acc) when is_list(ElementList) ->
+    match(Tail, lists:reverse(NewElementList));
+match([{index, Index} | Tail], ElementList) ->
+    match(Tail, match_index(Index, ElementList, []));
+match([{attr, Expr} | Tail], ElementList) ->
+    match(Tail, match_attr(Expr, ElementList, []));
+match([Key | Tail], ElementList) when is_list(ElementList) ->
     NewElementList = lists:foldl(fun (Element, Acc0) ->
                                          case match_key(Key, Element) of
                                              undefined ->
@@ -194,18 +183,24 @@ match([Key | Tail], ElementList, Acc) when is_list(ElementList) ->
                                                  [ChildElement | Acc0]
                                          end
                                  end, [], ElementList),
-    match(Tail, lists:reverse(NewElementList), Acc);
-match([Key | Tail], Element, Acc) ->
-    match(Tail, match_key(Key, Element), Acc);
-match([], Element, _Acc) ->
+    match(Tail, lists:reverse(NewElementList));
+match([Key | Tail], Element) ->
+    match(Tail, match_key(Key, Element));
+match([], Element) ->
     Element.
 
 
-rel_match(Path, ElementList, Acc) when is_list(ElementList) ->
+
+-ifdef(TEST).
+rec_match(Path, [Head | Tail] = ElementList, Acc) ->
+    case match(Path, ElementList
+    Acc = rec_match(Path, Head, Acc0)
+
+rec_match(Path, ElementList, Acc) when is_list(ElementList) ->
     lists:foldl(fun (Element, Acc0) ->
-                        rel_match(Path, Element, Acc0)
+                        rec_match(Path, Element, Acc0)
                 end, Acc, ElementList);
-rel_match(Path, {[{_Key, Value} | _Tail]} = Element, Acc0) ->
+rec_match(Path, {[{_Key, Value} | _Tail]} = Element, Acc0) ->
     Acc = case match(Path, Element, []) of
               undefined ->
                   Acc0;
@@ -214,9 +209,11 @@ rel_match(Path, {[{_Key, Value} | _Tail]} = Element, Acc0) ->
               ChildElement ->
                   [ChildElement | Acc0]
           end,
-    rel_match(Path, Value, Acc);
-rel_match(_Path, _Element, _Acc) ->
+    rec_match(Path, Value, Acc);
+rec_match(_Path, _Element, _Acc) ->
     undefined.
+-endif().
+
 
 
 
@@ -244,6 +241,7 @@ match_attr(Name, [{PropList} = Element | Tail], Acc0) ->
 match_attr(_Expr, [], Acc) ->
     lists:reverse(Acc).
 
+
 match_index(Index, [_ | _] = Array, _Acc) ->
     %% Swallow the exception when the index is bigger than the length of the array.
     try lists:nth(Index, Array) of
@@ -255,6 +253,7 @@ match_index(Index, [_ | _] = Array, _Acc) ->
     end;
 match_index(_Index, [], _Acc) ->
     undefined.
+
 
 match_key(Key, {PropList}) ->
     case lists:keyfind(Key, 1, PropList) of
@@ -320,9 +319,8 @@ operator_to_atom($<) -> '<';
 operator_to_atom($=) -> '=';
 operator_to_atom($>) -> '>';
 operator_to_atom(<<"<=">>) -> '=<';
-operator_to_atom(<<"=<">>) -> '=<';
-operator_to_atom(<<">=">>) -> '>=';
-operator_to_atom(<<"=>">>) -> '>='.
+operator_to_atom(<<"!=">>) -> '!=';
+operator_to_atom(<<">=">>) -> '>='.
 
 
 -spec compare_attr_value(operator(), value(), value()) -> boolean().
@@ -334,6 +332,7 @@ compare_attr_value('>', Value1, Value2) ->
     Value1 > Value2;
 compare_attr_value('=<', Value1, Value2) ->
     Value1 =< Value2;
+compare_attr_value('!=', Value1, Value2) ->
+    Value1 /= Value2;
 compare_attr_value('>=', Value1, Value2) ->
     Value1 >= Value2.
-
