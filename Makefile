@@ -1,8 +1,8 @@
 APPLICATION := mlapi
 
 ERL := erl
-EPATH := -pa ebin
-TEST_EPATH := -pa .eunit
+EPATH := -pa ebin -pz deps/*/ebin
+TEST_EPATH := -pa .eunit -pz deps/*/ebin
 
 .PHONY: all doc clean test
 
