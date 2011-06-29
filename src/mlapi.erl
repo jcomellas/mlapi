@@ -122,7 +122,7 @@ get_payment_method(PaymentMethodId) ->
 get_categories(SiteId) ->
     case get_site(SiteId) of
         {ok, Site} ->
-            {ok, mlapi_json:get([<<"categories">>], Site)};
+            {ok, json_xpath:get([<<"categories">>], Site)};
         Error ->
             Error
     end.
@@ -187,7 +187,7 @@ search_nickname(SiteId, Nickname) ->
 -spec search_nickname(SiteId :: string(), Nickname :: string(),
                       Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> response().
 search_nickname(SiteId, Nickname, Offset, Limit) ->
-    request(io_lib:format(?SITES "/~s" ?SEARCH "?nickname=~s&offset=~B&limit=~B",
+    request(io_lib:format(?SITES "/~s" ?SEARCH "?nickname=~s&offset=~w&limit=~w",
                           [SiteId, ibrowse_lib:url_encode(Nickname), Offset, Limit])).
 
 
@@ -197,7 +197,12 @@ request(Path) ->
         {ok, "200", Headers, Body} ->
             case lists:keyfind(?CONTENT_TYPE, 1, Headers) of
                 {_ContentType, ?JSON_MIME_TYPE ++ _CharSet} ->
-                    json:decode(Body);
+                    try
+                        ejson:decode(Body)
+                    catch
+                        throw:Reason ->
+                            {error, Reason}
+                    end;
                 InvalidContentType ->
                     {error, {invalid_content_type, InvalidContentType}}
             end;
