@@ -9,28 +9,28 @@ TEST_EPATH := -pa .eunit -pz deps/*/ebin
 all: compile
 
 compile:
-	@./rebar compile
+	@rebar compile
 
 doc:
-	@./rebar doc
+	@rebar doc
 
 clean:
-	@./rebar clean
+	@rebar clean
 
 distclean:
-	@./rebar delete-deps
+	@rebar delete-deps
 
 build-plt: compile
-	@./rebar build-plt
+	@rebar build-plt
 
 check-plt: compile
-	@./rebar check-plt
+	@rebar check-plt
 
 dialyze: compile
-	@./rebar dialyze
+	@rebar dialyze
 
 test:
-	@./rebar eunit
+	@rebar eunit
 
 console: compile
 	$(ERL) -sname $(APPLICATION) $(EPATH) -s mlapi_deps ensure
