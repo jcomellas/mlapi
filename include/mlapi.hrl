@@ -1,98 +1,171 @@
+%%%-------------------------------------------------------------------
+%%% @author Juan Jose Comellas <juanjo@comellas.org>
+%%% @copyright (C) 2011 Juan Jose Comellas
+%%% @doc MercadoLibre API records.
+%%% @end
+%%%
+%%% This source file is subject to the New BSD License. You should have received
+%%% a copy of the New BSD license with this software. If not, it can be
+%%% retrieved from: http://www.opensource.org/licenses/bsd-license.php
+%%%-------------------------------------------------------------------
 -ifndef(MLAPI_HRL).
 -define(MLAPI_HRL, "mlapi.hrl").
 
--record(mlapi_site, {
-          id,
-          name,
-          country_id,
-          sale_fees_mode                                    :: <<"not_free">>,
-          mercadopago_version                               :: 3,
-          default_currency_id,
-          currencies = []                                   :: [#mlapi_currency{}],
-          immediate_payment                                 :: <<"required">> | <<"optional">>,
-          payment_method_ids = [],
-          categories = []                                   [#mlapi_category{}],
-         }).
+-type mlapi_id()                      :: binary().
+-type mlapi_site_id()                 :: mlapi_id().
+-type mlapi_country_id()              :: mlapi_id().
+-type mlapi_state_id()                :: mlapi_id().
+-type mlapi_city_id()                 :: mlapi_id().
+-type mlapi_neighborhood_id()         :: mlapi_id().
+-type mlapi_locale_id()               :: mlapi_id().
+-type mlapi_currency_id()             :: mlapi_id().
+-type mlapi_timezone_id()             :: mlapi_id().
+-type mlapi_payment_method_id()       :: mlapi_id().
+-type mlapi_user_id()                 :: mlapi_id().
+-type mlapi_category_id()             :: mlapi_id().
+-type mlapi_item_id()                 :: mlapi_id().
+-type mlapi_address_id()              :: mlapi_id().
+-type mlapi_picture_id()              :: mlapi_id().
+-type mlapi_description_id()          :: mlapi_id().
+-type mlapi_attribute_id()            :: mlapi_id().
 
--record(mlapi_country, {
-          id,
-          iso_code,
-          name,
-          locale,
-          currency_id,
-          status
-         }).
+-type mlapi_email_address()           :: binary().
 
--record(mlapi_state, {
-          id,
-          iso_code,
-          name,
-          status
-         }).
+-type mlapi_required()                :: binary().          %% <<"required">> | <<"optional">>
+-type mlapi_buying_mode_id()          :: binary().          %% <<"buy_it_now">> | <<"auction">>
+-type mlapi_listing_type_id()         :: binary().          %% <<"gold_premium">> | <<"gold">> | <<"silver">> | <<"bronze">> | <<"free">>
+-type mlapi_listing_exposure_id()     :: binary().          %% <<"highest">> | <<"high">> | <<"mid">> | <<"low">> | <<"lowest">>
+-type mlapi_item_condition_id()       :: binary().          %% <<"not_specified">> | <<"new">> | <<"used">>
+-type mlapi_sale_fees_mode()          :: binary().          %% <<"not_free">>
+-type mlapi_site_status_id()          :: binary().          %% <<"active">>, <<"pending">>, <<"deactive">>
+-type mlapi_item_status_id()          :: binary().          %% <<"not_yet_active">> | <<"paused">> | <<"active">> |
+                                                            %% <<"closed">> | <<"deleted">> | <<"invisible">> |
+                                                            %% <<"under_review">> | <<"suspended_by_user">>
+-type mlapi_user_type_id()            :: binary().          %% <<"car_dealer">>, <<"real_estate_agency">>,
+                                                            %% <<"branch">>, <<"franchise">>, <<"normal">>
+-type mlapi_seller_experience_id()    :: binary().          %% <<"newbie">>, <<"intermediate">>, <<"advanced">>
+-type mlapi_seller_level_id()         :: binary().          %% <<"1_red">>, <<"2_orange">>, <<"3_yellow">>, <<"4_light_green">>, <<"5_green">>
+-type mlapi_power_seller_status_id()  :: binary().          %% <<"silver">>, <<"gold">>, <<"platinum">>, <<"null">>
+-type mlapi_period_id()               :: binary().          %% <<"historic">>, <<"12 months">>, <<"3 months">>
 
--record(mlapi_city, {
-          id,
-          iso_code,
-          name,
-          status
-         }).
-
--record(mlapi_currency, {
-          id,
-          description,
-          symbol,
-          decimal_places = 2
-         }).
-
--record(mlapi_category, {
-          id,
-          name,
-          permalink,
-          total_items_in_this_category,
-          path_from_root = [],
-          children_categories = []
-          settings                                          :: #mlapi_settings{},
-         }).
 
 -record(mlapi_settings, {
           adult_content                                     :: boolean(),
           buying_allowed                                    :: boolean(),
-          buying_modes = []                                 :: [<<"buy_it_now">> | <<"auction">>],
-          coverage_areas                                    :: <<"not_allowed">>,
-          immediate_payment                                 :: <<"required">> | <<"optional">>,
-          item_conditions = []                              :: [<<"not_specified">> | <<"new">> | <<"used">>],
+          buying_modes = []                                 :: [mlapi_buying_mode_id()],
+          coverage_areas                                    :: binary(),    %% <<"not_allowed">>,
+          immediate_payment                                 :: mlapi_required(),
+          item_conditions = []                              :: [mlapi_item_condition_id()],
           items_reviews_allowed                             :: boolean(),
           listing_allowed                                   :: boolean(),
-          max_stock_per_item                                :: integer(),
+          max_pictures_per_item                             :: integer(),
           mirror_category,
-          price                                             :: <<"required">> | <<"optional">>,
-          shipping_profile                                  :: <<"required">> | <<"optional">>,
+          price                                             :: mlapi_required(),
+          seller_contact                                    :: binary(),
+          shipping_profile                                  :: mlapi_required(),
           show_contact_information                          :: boolean(),
-          simple_shipping                                   :: <<"required">> | <<"optional">>,
-          stock                                             :: <<"required">> | <<"optional">>,
-          tags = []
+          simple_shipping                                   :: mlapi_required(),
+          stock                                             :: mlapi_required(),
+          tags = [],
+          vip_subdomain
          }).
 
+-record(mlapi_currency, {
+          id                                                :: mlapi_currency_id(),
+          description                                       :: binary(),
+          symbol                                            :: binary(),
+          decimal_places = 2                                :: integer()
+         }).
 
--record(mlapi_user, {
-          id,
-          nickname,
-          registration_date,
-          country_id,
-          user_type,
-          logo,
-          points = 0,
-          site_id,
+-record(mlapi_listing_type, {
+          site_id                                           :: mlapi_site_id(),
+          id                                                :: mlapi_listing_type_id(),
+          name                                              :: binary()
+         }).
+
+-record(mlapi_listing_exposure, {
+          id                                                :: mlapi_listing_exposure_id(),
+          name                                              :: binary(),
+          home_page                                         :: boolean(),
+          category_home_page                                :: boolean(),
+          advertising_on_listing_page                       :: boolean(),
+          priority_in_search                                :: integer()
+         }).
+
+-record(mlapi_listing_price, {
+          listing_type_id                                   :: mlapi_listing_type_id(),
+          listing_type_name                                 :: binary(),
+          listing_exposure                                  :: mlapi_listing_exposure_id(),
+          requires_picture                                  :: boolean(),
+          currency_id                                       :: mlapi_currency_id(),
+          listing_fee_amount                                :: float(),                     %% fixed amount
+          sale_fee_amount                                   :: float()                      %% percentage of sale price
+         }).
+
+-record(mlapi_category, {
+          id                                                :: mlapi_category_id(),
+          name                                              :: binary(),
           permalink,
-          seller_reputation                                 :: #mlapi_seller_reputation{},
-          status
+          total_items_in_this_category                      :: integer(),
+          path_from_root = [],
+          children_categories = [],
+          settings                                          :: #mlapi_settings{}
          }).
 
--record(mlapi_seller_reputation, {
-          level_id,
-          power_seller_status,
-          transactions,
-          period                                            :: #mlapi_period{}
+-record(mlapi_site, {
+          id                                                :: mlapi_site_id(),
+          name                                              :: binary(),
+          country_id                                        :: mlapi_country_id(),
+          sale_fees_mode                                    :: mlapi_sale_fees_mode(),
+          mercadopago_version = 3                           :: non_neg_integer(),
+          default_currency_id                               :: mlapi_currency_id(),
+          currencies = []                                   :: [#mlapi_currency{}],
+          immediate_payment                                 :: mlapi_required(),
+          payment_method_ids = []                           :: [mlapi_payment_method_id()],
+          categories = []                                   :: [#mlapi_category{}]
+         }).
+
+-record(mlapi_location, {
+          latitude                                          :: float(),
+          longitude                                         :: float()
+         }).
+
+-record(mlapi_geo_information, {
+          location                                          :: #mlapi_location{}
+         }).
+
+-record(mlapi_country, {
+          id                                                :: mlapi_country_id(),
+          name                                              :: binary(),
+          locale                                            :: mlapi_locale_id(),
+          currency_id                                       :: mlapi_currency_id(),
+          decimal_separator                                 :: integer(),
+          thousands_separator                               :: integer(),
+          time_zone                                         :: mlapi_timezone_id(),
+          geo_information                                   :: #mlapi_geo_information{},
+          states = []
+         }).
+
+-record(mlapi_state, {
+          id                                                :: mlapi_state_id(),
+          name                                              :: binary(),
+          country,
+          geo_information,
+          cities = []
+         }).
+
+-record(mlapi_city, {
+          id                                                :: mlapi_city_id(),
+          name                                              :: binary(),
+          state,
+          country,
+          geo_information                                   :: #mlapi_geo_information{}
+         }).
+
+-record(mlapi_ratings, {
+          positive,
+          negative,
+          neutral
          }).
 
 -record(mlapi_period, {
@@ -102,10 +175,59 @@
           ratings                                           :: #mlapi_ratings{}
          }).
 
--record(mlapi_ratings, {
-          positive,
-          negative,
-          neutral
+-record(mlapi_transactions, {
+          period                                            :: mlapi_period_id(),
+          total                                             :: integer(),
+          completed                                         :: integer(),
+          canceled                                          :: integer(),
+          ratings                                           :: #mlapi_ratings{}
+         }).
+
+-record(mlapi_seller_reputation, {
+          level_id                                          :: mlapi_seller_level_id(),
+          power_seller_status                               :: mlapi_power_seller_status_id(),
+          transactions                                      :: #mlapi_transactions{}
+         }).
+
+-record(mlapi_buyer_reputation, {
+          transactions                                      :: #mlapi_transactions{}
+         }).
+
+-record(mlapi_status, {
+          site_status                                       :: mlapi_site_status_id(),
+          list                                              :: binary()
+         }).
+
+-record(mlapi_identification, {
+          identification_type,
+          identification_number
+         }).
+
+-record(mlapi_phone, {
+          area_code,
+          number,
+          verified                                          :: boolean()
+         }).
+
+-record(mlapi_user, {
+          id,
+          nickname,
+          registration_date,
+          first_name                                        :: binary(),
+          last_name                                         :: binary(),
+          country_id                                        :: mlapi_country_id(),
+          email                                             :: mlapi_email_address(),
+          identification                                    :: #mlapi_identification{},
+          phone                                             :: #mlapi_phone{},
+          user_type                                         :: mlapi_user_type_id(),
+          logo,
+          points = 0,
+          site_id                                           :: mlapi_site_id(),
+          permalink,
+          seller_experience                                 :: mlapi_seller_experience_id(),
+          seller_reputation                                 :: #mlapi_seller_reputation{},
+          buyer_reputation                                  :: #mlapi_buyer_reputation{},
+          status                                            :: #mlapi_status{}
          }).
 
 -record(mlapi_user_status, {
@@ -113,100 +235,67 @@
          }).
 
 
--record(mlapi_item, {
-          id,
-          site_id,
-          title,
-          subtitle,
-          seller_id,
-          category_id,
-          price = 0.0,
-          currency_id,
-          initial_quantity = 0,
-          available_quantity = 0,
-          sold_quantity,
-          buying_mode                                       :: <<"auction">> | <<"buy_it_now">>,
-          listing_type_id                                   :: <<"gold">> | <<"silver">> | <<"bronze">>,
-          start_time,
-          stop_time,
-          condition                                         :: <<"new">> | <<"used">> | <<"unspecified">>,
-          permalink,
-          thumbnail,
-          pictures = []                                     :: [#mlapi_picture{}],
-          video_id,
-          descriptions = []                                 :: [#mlapi_description{}],
-          accepts_mercadopago                               :: boolean() | undefined,
-          non_mercadopago_payment_methods = []              :: [#mlapi_payment_method{}],
-          shipping                                          :: #mlapi_shipping{},
-          address                                           :: #mlapi_address{},
-          coverage_areas = [],
-          attributes = []                                   :: [#mlapi_attribute{}],
-          varying_attributes = []                           :: [#mlapi_varying_attribute{}],
-          variations = []                                   :: [#mlapi_variations{}],
-          status                                            :: <<"not_yet_active">> | <<"paused">> | <<"active">> |
-                                                               <<"closed">> | <<"deleted">> | <<"invisible">> |
-                                                               <<"under_review">> | <<"suspended_by_user">>,
-          sub_status = [],
-          warranty,
-          catalog_product_id,
-          parent_item_id,
-          date_created,
-          last_updated
-         }).
-
-
 -record(mlapi_picture, {
-          id,
+          id                                                :: mlapi_picture_id(),
           url,
+          secure_url,
+          size,
+          max_size,
           quality
          }).
 
 -record(mlapi_description, {
-          id,
+          id                                                :: mlapi_description_id(),
           created
          }).
 
 -record(mlapi_payment_method, {
-          id,
+          id                                                :: mlapi_payment_method_id(),
           description,
           is_default                                        :: boolean(),
           type
          }).
 
+-record(mlapi_shipping_costs, {
+          description,
+          cost                                              :: float(),
+          time,
+          shipping_rule_id
+         }).
+
 -record(mlapi_shipping, {
           profile_id,
           local_pick_up                                     :: boolean(),
-          free_shipping                                     :: boolean()
+          free_shipping                                     :: boolean(),
+          costs                                             :: #mlapi_shipping_costs{}
          }).
 
--record(mlapi_address, {
-          id,
-          country_id,
-          country_name,
-          state_id,
-          state_name,
-          city_id,
-          city_name,
-          neighborhood_id,
-          neighborhood_name,
-          zip_code,
-          street,
-          contact,
-          area_code,
-          phone1,
-          phone2,
-          webpage,
-          latitude = 0.0,
-          longitude = 0.0
+-record(mlapi_seller_address, {
+          id                                                :: mlapi_address_id(),
+          comment                                           :: binary(),
+          address_line                                      :: binary(),
+          zip_code                                          :: binary(),
+          city                                              :: #mlapi_city{},
+          state                                             :: #mlapi_state{},
+          country                                           :: #mlapi_country{},
+          latitude = 0.0                                    :: float(),
+          longitude = 0.0                                   :: float()
          }).
 
 -record(mlapi_attribute, {
-          id,
-          name,
+          id                                                :: mlapi_attribute_id(),
+          name                                              :: binary(),
           value_id,
           value_name,
           attribute_group_id,
           attribute_group_name
+         }).
+
+-record(mlapi_attribute_combination, {
+          id,
+          name,
+          value_id,
+          value_name
          }).
 
 -record(mlapi_varying_attribute, {
@@ -218,19 +307,134 @@
 -record(mlapi_variations, {
           id,
           attribute_combinations = []                       :: [#mlapi_attribute_combination{}],
-          price = 0.0,
-          available_quantity,
-          picture_id,
-          seller_custom_field
+          price = 0.0                                       :: float(),
+          available_quantity                                :: integer(),
+          picture_id                                        :: mlapi_picture_id(),
+          seller_custom_field                               :: binary()
          }).
 
--record(mlapi_attribute_combination, {
+-record(mlapi_item, {
+          id                                                :: mlapi_item_id(),
+          site_id                                           :: mlapi_site_id(),
+          title                                             :: binary(),
+          subtitle                                          :: binary(),
+          seller_id                                         :: mlapi_user_id(),
+          category_id                                       :: mlapi_category_id(),
+          price = 0.0                                       :: float(),
+          base_price = 0.0                                  :: float(),
+          currency_id                                       :: mlapi_currency_id(),
+          initial_quantity = 0                              :: integer(),
+          available_quantity = 0                            :: integer(),
+          sold_quantity = 0                                 :: integer(),
+          buying_mode                                       :: mlapi_buying_mode_id(),
+          listing_type_id                                   :: mlapi_listing_type_id(),
+          start_time,
+          stop_time,
+          condition                                         :: mlapi_item_condition_id(),
+          permalink,
+          thumbnail,
+          pictures = []                                     :: [#mlapi_picture{}],
+          video_id,
+          descriptions = []                                 :: [#mlapi_description{}],
+          accepts_mercadopago                               :: boolean(),
+          non_mercado_pago_payment_methods = []             :: [#mlapi_payment_method{}],
+          shipping                                          :: #mlapi_shipping{},
+          seller_address                                    :: #mlapi_seller_address{},
+          seller_contact                                    :: binary(),
+          location,
+          geolocation                                       :: #mlapi_location{},
+          coverage_areas = [],
+          attributes = []                                   :: [#mlapi_attribute{}],
+          varying_attributes = []                           :: [#mlapi_varying_attribute{}],
+          variations = []                                   :: [#mlapi_variations{}],
+          status                                            :: mlapi_item_status_id(),
+          sub_status = [],
+          warranty,
+          catalog_product_id,
+          seller_custom_field                               :: binary(),
+          parent_item_id                                    :: mlapi_item_id(),
+          date_created,
+          last_updated
+         }).
+
+-record(mlapi_seller, {
+          id                                                :: mlapi_user_id(),
+          seller_reputation,
+          power_seller_status                               :: mlapi_power_seller_status_id(),
+          real_estate_agency                                :: boolean(),
+          car_dealer                                        :: boolean()
+         }).
+
+-record(mlapi_installment, {
+          quantity = 0                                      :: integer(),
+          amount = 0.0                                      :: float(),
+          currency_id                                       :: mlapi_currency_id()
+         }).
+
+-record(mlapi_search_address, {
+          state_id                                          :: mlapi_state_id(),
+          state_name                                        :: binary(),
+          city_id                                           :: mlapi_city_id(),
+          city_name                                        :: binary()
+         }).
+
+-record(mlapi_search_item, {
+          id                                                :: mlapi_item_id(),
+          site_id                                           :: mlapi_site_id(),
+          title                                             :: binary(),
+          subtitle                                          :: binary(),
+          seller                                            :: #mlapi_seller{},
+          price = 0.0                                       :: float(),
+          currency_id                                       :: mlapi_currency_id(),
+          sold_quantity = 0                                 :: integer(),
+          buying_mode                                       :: mlapi_buying_mode_id(),
+          listing_type_id                                   :: mlapi_listing_type_id(),
+          stop_time,
+          condition                                         :: mlapi_item_condition_id(),
+          permalink,
+          thumbnail,
+          accepts_mercadopago                               :: boolean(),
+          installments                                      :: #mlapi_installment{},
+          address                                           :: #mlapi_search_address{},
+          seller_address                                    :: #mlapi_seller_address{},
+          attributes = []                                   :: [#mlapi_attribute{}]
+         }).
+
+-record(mlapi_paging, {
+        total = 0                                           :: integer(),
+        offset = 0                                          :: integer(),
+        limit = 0                                           :: integer()
+       }).
+
+-record(mlapi_sort, {
+        id,
+        name
+       }).
+
+-record(mlapi_filter_value, {
           id,
           name,
-          value_id,
-          value_name
+          results
          }).
 
+-record(mlapi_filter, {
+          id,
+          name,
+          type,
+          values                                            :: #mlapi_filter_value{}
+         }).
 
+-record(mlapi_search_result, {
+          site_id                                          :: mlapi_site_id(),
+          seller                                           :: #mlapi_seller{},
+          'query'                                          :: binary(),
+          results                                          :: [#mlapi_item{}],
+          matching_catalog_products,
+          paging                                           :: #mlapi_paging{},
+          sort                                             :: #mlapi_sort{},
+          available_sorts                                  :: #mlapi_sort{},
+          filters,
+          available_filters
+         }).
 
--endif().
+-endif.
