@@ -29,7 +29,8 @@
          search_category/2, search_category/4,
          search_seller_id/2, search_seller_id/4,
          search_nickname/2, search_nickname/4]).
--export([json_to_record/2, json_to_record_list/2, json_field_to_record_name/2,
+-export([json_to_record/2, json_to_proplist/2,
+         json_field_to_record_name/2,
          is_json_datetime_field/2, iso_datetime_to_tuple/1]).
 
 -include("include/mlapi.hrl").
@@ -257,12 +258,12 @@ request(Path) ->
 
 
 %% @doc Convert a list of JSON elements into a list of known records.
--spec json_to_record_list([tuple()], RecordName :: atom()) -> [tuple()].
-json_to_record_list(Elements, RecordName) when is_list(Elements) ->
-    lists:reverse(
-      lists:foldl(fun (Element, Acc) ->
-                          [json_to_record(Element, new_record(RecordName)) | Acc]
-                  end, [], Elements)).
+%-spec json_to_record_list([tuple()], RecordName :: atom()) -> [tuple()].
+%json_to_record_list(Elements, RecordName) when is_list(Elements) ->
+%    lists:reverse(
+%      lists:foldl(fun (Element, Acc) ->
+%                          [json_to_record(Element, new_record(RecordName)) | Acc]
+%                  end, [], Elements)).
 
 
 %% @doc Convert a JSON element into a known record.
@@ -270,7 +271,12 @@ json_to_record_list(Elements, RecordName) when is_list(Elements) ->
 json_to_record({Elements}, RecordName) when is_list(Elements), is_atom(RecordName) ->
     json_to_record_1(Elements, new_record(RecordName));
 json_to_record({Elements}, Record) when is_list(Elements) ->
-    json_to_record_1(Elements, Record).
+    json_to_record_1(Elements, Record);
+json_to_record(Elements, RecordName) when is_list(Elements) ->
+    lists:reverse(
+      lists:foldl(fun (Element, Acc) ->
+                          [json_to_record(Element, new_record(RecordName)) | Acc]
+                  end, [], Elements)).
 
 json_to_record_1([{Name, Value} | Tail], Record) ->
     FieldName = binary_to_existing_atom(Name, utf8),
@@ -286,9 +292,7 @@ json_to_record_1([{Name, Value} | Tail], Record) ->
                 end;
             RecordName ->
                 if
-                    is_list(Value) ->
-                        json_to_record_list(Value, RecordName);
-                    is_tuple(Value) ->
+                    is_tuple(Value) orelse is_list(Value) ->
                         json_to_record(Value, RecordName);
                     true ->
                         Value
@@ -297,6 +301,41 @@ json_to_record_1([{Name, Value} | Tail], Record) ->
     json_to_record_1(Tail, set_value(element(1, Record), FieldName, Record, NewValue));
 json_to_record_1([], Record) ->
     Record.
+
+
+%% @doc Convert a JSON element into a property list.
+-spec json_to_proplist(tuple(), RecordName :: atom()) -> tuple().
+json_to_proplist({Elements}, RecordName) when is_list(Elements), is_atom(RecordName) ->
+    json_to_proplist_1(Elements, RecordName, []);
+json_to_proplist(Elements, RecordName) when is_list(Elements) ->
+    lists:reverse(
+      lists:foldl(fun (Element, Acc) ->
+                          [json_to_proplist(Element, RecordName) | Acc]
+                  end, [], Elements)).
+
+json_to_proplist_1([{Name, Value} | Tail], RecordName, Acc) ->
+    FieldName = binary_to_existing_atom(Name, utf8),
+    %% Convert the value to a record if possible
+    NewValue =
+        case json_field_to_record_name(RecordName, FieldName) of
+            undefined ->
+                case is_json_datetime_field(RecordName, FieldName) of
+                    true ->
+                        iso_datetime_to_tuple(Value);
+                    false ->
+                        Value
+                end;
+            ChildRecordName ->
+                if
+                    is_tuple(Value) orelse is_list(Value) ->
+                        json_to_proplist(Value, ChildRecordName);
+                    true ->
+                        Value
+                end
+        end,
+    json_to_proplist_1(Tail, RecordName, [{FieldName, NewValue} | Acc]);
+json_to_proplist_1([], _RecordName, Acc) ->
+    lists:reverse(Acc).
 
 
 %% @doc Return the record name for those JSON fields that can be converted to a known child record.
