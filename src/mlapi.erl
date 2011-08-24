@@ -20,7 +20,8 @@
          get_currencies/0, get_currency/1,
          get_listing_exposures/1, get_listing_exposure/2,
          get_listing_types/1, get_listing_prices/1,
-         get_payment_methods/0, get_payment_method/1,
+         get_payment_types/0, get_payment_type/1,
+         get_payment_methods/1, get_payment_method/2,
          get_categories/1, get_subcategories/1, get_category/1,
          get_user/1,
          get_item/1,
@@ -66,6 +67,7 @@
 -define(LISTING_EXPOSURES, "/listing_exposures").
 -define(LISTING_TYPES,     "/listing_types").
 -define(LISTING_PRICES,    "/listing_prices").
+-define(PAYMENT_TYPES,     "/payment_types").
 -define(PAYMENT_METHODS,   "/payment_methods").
 -define(CATEGORIES,        "/categories").
 -define(USERS,             "/users").
@@ -147,16 +149,24 @@ get_listing_prices(SiteId) ->
     request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_PRICES "?price=1").
 
 
--spec get_payment_methods() -> response().
-get_payment_methods() ->
-    request(?PAYMENT_METHODS).
+-spec get_payment_types() -> response().
+get_payment_types() ->
+    request(?PAYMENT_TYPES).
 
--spec get_payment_method(PaymentMethodId :: string() | binary()) -> response().
-get_payment_method(PaymentMethodId) ->
-    request(?PAYMENT_METHODS "/" ++ to_string(PaymentMethodId)).
+-spec get_payment_type(PaymentTypeId :: string() | binary()) -> response().
+get_payment_type(PaymentTypeId) ->
+    request(?PAYMENT_TYPES "/" ++ to_string(PaymentTypeId)).
+
+-spec get_payment_methods(SiteId :: string() | binary()) -> response().
+get_payment_methods(SiteId) ->
+    request(?SITES "/" ++ to_string(SiteId) ++ ?PAYMENT_METHODS).
+
+-spec get_payment_method(SiteId :: string() | binary(), PaymentMethodId :: string() | binary()) -> response().
+get_payment_method(SiteId, PaymentMethodId) ->
+    request(?SITES "/" ++ to_string(SiteId) ++ ?PAYMENT_METHODS "/" ++ to_string(PaymentMethodId)).
 
 
--spec get_categories(SiteId :: string() | binary()) -> {ok, mlapi_json:ejson() | mlapi_json:value()} | error().
+-spec get_categories(SiteId :: string() | binary()) -> response().
 get_categories(SiteId) ->
     case get_site(SiteId) of
         {ok, Site} ->
