@@ -55,8 +55,8 @@
 
 -define(PROTOCOL, "https").
 -define(HOST, "api.mercadolibre.com").
--define(CONTENT_TYPE, "Content-Type").
--define(JSON_MIME_TYPE, "application/json").
+-define(HEADER_CONTENT_TYPE, "Content-Type").
+-define(MIME_TYPE_JSON, "application/json").
 
 -define(SITES,             "/sites").
 -define(COUNTRIES,         "/countries").
@@ -248,8 +248,8 @@ search_nickname(SiteId, Nickname, Offset, Limit) ->
 request(Path) ->
     case ibrowse:send_req(?PROTOCOL "://" ?HOST ++ Path, [], get) of
         {ok, "200", Headers, Body} ->
-            case lists:keyfind(?CONTENT_TYPE, 1, Headers) of
-                {_ContentType, ?JSON_MIME_TYPE ++ _CharSet} ->
+            case lists:keyfind(?HEADER_CONTENT_TYPE, 1, Headers) of
+                {_ContentType, ?MIME_TYPE_JSON ++ _CharSet} ->
                     try
                         ejson:decode(Body)
                     catch
