@@ -174,10 +174,10 @@ import_states(States) ->
     lists:foreach(fun (State) ->
                           mnesia:dirty_write(State),
                           case mlapi:get_state(State#mlapi_state.id) of
-                                      {Elements} = RawStateExt when is_list(Elements) ->
-                                          StateExt = mlapi:json_to_record(RawStateExt, mlapi_state_ext),
-                                          mnesia:dirty_write(StateExt),
-                                          import_cities(StateExt#mlapi_state_ext.cities);
+                              {Elements} = RawStateExt when is_list(Elements) ->
+                                  StateExt = mlapi:json_to_record(RawStateExt, mlapi_state_ext),
+                                  mnesia:dirty_write(StateExt),
+                                  import_cities(StateExt#mlapi_state_ext.cities);
                               Error ->
                                   throw(Error)
                           end
@@ -189,9 +189,9 @@ import_cities(Cities) ->
     lists:foreach(fun (City) ->
                           mnesia:dirty_write(City),
                           case mlapi:get_state(City#mlapi_city.id) of
-                                      {Elements} = RawCityExt when is_list(Elements) ->
-                                          CityExt = mlapi:json_to_record(RawCityExt, mlapi_city_ext),
-                                          mnesia:dirty_write(CityExt);
+                              {Elements} = RawCityExt when is_list(Elements) ->
+                                  CityExt = mlapi:json_to_record(RawCityExt, mlapi_city_ext),
+                                  mnesia:dirty_write(CityExt);
                               Error ->
                                   throw(Error)
                           end
@@ -244,7 +244,18 @@ import_payment_methods(SiteId) ->
             throw(Error)
     end.
 
-import_categories(_SiteId) ->
+import_categories(Categories) ->
+    lists:foreach(fun (Category) ->
+                          mnesia:dirty_write(Category),
+                          case mlapi:get_category(Category#mlapi_category.id) of
+                              {Elements} = RawCategoryExt when is_list(Elements) ->
+                                  CategoryExt = mlapi:json_to_record(RawCategoryExt, mlapi_category_ext),
+                                  mnesia:dirty_write(CategoryExt),
+                                  import_categories(CategoryExt#mlapi_category_ext.children_categories);
+                              Error ->
+                                  throw(Error)
+                          end
+                  end, States),
     ok.
 
 
