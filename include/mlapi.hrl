@@ -20,6 +20,7 @@
 -type mlapi_locale_id()               :: mlapi_id().
 -type mlapi_currency_id()             :: mlapi_id().
 -type mlapi_timezone_id()             :: mlapi_id().
+-type mlapi_payment_type_id()         :: mlapi_id().
 -type mlapi_payment_method_id()       :: mlapi_id().
 -type mlapi_user_id()                 :: mlapi_id().
 -type mlapi_category_id()             :: mlapi_id().
@@ -29,6 +30,7 @@
 -type mlapi_description_id()          :: mlapi_id().
 -type mlapi_attribute_id()            :: mlapi_id().
 
+-type mlapi_url()                     :: binary().
 -type mlapi_email_address()           :: binary().
 
 -type mlapi_required()                :: binary().          %% <<"required">> | <<"optional">>
@@ -36,7 +38,7 @@
 -type mlapi_listing_type_id()         :: binary().          %% <<"gold_premium">> | <<"gold">> | <<"silver">> | <<"bronze">> | <<"free">>
 -type mlapi_listing_exposure_id()     :: binary().          %% <<"highest">> | <<"high">> | <<"mid">> | <<"low">> | <<"lowest">>
 -type mlapi_item_condition_id()       :: binary().          %% <<"not_specified">> | <<"new">> | <<"used">>
--type mlapi_sale_fees_mode()          :: binary().          %% <<"not_free">>
+-type mlapi_sale_fees_mode_id()       :: binary().          %% <<"not_free">>
 -type mlapi_site_status_id()          :: binary().          %% <<"active">>, <<"pending">>, <<"deactive">>
 -type mlapi_item_status_id()          :: binary().          %% <<"not_yet_active">> | <<"paused">> | <<"active">> |
                                                             %% <<"closed">> | <<"deleted">> | <<"invisible">> |
@@ -48,6 +50,11 @@
 -type mlapi_power_seller_status_id()  :: binary().          %% <<"silver">>, <<"gold">>, <<"platinum">>, <<"null">>
 -type mlapi_period_id()               :: binary().          %% <<"historic">>, <<"12 months">>, <<"3 months">>
 
+
+-record(mlapi_last_update, {
+          table                                             :: atom(),
+          timestamp                                         :: calendar:datetime()
+         }).
 
 -record(mlapi_settings, {
           adult_content                                     :: boolean(),
@@ -105,18 +112,29 @@
 -record(mlapi_category, {
           id                                                :: mlapi_category_id(),
           name                                              :: binary(),
+          total_items_in_this_category                      :: integer()
+         }).
+
+-record(mlapi_category_ext, {
+          id                                                :: mlapi_category_id(),
+          name                                              :: binary(),
           permalink,
           total_items_in_this_category                      :: integer(),
-          path_from_root = [],
-          children_categories = [],
+          path_from_root = []                               :: [#mlapi_category{}],
+          children_categories = []                          :: [#mlapi_category{}],
           settings                                          :: #mlapi_settings{}
          }).
 
 -record(mlapi_site, {
           id                                                :: mlapi_site_id(),
+          name                                              :: binary()
+         }).
+
+-record(mlapi_site_ext, {
+          id                                                :: mlapi_site_id(),
           name                                              :: binary(),
           country_id                                        :: mlapi_country_id(),
-          sale_fees_mode                                    :: mlapi_sale_fees_mode(),
+          sale_fees_mode                                    :: mlapi_sale_fees_mode_id(),
           mercadopago_version = 3                           :: non_neg_integer(),
           default_currency_id                               :: mlapi_currency_id(),
           currencies = []                                   :: [#mlapi_currency{}],
@@ -134,7 +152,24 @@
           location                                          :: #mlapi_location{}
          }).
 
+-record(mlapi_city, {
+          id                                                :: mlapi_city_id(),
+          name                                              :: binary()
+         }).
+
+-record(mlapi_state, {
+          id                                                :: mlapi_state_id(),
+          name                                              :: binary()
+         }).
+
 -record(mlapi_country, {
+          id                                                :: mlapi_country_id(),
+          name                                              :: binary(),
+          locale                                            :: mlapi_locale_id(),
+          currency_id                                       :: mlapi_currency_id()
+         }).
+
+-record(mlapi_country_ext, {
           id                                                :: mlapi_country_id(),
           name                                              :: binary(),
           locale                                            :: mlapi_locale_id(),
@@ -143,22 +178,22 @@
           thousands_separator                               :: integer(),
           time_zone                                         :: mlapi_timezone_id(),
           geo_information                                   :: #mlapi_geo_information{},
-          states = []
+          states = []                                       :: [#mlapi_state{}]
          }).
 
--record(mlapi_state, {
+-record(mlapi_state_ext, {
           id                                                :: mlapi_state_id(),
           name                                              :: binary(),
-          country,
-          geo_information,
-          cities = []
+          country                                           :: #mlapi_country{},
+          geo_information                                   :: #mlapi_geo_information{},
+          cities = []                                       :: [#mlapi_city{}]
          }).
 
--record(mlapi_city, {
+-record(mlapi_city_ext, {
           id                                                :: mlapi_city_id(),
           name                                              :: binary(),
-          state,
-          country,
+          state                                             :: #mlapi_state{},
+          country                                           :: #mlapi_country{},
           geo_information                                   :: #mlapi_geo_information{}
          }).
 
@@ -249,11 +284,39 @@
           created
          }).
 
+-record(mlapi_payment_type, {
+          id                                                :: mlapi_payment_type_id(),
+          name                                              :: binary()
+         }).
+
 -record(mlapi_payment_method, {
           id                                                :: mlapi_payment_method_id(),
-          description,
-          is_default                                        :: boolean(),
-          type
+          name                                              :: binary(),
+          payment_type_id                                   :: mlapi_payment_type_id(),
+          thumbnail                                         :: mlapi_url(),
+          secure_thumbnail                                  :: mlapi_url()
+         }).
+
+-record(mlapi_payer_costs, {
+          installments                                      :: non_neg_integer(),
+          installment_rate                                  :: float(),
+          labels = [],
+          min_allowed_amount                                :: float(),
+          max_allowed_amount                                :: float(),
+          minimum_charge                                    :: float()
+         }).
+
+-record(mlapi_payment_method_ext, {
+          id                                                :: mlapi_payment_method_id(),
+          name                                              :: binary(),
+          payment_type_id                                   :: mlapi_payment_type_id(),
+          site_id                                           :: mlapi_site_id(),
+          secure_thumbnail                                  :: mlapi_url(),
+          thumbnail                                         :: mlapi_url(),
+          labels = [],
+          min_accreditation_days                            :: non_neg_integer(),
+          max_accreditation_days                            :: non_neg_integer(),
+          payer_costs                                       :: #mlapi_payer_costs{}
          }).
 
 -record(mlapi_shipping_costs, {
