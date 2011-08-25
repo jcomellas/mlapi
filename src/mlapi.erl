@@ -352,11 +352,11 @@ json_to_proplist_1([], _RecordName, Acc) ->
 -spec json_field_to_record_name(ParentRecordName :: atom(), FieldName :: atom()) -> ChildRecordName :: atom() | undefined.
 json_field_to_record_name(mlapi_buyer_reputation, transactions) ->
     mlapi_transactions;
-json_field_to_record_name(mlapi_category, children_categories) ->
+json_field_to_record_name(mlapi_category_ext, children_categories) ->
     mlapi_category;
-json_field_to_record_name(mlapi_category, settings) ->
+json_field_to_record_name(mlapi_category_ext, settings) ->
     mlapi_settings;
-json_field_to_record_name(mlapi_country, states) ->
+json_field_to_record_name(mlapi_country_ext, states) ->
     mlapi_state;
 json_field_to_record_name(mlapi_filter, values) ->
     mlapi_filter_value;
@@ -390,11 +390,11 @@ json_field_to_record_name(mlapi_search_item, seller) ->
     mlapi_seller;
 json_field_to_record_name(mlapi_search_item, installments) ->
     mlapi_installment;
-json_field_to_record_name(mlapi_site, categories) ->
+json_field_to_record_name(mlapi_site_ext, categories) ->
     mlapi_category;
-json_field_to_record_name(mlapi_site, currencies) ->
+json_field_to_record_name(mlapi_site_ext, currencies) ->
     mlapi_currency;
-json_field_to_record_name(mlapi_state, cities) ->
+json_field_to_record_name(mlapi_state_ext, cities) ->
     mlapi_city;
 json_field_to_record_name(mlapi_search_result, filters) ->
     mlapi_filter;
