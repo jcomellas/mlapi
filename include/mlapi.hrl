@@ -11,6 +11,8 @@
 -ifndef(MLAPI_HRL).
 -define(MLAPI_HRL, "mlapi.hrl").
 
+-type mlapi_table()                   :: atom().
+
 -type mlapi_id()                      :: binary().
 -type mlapi_site_id()                 :: mlapi_id().
 -type mlapi_country_id()              :: mlapi_id().
@@ -53,7 +55,8 @@
 
 -record(mlapi_last_update, {
           table                                             :: atom(),
-          timestamp                                         :: calendar:datetime()
+          timestamp                                         :: calendar:datetime(),
+          reason                                            :: any()
          }).
 
 -record(mlapi_settings, {
