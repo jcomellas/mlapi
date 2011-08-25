@@ -152,9 +152,11 @@
           location                                          :: #mlapi_location{}
          }).
 
--record(mlapi_city, {
-          id                                                :: mlapi_city_id(),
-          name                                              :: binary()
+-record(mlapi_country, {
+          id                                                :: mlapi_country_id(),
+          name                                              :: binary(),
+          locale                                            :: mlapi_locale_id(),
+          currency_id                                       :: mlapi_currency_id()
          }).
 
 -record(mlapi_state, {
@@ -162,11 +164,9 @@
           name                                              :: binary()
          }).
 
--record(mlapi_country, {
-          id                                                :: mlapi_country_id(),
-          name                                              :: binary(),
-          locale                                            :: mlapi_locale_id(),
-          currency_id                                       :: mlapi_currency_id()
+-record(mlapi_city, {
+          id                                                :: mlapi_city_id(),
+          name                                              :: binary()
          }).
 
 -record(mlapi_country_ext, {
