@@ -11,7 +11,9 @@
 -module(mlapi_cache).
 -author('Juan Jose Comellas <juanjo@comellas.org>').
 
--export([init/0, init/1, create_tables/1, import/1]).
+-export([init/0, init/1, tables/0, create_tables/1, import/1]).
+-export([import_currencies/0, import_payment_types/0, import_countries/0,
+         import_listing_exposures/1, import_listing_types/1, import_listing_prices/1]).
 
 -include("include/mlapi.hrl").
 
@@ -32,12 +34,15 @@ init(Nodes) ->
         _ : _ ->
             try create_tables(Nodes) of
                 {atomic, ok} ->
-                    ok
+                    ok;
+                Error ->
+                    Error
             catch
                 _ : Error ->
                     Error
             end
     end.
+
 
 
 -spec create_tables([node()]) -> ok | {aborted, Reason :: any()}.
@@ -49,7 +54,7 @@ create_tables(Nodes) ->
 create_table(Table, Nodes) ->
     mnesia:create_table(Table, [{access_mode, read_write},
                                 {attributes, mlapi:fields(Table)},
-                                {disc_copies, [Nodes]},
+                                {disc_copies, Nodes},
                                 {type, set},
                                 {local_content, true}]).
 
@@ -66,17 +71,40 @@ tables() ->
      mlapi_payment_method,
      mlapi_payment_method_ext,
      mlapi_category,
+     mlapi_category_ext,
      mlapi_city,
+     mlapi_city_ext,
      mlapi_country,
+     mlapi_country_ext,
      mlapi_site,
-     mlapi_state
+     mlapi_site_ext,
+     mlapi_state,
+     mlapi_state_ext
     ].
 
-import(_SiteId) ->
+
+-spec site_to_country(SiteId :: mlapi_site_id()) -> mlapi_country_id().
+site_country(SiteId) ->
+    SiteToCountry = [
+                     {<<"MLA">>, <<"AR">>},  %% Argentina
+                     {<<"MLB">>, <<"BR">>},  %% Brasil
+                     {<<"MCO">>, <<"CO">>},  %% Colombia
+                     {<<"MCR">>, <<"CR">>},  %% Costa Rica
+                     {<<"MEC">>, <<"EC">>},  %% Ecuador
+                     {<<"MLC">>, <<"CL">>},  %% Chile
+                     {<<"MLM">>, <<"MX">>},  %% Mexico
+                     {<<"MLU">>, <<"UY">>},  %% Uruguay
+                     {<<"MLV">>, <<"VE">>},  %% Venezuela
+                     {<<"MPA">>, <<"PA">>},  %% Panamá
+                     {<<"MPE">>, <<"PE">>},  %% Perú
+                     {<<"MPT">>, <<"PT">>},  %% Portugal
+                     {<<"MRD">>, <<"DO">>}   %% República Dominicana
+                    ],
+    lists:keyfind(SiteId, 1, SiteToCountry).
+
+
+import(SiteId) ->
     import_currencies(),
-    import_listing_exposures(),
-    import_listing_types(),
-    import_listing_prices(),
     import_payment_types(),
     import_countries(),
     import_sites().
@@ -87,44 +115,8 @@ import_currencies() ->
         RawCurrencies when is_list(RawCurrencies) ->
             Currencies = mlapi:json_to_record(RawCurrencies, mlapi_currency),
             mnesia:clear_table(mlapi_currency),
-            mnesia:dirty_write(Currencies),
+            lists:foreach(fun mnesia:dirty_write/1, Currencies),
             set_last_update(mlapi_currency);
-        Error ->
-            throw(Error)
-    end.
-
-
-import_listing_exposures() ->
-    case mlapi:get_listing_exposures() of
-        RawExposures when is_list(RawExposures) ->
-            Exposures = mlapi:json_to_record(RawExposures, mlapi_listing_exposure),
-            mnesia:clear_table(mlapi_listing_exposure),
-            lists:foreach(fun mnesia:dirty_write/1, Exposures),
-            set_last_update(mlapi_listing_exposure);
-        Error ->
-            throw(Error)
-    end.
-
-
-import_listing_types() ->
-    case mlapi:get_listing_types() of
-        RawListingTypes when is_list(RawListingTypes) ->
-            ListingTypes = mlapi:json_to_record(RawListingTypes, mlapi_listing_type),
-            mnesia:clear_table(mlapi_listing_type),
-            lists:foreach(fun mnesia:dirty_write/1, ListingTypes),
-            set_last_update(mlapi_listing_type);
-        Error ->
-            throw(Error)
-    end.
-
-
-import_listing_prices() ->
-    case mlapi:get_listing_prices() of
-        RawListingPrices when is_list(RawListingPrices) ->
-            ListingPrices = mlapi:json_to_record(RawListingPrices, mlapi_listing_price),
-            mnesia:clear_table(mlapi_listing_price),
-            lists:foreach(fun mnesia:dirty_write/1, ListingPrices),
-            set_last_update(mlapi_listing_price);
         Error ->
             throw(Error)
     end.
@@ -188,7 +180,7 @@ import_states(States) ->
 import_cities(Cities) ->
     lists:foreach(fun (City) ->
                           mnesia:dirty_write(City),
-                          case mlapi:get_state(City#mlapi_city.id) of
+                          case mlapi:get_city(City#mlapi_city.id) of
                               {Elements} = RawCityExt when is_list(Elements) ->
                                   CityExt = mlapi:json_to_record(RawCityExt, mlapi_city_ext),
                                   mnesia:dirty_write(CityExt);
@@ -203,8 +195,6 @@ import_sites() ->
         RawSites when is_list(RawSites) ->
             mnesia:clear_table(mlapi_site),
             mnesia:clear_table(mlapi_site_ext),
-            mnesia:clear_table(mlapi_payment_method),
-            mnesia:clear_table(mlapi_payment_method_ext),
             mnesia:clear_table(mlapi_category),
             mnesia:clear_table(mlapi_category_ext),
             lists:foreach(fun (Site) ->
@@ -213,6 +203,9 @@ import_sites() ->
                                       {Elements} = RawSiteExt when is_list(Elements) ->
                                           SiteExt = mlapi:json_to_record(RawSiteExt, mlapi_site_ext),
                                           mnesia:dirty_write(SiteExt),
+                                          import_listing_exposures(Site#mlapi_site.id),
+                                          import_listing_types(Site#mlapi_site.id),
+                                          import_listing_prices(Site#mlapi_site.id),
                                           import_payment_methods(Site#mlapi_site.id),
                                           import_categories(SiteExt#mlapi_site_ext.categories);
                                       Error ->
@@ -220,15 +213,52 @@ import_sites() ->
                                   end
                           end, mlapi:json_to_record(RawSites, mlapi_site)),
             set_last_update([mlapi_site, mlapi_site_ext,
-                             mlapi_payment_method, mlapi_payment_method_ext,
                              mlapi_category, mlapi_category_ext]);
         Error ->
             throw(Error)
     end.
 
+import_listing_exposures(SiteId) ->
+    case mlapi:get_listing_exposures(SiteId) of
+        RawListingExposures when is_list(RawListingExposures) ->
+            ListingExposures = mlapi:json_to_record(RawListingExposures, mlapi_listing_exposure),
+            mnesia:clear_table(mlapi_listing_exposure),
+            lists:foreach(fun mnesia:dirty_write/1, ListingExposures),
+            set_last_update(mlapi_listing_exposure);
+        Error ->
+            throw(Error)
+    end.
+
+
+import_listing_types(SiteId) ->
+    case mlapi:get_listing_types(SiteId) of
+        RawListingTypes when is_list(RawListingTypes) ->
+            ListingTypes = mlapi:json_to_record(RawListingTypes, mlapi_listing_type),
+            mnesia:clear_table(mlapi_listing_type),
+            lists:foreach(fun mnesia:dirty_write/1, ListingTypes),
+            set_last_update(mlapi_listing_type);
+        Error ->
+            throw(Error)
+    end.
+
+
+import_listing_prices(SiteId) ->
+    case mlapi:get_listing_prices(SiteId) of
+        RawListingPrices when is_list(RawListingPrices) ->
+            ListingPrices = mlapi:json_to_record(RawListingPrices, mlapi_listing_price),
+            mnesia:clear_table(mlapi_listing_price),
+            lists:foreach(fun mnesia:dirty_write/1, ListingPrices),
+            set_last_update(mlapi_listing_price);
+        Error ->
+            throw(Error)
+    end.
+
+
 import_payment_methods(SiteId) ->
     case mlapi:get_payment_methods(SiteId) of
         RawPaymentMethods when is_list(RawPaymentMethods) ->
+            mnesia:clear_table(mlapi_payment_method),
+            mnesia:clear_table(mlapi_payment_method_ext),
             lists:foreach(fun (RawPaymentMethod) ->
                                   PaymentMethod = mlapi:json_to_record(RawPaymentMethod, mlapi_payment_method),
                                   mnesia:dirty_write(PaymentMethod),
@@ -239,7 +269,9 @@ import_payment_methods(SiteId) ->
                                       Error ->
                                           throw(Error)
                                   end
-                          end, RawPaymentMethods);
+                          end, RawPaymentMethods),
+            set_last_update(mlapi_payment_method),
+            set_last_update(mlapi_payment_method_ext);
         Error ->
             throw(Error)
     end.
@@ -255,7 +287,7 @@ import_categories(Categories) ->
                               Error ->
                                   throw(Error)
                           end
-                  end, States),
+                  end, Categories),
     ok.
 
 
