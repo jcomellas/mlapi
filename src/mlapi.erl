@@ -33,6 +33,7 @@
 -export([json_to_record/2, json_to_proplist/2,
          json_field_to_record_name/2,
          is_json_datetime_field/2, iso_datetime_to_tuple/1]).
+-export([site_to_country/1, country_to_site/1]).
 
 -include("include/mlapi.hrl").
 -compile({parse_transform, dynarec}).
@@ -82,7 +83,8 @@ start() ->
     application:start(public_key),
     application:start(ssl),
     application:start(ibrowse),
-    application:start(eper),
+    application:start(mnesia),
+    %% application:start(eper),
     application:start(mlapi).
 
 
@@ -494,6 +496,45 @@ response_reason("503") -> service_unavailable;
 response_reason("504") -> gateway_timeout;
 response_reason("505") -> http_version_not_supported;
 response_reason(Code) -> Code.
+
+
+-spec site_to_country(SiteId :: mlapi_site_id()) -> mlapi_country_id().
+site_to_country(SiteId) ->
+    case lists:keyfind(SiteId, 1, site_country_map()) of
+        {SiteId, CountryId} ->
+            CountryId;
+        _ ->
+            undefined
+    end.
+
+
+-spec country_to_site(CountryId :: mlapi_country_id()) -> mlapi_site_id().
+country_to_site(CountryId) ->
+    case lists:keyfind(CountryId, 2, site_country_map()) of
+        {SiteId, CountryId} ->
+            SiteId;
+        _ ->
+            undefined
+    end.
+
+
+-spec site_country_map() -> [{mlapi_site_id(), mlapi_country_id()}].
+site_country_map() ->
+    [
+     {<<"MLA">>, <<"AR">>},  %% Argentina
+     {<<"MLB">>, <<"BR">>},  %% Brasil
+     {<<"MCO">>, <<"CO">>},  %% Colombia
+     {<<"MCR">>, <<"CR">>},  %% Costa Rica
+     {<<"MEC">>, <<"EC">>},  %% Ecuador
+     {<<"MLC">>, <<"CL">>},  %% Chile
+     {<<"MLM">>, <<"MX">>},  %% Mexico
+     {<<"MLU">>, <<"UY">>},  %% Uruguay
+     {<<"MLV">>, <<"VE">>},  %% Venezuela
+     {<<"MPA">>, <<"PA">>},  %% Panamá
+     {<<"MPE">>, <<"PE">>},  %% Perú
+     {<<"MPT">>, <<"PT">>},  %% Portugal
+     {<<"MRD">>, <<"DO">>}   %% República Dominicana
+    ].
 
 
 -spec to_string(string() | binary() | integer() | float() | atom()) -> string().
