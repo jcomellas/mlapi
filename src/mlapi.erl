@@ -1,7 +1,7 @@
 %%%-------------------------------------------------------------------
 %%% @author Juan Jose Comellas <juanjo@comellas.org>
 %%% @copyright (C) 2011 Juan Jose Comellas
-%%% @doc Module that performs searches on the MercadoLibre API.
+%%% @doc MercadoLibre API.
 %%% @end
 %%%
 %%% This source file is subject to the New BSD License. You should have received
@@ -18,14 +18,18 @@
          get_countries/0, get_country/1,
          get_state/1, get_city/1, get_neighborhood/1,
          get_currencies/0, get_currency/1,
+         get_currency_conversion/2, get_currency_conversion/3,
          get_listing_exposures/1, get_listing_exposure/2,
          get_listing_types/1, get_listing_prices/1,
+         get_card_issuers/1, get_card_issuer/2,
          get_payment_types/0, get_payment_type/1,
          get_payment_methods/1, get_payment_method/2,
          get_categories/1, get_subcategories/1, get_category/1,
          get_user/1,
          get_item/1,
          get_picture/1,
+         get_trends/1, get_trends/2, get_trends/3,
+         get_geolocation/0, get_geolocation/1,
          search/2, search/4,
          search_category/2, search_category/4,
          search_seller_id/2, search_seller_id/4,
@@ -41,40 +45,34 @@
 -type url_path()          :: string().
 -type error()             :: {error, Reason :: atom() | {atom(), any()}}.
 -type response()          :: {ok, mlapi_json:ejson()} | error().
--type site_id()           :: binary() | string().
--type country_id()        :: binary() | string().
--type state_id()          :: binary() | string().
--type city_id()           :: binary() | string().
--type neighborhood_id()   :: binary() | string().
--type currency_id()       :: binary() | string().
--type payment_method_id() :: binary() | string().
--type category_id()       :: binary() | string().
 
--export_type([error/0, response/0]).
--export_type([site_id/0, country_id/0, state_id/0, city_id/0, neighborhood_id/0,
-              currency_id/0, payment_method_id/0, category_id/0]).
+-export_type([url_path/0, response/0, error/0]).
 
 -define(PROTOCOL, "https").
 -define(HOST, "api.mercadolibre.com").
 -define(HEADER_CONTENT_TYPE, "Content-Type").
 -define(MIME_TYPE_JSON, "application/json").
 
--define(SITES,             "/sites").
--define(COUNTRIES,         "/countries").
--define(STATES,            "/states").
--define(CITIES,            "/cities").
--define(NEIGHBORHOODS,     "/neighborhoods").
--define(CURRENCIES,        "/currencies").
--define(LISTING_EXPOSURES, "/listing_exposures").
--define(LISTING_TYPES,     "/listing_types").
--define(LISTING_PRICES,    "/listing_prices").
--define(PAYMENT_TYPES,     "/payment_types").
--define(PAYMENT_METHODS,   "/payment_methods").
--define(CATEGORIES,        "/categories").
--define(USERS,             "/users").
--define(ITEMS,             "/items").
--define(PICTURES,          "/pictures").
--define(SEARCH,            "/search").
+-define(SITES,                "/sites").
+-define(COUNTRIES,            "/countries").
+-define(STATES,               "/states").
+-define(CITIES,               "/cities").
+-define(NEIGHBORHOODS,        "/neighborhoods").
+-define(CURRENCIES,           "/currencies").
+-define(CURRENCY_CONVERSIONS, "/currency_conversions/search").
+-define(LISTING_EXPOSURES,    "/listing_exposures").
+-define(LISTING_TYPES,        "/listing_types").
+-define(LISTING_PRICES,       "/listing_prices").
+-define(PAYMENT_TYPES,        "/payment_types").
+-define(PAYMENT_METHODS,      "/payment_methods").
+-define(CARD_ISSUERS,         "/card_issuers").
+-define(CATEGORIES,           "/categories").
+-define(USERS,                "/users").
+-define(ITEMS,                "/items").
+-define(PICTURES,             "/pictures").
+-define(SEARCH,               "/search").
+-define(TRENDS,               "/trends/search").
+-define(GEOLOCATION,          "/geolocation").
 
 
 start() ->
@@ -129,24 +127,37 @@ get_neighborhood(NeighborhoodId) ->
 get_currencies() ->
     request(?CURRENCIES).
 
+
 -spec get_currency(CurrencyId :: string() | binary()) -> response().
 get_currency(CurrencyId) ->
     request(?CURRENCIES "/" ++ to_string(CurrencyId)).
 
 
--spec get_listing_exposures(SiteId :: string() | binary()) -> response().
+-spec get_currency_conversion(FromCurrencyId :: string() | binary(), ToCurrencyId :: string() | binary()) -> response().
+get_currency_conversion(FromCurrencyId, ToCurrencyId) ->
+    request(?CURRENCY_CONVERSIONS "?from=" ++ to_string(FromCurrencyId) ++ "&to=" ++ to_string(ToCurrencyId)).
+
+-spec get_currency_conversion(FromCurrencyId :: string() | binary(), ToCurrencyId :: string() | binary(),
+                              Date :: calendar:datetime()) -> response().
+get_currency_conversion(FromCurrencyId, ToCurrencyId, {{Year, Month, Day}, {Hour, Min, _Sec}}) ->
+    %% The conversion date must be formatted as: dd/MM/yyyy-HH:mm
+    DateArg = io_lib:format("&date=~2.2.0w/~2.2.0w/~4.4.0w-~2.2.0w:~2.2.0w", [Day, Month, Year, Hour, Min]),
+    request(?CURRENCY_CONVERSIONS "?from=" ++ to_string(FromCurrencyId) ++ "&to=" ++ to_string(ToCurrencyId) ++ DateArg).
+
+
+-spec get_listing_exposures(mlapi_site_id()) -> response().
 get_listing_exposures(SiteId) ->
     request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_EXPOSURES).
 
--spec get_listing_exposure(SiteId :: string() | binary(), ListingExposureId :: string() | binary()) -> response().
+-spec get_listing_exposure(mlapi_site_id(), mlapi_listing_exposure_id()) -> response().
 get_listing_exposure(SiteId, ListingExposureId) ->
     request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_EXPOSURES "/" ++ to_string(ListingExposureId)).
 
--spec get_listing_types(SiteId :: string() | binary()) -> response().
+-spec get_listing_types(mlapi_site_id()) -> response().
 get_listing_types(SiteId) ->
     request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_TYPES).
 
--spec get_listing_prices(SiteId :: string() | binary()) -> response().
+-spec get_listing_prices(mlapi_site_id()) -> response().
 get_listing_prices(SiteId) ->
     request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_PRICES "?price=1").
 
@@ -168,7 +179,16 @@ get_payment_method(SiteId, PaymentMethodId) ->
     request(?SITES "/" ++ to_string(SiteId) ++ ?PAYMENT_METHODS "/" ++ to_string(PaymentMethodId)).
 
 
--spec get_categories(SiteId :: string() | binary()) -> response().
+-spec get_card_issuers(mlapi_site_id()) -> response().
+get_card_issuers(SiteId) ->
+    request(?SITES "/" ++ to_string(SiteId) ++ ?CARD_ISSUERS).
+
+-spec get_card_issuer(mlapi_site_id(), mlapi_card_issuer_id()) -> response().
+get_card_issuer(SiteId, CardIssuerId) ->
+    request(?SITES "/" ++ to_string(SiteId) ++ ?CARD_ISSUERS "/" ++ to_string(CardIssuerId)).
+
+
+-spec get_categories(mlapi_site_id()) -> response().
 get_categories(SiteId) ->
     case get_site(SiteId) of
         {ok, Site} ->
@@ -177,69 +197,91 @@ get_categories(SiteId) ->
             Error
     end.
 
--spec get_subcategories(ParentCategoryId :: string() | binary()) -> response().
+-spec get_subcategories(mlapi_category_id()) -> response().
 get_subcategories(ParentCategoryId) ->
     request(?CATEGORIES "/" ++ to_string(ParentCategoryId)).
 
 
--spec get_category(CategoryId :: string() | binary()) -> response().
+-spec get_category(mlapi_category_id()) -> response().
 get_category(CategoryId) ->
     request(?CATEGORIES "/" ++ to_string(CategoryId)).
 
 
--spec get_user(UserId :: string() | binary()) -> response().
+-spec get_user(mlapi_user_id()) -> response().
 get_user(UserId) ->
     request(?USERS "/" ++ to_string(UserId)).
 
 
--spec get_item(ItemId :: string()) -> response().
+-spec get_item(mlapi_item_id()) -> response().
 get_item(ItemId) ->
     request(?ITEMS "/" ++ to_string(ItemId)).
 
 
--spec get_picture(PictureId :: string()) -> response().
+-spec get_picture(mlapi_picture_id()) -> response().
 get_picture(PictureId) ->
     request(?PICTURES "/" ++ to_string(PictureId)).
 
 
--spec search(SiteId :: string(), Query :: string()) -> response().
+-spec get_trends(mlapi_site_id()) -> response().
+get_trends(SiteId) ->
+    request(?TRENDS "?site=" ++ to_string(SiteId)).
+
+-spec get_trends(mlapi_site_id(), mlapi_category_id()) -> response().
+get_trends(SiteId, CategoryId) ->
+    request(?TRENDS "?site=" ++ to_string(SiteId) ++ "&category=" ++ to_string(CategoryId)).
+
+-spec get_trends(mlapi_site_id(), mlapi_category_id(), Limit :: non_neg_integer()) -> response().
+get_trends(SiteId, CategoryId, Limit) ->
+    request(?TRENDS "?site=" ++ to_string(SiteId) ++ "&category=" ++ to_string(CategoryId) ++ io_lib:format("&limit=~w", [Limit])).
+
+
+-spec get_geolocation() -> response().
+get_geolocation() ->
+    request(?GEOLOCATION "/whereami").
+
+
+-spec get_geolocation(mlapi_ip_address()) -> response().
+get_geolocation(IpAddr) ->
+    request(?GEOLOCATION "/ip/" ++ to_string(IpAddr)).
+
+
+-spec search(mlapi_site_id(), Query :: string()) -> response().
 search(SiteId, Query) ->
     request(?SITES "/" ++ to_string(SiteId) ++ ?SEARCH ++ "?q=" ++ ibrowse_lib:url_encode(to_string(Query))).
 
--spec search(SiteId :: string(), Query :: string(),
-             Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> response().
+-spec search(mlapi_site_id(), Query :: string(), Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> response().
 search(SiteId, Query, Offset, Limit) ->
     request(io_lib:format(?SITES "/~s" ?SEARCH "?q=~s&offset=~w&limit=~w",
                           [SiteId, ibrowse_lib:url_encode(to_string(Query)), Offset, Limit])).
 
 
--spec search_category(SiteId :: string(), CategoryId :: string()) -> response().
+-spec search_category(mlapi_site_id(), mlapi_category_id()) -> response().
 search_category(SiteId, CategoryId) ->
     request(?SITES "/" ++ to_string(SiteId) ++ ?SEARCH "?category=" ++ ibrowse_lib:url_encode(to_string(CategoryId))).
 
--spec search_category(SiteId :: string(), CategoryId :: string(),
+-spec search_category(mlapi_site_id(), mlapi_category_id(),
                       Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> response().
 search_category(SiteId, CategoryId, Offset, Limit) ->
     request(io_lib:format(?SITES "/~s" ?SEARCH "?category=~s&offset=~w&limit=~w",
                           [SiteId, ibrowse_lib:url_encode(to_string(CategoryId)), Offset, Limit])).
 
 
--spec search_seller_id(SiteId :: string(), SellerId :: string()) -> response().
+-spec search_seller_id(mlapi_site_id(), SellerId :: string()) -> response().
 search_seller_id(SiteId, SellerId) ->
     request(?SITES "/" ++ to_string(SiteId) ++ ?SEARCH "?seller_id=" ++ ibrowse_lib:url_encode(to_string(SellerId))).
 
--spec search_seller_id(SiteId :: string(), SellerId :: string(),
+-spec search_seller_id(mlapi_site_id(), SellerId :: string(),
                        Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> response().
 search_seller_id(SiteId, SellerId, Offset, Limit) ->
     request(io_lib:format(?SITES "/~s" ?SEARCH "?seller_id=~s&offset=~w&limit=~w",
                           [SiteId, ibrowse_lib:url_encode(to_string(SellerId)), Offset, Limit])).
 
 
--spec search_nickname(SiteId :: string(), Nickname :: string()) -> response().
+-spec search_nickname(mlapi_site_id(), Nickname :: string()) -> response().
 search_nickname(SiteId, Nickname) ->
     request(?SITES "/" ++ to_string(SiteId) ++ ?SEARCH "?nickname=" ++ ibrowse_lib:url_encode(to_string(Nickname))).
 
--spec search_nickname(SiteId :: string(), Nickname :: string(),
+-spec search_nickname(mlapi_site_id(), Nickname :: string(),
                       Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> response().
 search_nickname(SiteId, Nickname, Offset, Limit) ->
     request(io_lib:format(?SITES "/~s" ?SEARCH "?nickname=~s&offset=~w&limit=~w",
@@ -267,15 +309,6 @@ request(Path) ->
         {error, _Reason} = Error ->
             Error
     end.
-
-
-%% @doc Convert a list of JSON elements into a list of known records.
-%-spec json_to_record_list([tuple()], RecordName :: atom()) -> [tuple()].
-%json_to_record_list(Elements, RecordName) when is_list(Elements) ->
-%    lists:reverse(
-%      lists:foldl(fun (Element, Acc) ->
-%                          [json_to_record(Element, new_record(RecordName)) | Acc]
-%                  end, [], Elements)).
 
 
 %% @doc Convert a JSON element into a known record.
@@ -454,6 +487,7 @@ iso_datetime_to_tuple(Value) ->
     Value.
 
 
+%% @doc Convert an HTTP response code to its corresponding reason.
 -spec response_reason(string()) -> atom().
 response_reason("100") -> continue;
 response_reason("101") -> switching_protocols;
