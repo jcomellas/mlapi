@@ -15,9 +15,35 @@
 -export([import/1, import_currencies/0, import_payment_types/0, import_countries/0, import_sites/0,
          import_site/1, import_country/1, import_state/1, import_city/1,
          import_listing_exposures/1, import_listing_types/1, import_listing_prices/1,
-         import_payment_methods/1, import_category/1]).
+         import_payment_methods/1, import_card_issuers/1, import_category/1]).
+-export([get_sites/0, get_site/1,
+         get_countries/0, get_country/1,
+         get_state/1, get_city/1, %% get_neighborhood/1,
+         get_currencies/0, get_currency/1,
+         get_listing_exposures/1, get_listing_exposure/2,
+         get_listing_types/1, get_listing_prices/1,
+         get_payment_types/0, get_payment_type/1,
+         get_payment_methods/1, get_payment_method/2,
+         get_card_issuers/1, get_card_issuer/2,
+         get_categories/1]).
+         %% get_categories/1, get_category/1]).
 
 -include("include/mlapi.hrl").
+
+%% Wrappers for records that don't have the table-wide ID in them that is needed
+%% to store them grouped together in Mnesia.
+%% -record(mlapi_listing_price_wrapper, {
+%%           site_id                                           :: mlapi_site_id(),
+%%           listing_price                                     :: #mlapi_listing_price{}
+%%          }).
+%% -record(mlapi_payment_method_wrapper, {
+%%           site_id                                           :: mlapi_site_id(),
+%%           payment_method                                    :: #mlapi_payment_method{}
+%%          }).
+%% -record(mlapi_card_issuer_wrapper, {
+%%           site_id                                           :: mlapi_site_id(),
+%%           card_issuer                                       :: #mlapi_card_issuer{}
+%%          }).
 
 
 -spec init() -> ok | {aborted, Reason :: any()}.
@@ -30,7 +56,7 @@ init(Nodes) ->
     lists:foreach(fun (Table) -> init_table(Table, Nodes) end, tables()).
 
 
--spec init_table(mlapi_table(), [node()]) -> {atomic, ok} | {aborted, Reason :: any()}.
+-spec init_table(mlapi_table(), [node()]) -> ok | {aborted, Reason :: any()}.
 init_table(Table, Nodes) ->
     Fields = mlapi:fields(Table),
     %% Make sure that the schema of each Mnesia table is up-to-date.
@@ -51,18 +77,41 @@ create_tables(Nodes) ->
     lists:foreach(fun (Table) -> create_table(Table, Nodes) end, tables()).
 
 
--spec create_table(mlapi_table(), [node()]) -> {atomic, ok} | {aborted, Reason :: any()}.
+-spec create_table(mlapi_table(), [node()]) -> ok | {aborted, Reason :: any()}.
 create_table(Table, Nodes) ->
     case mnesia:create_table(Table, [{access_mode, read_write},
                                      {attributes, mlapi:fields(Table)},
                                      {disc_copies, Nodes},
-                                     {type, set},
+                                     {type, table_type(Table)},
                                      {local_content, true}]) of
         {atomic, ok} ->
             ok;
         Error ->
             Error
     end.
+
+
+%% -spec create_table_wrapper(mlapi_table(), [node()]) ->  ok | {aborted, Reason :: any()}.
+%% create_table_wrapper(mlapi_listing_price, Nodes) ->
+%%     create_table_wrapper(mlapi_listing_price_wrapper, Nodes, [site_id, listing_price]);
+%% create_table_wrapper(mlapi_payment_method, Nodes) ->
+%%     create_table_wrapper(mlapi_payment_method_wrapper, Nodes, [site_id, payment_method]);
+%% create_table_wrapper(mlapi_card_issuer, Nodes) ->
+%%     create_table_wrapper(mlapi_card_issuer_wrapper, Nodes, [site_id, card_issuer]).
+
+
+%% -spec create_table_wrapper(mlapi_table(), [node()], [mlapi_field()]) ->  ok | {aborted, Reason :: any()}.
+%% create_table_wrapper(Table, Nodes, Fields) ->
+%%     case mnesia:create_table(Table, [{access_mode, read_write},
+%%                                      {attributes, Fields},
+%%                                      {disc_copies, Nodes},
+%%                                      {type, bag},
+%%                                      {local_content, true}]) of
+%%         {atomic, ok} ->
+%%             ok;
+%%         Error ->
+%%             Error
+%%     end.
 
 
 -spec upgrade_table(mlapi_table()) -> {atomic, ok} | {aborted, Reason :: any()}.
@@ -86,13 +135,30 @@ tables() ->
      mlapi_site,
      mlapi_site_ext,
      mlapi_listing_exposure,
-     mlapi_listing_price,
      mlapi_listing_type,
+     mlapi_listing_price,
      mlapi_payment_method,
      mlapi_payment_method_ext,
+     mlapi_card_issuer,
+     mlapi_card_issuer_ext,
      mlapi_category,
      mlapi_category_ext
     ].
+
+
+-spec table_type(mlapi_table()) -> set | bag | ordered_set.
+table_type(mlapi_listing_exposure) ->
+    bag;
+table_type(mlapi_listing_type) ->
+    bag;
+table_type(mlapi_listing_price) ->
+    bag;
+table_type(mlapi_payment_method) ->
+    bag;
+table_type(mlapi_card_issuer) ->
+    bag;
+table_type(_Table) ->
+    set.
 
 
 -spec import(mlapi_site_id()) -> ok.
@@ -225,6 +291,7 @@ import_site(SiteId) ->
             import_listing_types(SiteId),
             import_listing_prices(SiteId),
             import_payment_methods(SiteId),
+            import_card_issuers(SiteId),
             import_categories(SiteExt#mlapi_site_ext.categories, {site, SiteId}),
             set_last_update([mlapi_category, mlapi_category_ext]);
         Error ->
@@ -238,7 +305,11 @@ import_listing_exposures(SiteId) ->
         RawListingExposures when is_list(RawListingExposures) ->
             ListingExposures = mlapi:json_to_record(RawListingExposures, mlapi_listing_exposure),
             mnesia:clear_table(mlapi_listing_exposure),
-            lists:foreach(fun mnesia:dirty_write/1, ListingExposures),
+            lists:foreach(fun (ListingExposure) ->
+                                  %% Add missing site_id (not returned by API) to store the record in Mnesia
+                                  %% (the mlapi_listing_exposure table is a bag).
+                                  mnesia:dirty_write(ListingExposure#mlapi_listing_exposure{site_id = SiteId}) end,
+                          ListingExposures),
             set_last_update(mlapi_listing_exposure);
         Error ->
             throw(Error)
@@ -262,10 +333,14 @@ import_listing_types(SiteId) ->
 import_listing_prices(SiteId) ->
     case mlapi:get_listing_prices(SiteId) of
         RawListingPrices when is_list(RawListingPrices) ->
-            ListingPrices = mlapi:json_to_record(RawListingPrices, mlapi_listing_price),
-            mnesia:clear_table(mlapi_listing_price),
-            lists:foreach(fun mnesia:dirty_write/1, ListingPrices),
-            set_last_update(mlapi_listing_price);
+            %% Delete all the previous entries for this site.
+            mnesia:dirty_delete(mlapi_payment_method, SiteId),
+            lists:foreach(fun (RawListingPrice) ->
+                                  ListingPrice = mlapi:json_to_record(RawListingPrice, mlapi_listing_price),
+                                  %% Add site_id to be able to group the listing prices for the same site together.
+                                  mnesia:dirty_write(ListingPrice#mlapi_listing_price{site_id = SiteId})
+                          end, RawListingPrices),
+            set_last_update(mlapi_listing_price, {site, SiteId});
         Error ->
             throw(Error)
     end.
@@ -275,11 +350,12 @@ import_listing_prices(SiteId) ->
 import_payment_methods(SiteId) ->
     case mlapi:get_payment_methods(SiteId) of
         RawPaymentMethods when is_list(RawPaymentMethods) ->
-            mnesia:clear_table(mlapi_payment_method),
-            mnesia:clear_table(mlapi_payment_method_ext),
+            %% Delete all the previous entries for this site.
+            mnesia:dirty_delete(mlapi_payment_method, SiteId),
             lists:foreach(fun (RawPaymentMethod) ->
                                   PaymentMethod = mlapi:json_to_record(RawPaymentMethod, mlapi_payment_method),
-                                  mnesia:dirty_write(PaymentMethod),
+                                  %% Add site_id to be able to group the payment methods for the same site together.
+                                  mnesia:dirty_write(PaymentMethod#mlapi_payment_method{site_id = SiteId}),
                                   case mlapi:get_payment_method(SiteId, PaymentMethod#mlapi_payment_method.id) of
                                       {Elements} = RawPaymentMethodExt when is_list(Elements) ->
                                           PaymentMethodExt = mlapi:json_to_record(RawPaymentMethodExt, mlapi_payment_method_ext),
@@ -288,7 +364,31 @@ import_payment_methods(SiteId) ->
                                           throw(Error)
                                   end
                           end, RawPaymentMethods),
-            set_last_update([mlapi_payment_method, mlapi_payment_method_ext]);
+            set_last_update([mlapi_payment_method, mlapi_payment_method_ext], {site, SiteId});
+        Error ->
+            throw(Error)
+    end.
+
+
+-spec import_card_issuers(mlapi_site_id()) -> ok.
+import_card_issuers(SiteId) ->
+    case mlapi:get_card_issuers(SiteId) of
+        RawCardIssuers when is_list(RawCardIssuers) ->
+            %% Delete all the previous entries for this site.
+            mnesia:dirty_delete(mlapi_card_issuer_wrapper, SiteId),
+            lists:foreach(fun (RawCardIssuer) ->
+                                  CardIssuer = mlapi:json_to_record(RawCardIssuer, mlapi_card_issuer),
+                                  %% Add site_id to be able to group the card issuers for the same site together.
+                                  mnesia:dirty_write(CardIssuer#mlapi_card_issuer{site_id = SiteId}),
+                                  case mlapi:get_card_issuer(SiteId, CardIssuer#mlapi_card_issuer.id) of
+                                      {Elements} = RawCardIssuerExt when is_list(Elements) ->
+                                          CardIssuerExt = mlapi:json_to_record(RawCardIssuerExt, mlapi_card_issuer_ext),
+                                          mnesia:dirty_write(CardIssuerExt);
+                                      Error ->
+                                          throw(Error)
+                                  end
+                          end, RawCardIssuers),
+            set_last_update([mlapi_payment_method, mlapi_payment_method_ext], {site, SiteId});
         Error ->
             throw(Error)
     end.
@@ -336,3 +436,142 @@ set_last_update(Tables, Reason) when is_list(Tables) ->
                                                 reason = Reason
                                                })
                   end, Tables).
+
+
+-spec get_sites() -> [#mlapi_site{}].
+get_sites() ->
+    ets:tab2list(mlapi_site).
+
+
+-spec get_site(mlapi_site_id()) -> #mlapi_site_ext{} | undefined.
+get_site(SiteId) ->
+    read_single(mlapi_site_ext, SiteId).
+
+
+-spec get_countries() -> [#mlapi_country{}].
+get_countries() ->
+    ets:tab2list(mlapi_country).
+
+
+-spec get_country(mlapi_country_id()) -> #mlapi_country_ext{} | undefined.
+get_country(CountryId) ->
+    read_single(mlapi_country_ext, CountryId).
+
+
+-spec get_state(mlapi_state_id()) -> #mlapi_state_ext{} | undefined.
+get_state(StateId) ->
+    read_single(mlapi_state_ext, StateId).
+
+
+-spec get_city(mlapi_city_id()) -> #mlapi_city_ext{} | undefined.
+get_city(CityId) ->
+    read_single(mlapi_city_ext, CityId).
+
+
+-spec get_currencies() -> [#mlapi_currency{}].
+get_currencies() ->
+    ets:tab2list(mlapi_currency).
+
+
+-spec get_currency(mlapi_currency_id()) -> #mlapi_currency{} | undefined.
+get_currency(CurrencyId) ->
+    read_single(mlapi_currency, CurrencyId).
+
+
+-spec get_listing_exposures(mlapi_site_id()) -> [#mlapi_listing_exposure{}].
+get_listing_exposures(SiteId) ->
+    read_multi(mlapi_listing_exposure, SiteId).
+
+-spec get_listing_exposure(mlapi_site_id(), mlapi_listing_exposure_id()) -> #mlapi_listing_exposure{} | undefined.
+get_listing_exposure(SiteId, ListingExposureId) ->
+    match_single(#mlapi_listing_exposure{site_id = SiteId, id = ListingExposureId,
+                                         name = '_', home_page = '_', category_home_page = '_',
+                                         advertising_on_listing_page = '_', priority_in_search = '_'}).
+
+
+get_listing_types(SiteId) ->
+    read_multi(mlapi_listing_type, SiteId).
+
+
+get_listing_prices(SiteId) ->
+    read_multi(mlapi_listing_price, SiteId).
+
+
+-spec get_payment_types() -> [#mlapi_payment_type{}].
+get_payment_types() ->
+    ets:tab2list(mlapi_payment_type).
+
+
+-spec get_payment_type(mlapi_payment_type_id()) -> #mlapi_payment_type{} | undefined.
+get_payment_type(PaymentTypeId) ->
+    read_single(mlapi_payment_type, PaymentTypeId).
+
+
+get_payment_methods(SiteId) ->
+    read_multi(mlapi_payment_method, SiteId).
+
+get_payment_method(SiteId, PaymentMethodId) ->
+    match_single(#mlapi_payment_method{site_id = SiteId, id = PaymentMethodId,
+                                       name = '_', payment_type_id = '_',
+                                       thumbnail = '_', secure_thumbnail = '_'}).
+
+
+-spec get_card_issuers(mlapi_site_id()) -> [#mlapi_card_issuer{}].
+get_card_issuers(SiteId) ->
+    read_multi(mlapi_card_issuer, SiteId).
+
+-spec get_card_issuer(mlapi_site_id(), mlapi_card_issuer_id()) -> #mlapi_card_issuer{} | undefined.
+get_card_issuer(SiteId, CardIssuerId) ->
+    match_single(#mlapi_card_issuer{site_id = SiteId, id = CardIssuerId, name = '_'}).
+
+
+%%get_subcategories/1, get_category/1]).
+
+-spec get_categories(mlapi_site_id()) -> [#mlapi_category{}].
+get_categories(SiteId) ->
+    case get_site(SiteId) of
+        #mlapi_site_ext{categories = Categories} ->
+            Categories;
+        Error ->
+            Error
+    end.
+
+
+read_single(Table, Key) ->
+    case mnesia:dirty_read(Table, Key) of
+        [Result] ->
+            Result;
+        [] ->
+            undefined;
+        Error ->
+            Error
+    end.
+
+
+read_multi(Table, Key) ->
+    case mnesia:dirty_read(Table, Key) of
+        [_Head | _Tail] = Result ->
+            Result;
+        Error ->
+            Error
+    end.
+
+
+match_single(Record) ->
+    case mnesia:match_object(Record) of
+        [Result] ->
+            Result;
+        [] ->
+            undefined;
+        Error ->
+            Error
+    end.
+
+
+%% read_multi_wrapper(Table, Key) ->
+%%     case mnesia:dirty_read(Table, Key) of
+%%         [_Head | _Tail] = Result ->
+%%             [WrappedRecord || {_RecordName, _Key, WrappedRecord} <- Result];
+%%         Error ->
+%%             Error
+%%     end.
