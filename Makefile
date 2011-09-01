@@ -11,8 +11,11 @@ all: compile
 compile:
 	@rebar compile
 
+deps:
+	@rebar get-deps
+
 doc:
-	@rebar doc
+	@rebar skip_deps=true doc
 
 clean:
 	@rebar clean
@@ -30,9 +33,9 @@ dialyze: compile
 	@rebar dialyze
 
 test:
-	@rebar eunit
+	@rebar skip_deps=true eunit
 
-console: compile
+console:
 	$(ERL) -sname $(APPLICATION) $(EPATH) -s mlapi_deps ensure
 
 test-console: test
