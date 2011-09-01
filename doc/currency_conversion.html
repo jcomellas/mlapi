@@ -1,0 +1,190 @@
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <script type="text/javascript">
+            document.addEventListener('DOMContentLoaded', function() {
+              // Click handler for collapsing and expanding objects and arrays
+              function collapse(evt) {
+                var collapser = evt.target;
+               
+                var target = collapser.parentNode.getElementsByClassName('collapsible');
+                
+                if ( ! target.length ) {
+                  return;
+                }
+                
+                target = target[0];
+
+                if ( target.style.display == 'none' ) {
+                  var ellipsis = target.parentNode.getElementsByClassName('ellipsis')[0];
+                  target.parentNode.removeChild(ellipsis);
+                  target.style.display = '';
+                } else {
+                  target.style.display = 'none';
+                  
+                  var ellipsis = document.createElement('span');
+                  ellipsis.className = 'ellipsis';
+                  ellipsis.innerHTML = ' &hellip; ';
+                  target.parentNode.insertBefore(ellipsis, target);
+                }
+                
+                collapser.innerHTML = ( collapser.innerHTML == '-' ) ? '+' : '-';
+              }
+              
+              function addCollapser(item) {
+                // This mainly filters out the root object (which shouldn't be collapsible)
+                if ( item.nodeName != 'LI' ) {
+                  return;
+                }
+                
+                var collapser = document.createElement('div');
+                collapser.className = 'collapser';
+                collapser.innerHTML = '-';
+                collapser.addEventListener('click', collapse, false);
+                item.insertBefore(collapser, item.firstChild);
+              }
+              
+              var items = document.getElementsByClassName('collapsible');
+              for( var i = 0; i < items.length; i++) {
+                addCollapser(items[i].parentNode);
+              }
+            }, false);
+        </script>
+        <style>
+          body { font-family: "Helvetica Neue", sans-serif; font-size: 12px; margin: 0; padding: 15px 15px 15px 550px; line-height: 1.4em; } 
+          .json-name { font-weight: bold; } 
+          .json-null { color: red; } 
+          .json-boolean { color: blue; } 
+          .json-number { color: blue; } 
+          .json-string { color: green; white-space: pre-wrap; } 
+          .collapser { position: absolute; left: -1em; cursor: pointer; } 
+          .code li { position: relative; } 
+          .code li:after { content: ','; } 
+          .code li:last-child:after { content: ''; } 
+          .code ul { list-style: none; margin: 0 0 0 2em; padding: 0; } 
+          .code { background-color: #f0f0f0; border-color:#D8DFEA; border-style:solid; border-width:1px 1px 1px 3px; margin: 0; overflow:auto; padding: 15px 10px; font-family: "Menlo", "Monaco", monospace; clear: both; line-height: 16px;
+          } 
+
+          h1 {
+            font-size: 26px;
+          }
+
+          h2 {
+            font-size: 18px;
+          }
+
+          h3 {
+            font-size: 15px;
+            margin-bottom: 5px;
+          }
+
+          section {
+            display: block;
+          }
+
+          body > section {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 50%;
+            overflow: auto;
+          }
+
+          body > section:first-child {
+            left: 0;
+          }
+          
+          body > section:last-child {
+            right: 0;
+          }
+
+          section.text {
+
+          }
+
+          section.text > * {
+            margin-left: 20px;
+            margin-right: 20px;
+          }
+
+          table {
+            border-collapse: collapse;
+            border-width: 0;
+          }
+
+          table td {
+            vertical-align: top;
+            padding: 4px 6px;
+            text-align: left;
+          }
+
+          table td {
+            border: 1px solid #ccc;
+          }
+          
+          table.attributes td:first-child {
+            font-family: "Menlo", "Monaco", monospace;
+            font-weight: bold;
+          }
+
+          ul h3 {
+            font-family: "Menlo", "Monaco", monospace;
+          }
+          
+          ul h3 span {
+            color: #999;
+          }
+          a {
+            font-weight: bold;
+          }
+       </style>
+       <title>Conversi&oacute;n de Moneda.</title>
+    </head>
+    <body>
+        <section>
+            <div class="code">{<ul class="json-object collapsible"><li id="ratio"><span class="json-name">ratio</span>: <span class="json-number">0.24</span></li><li id="mercado_pago_ratio"><span class="json-name">mercado_pago_ratio</span>: <span class="json-number">0.24</span></li></ul>}</div>
+        </section>
+        <section class="text">
+            <h1>Conversi&oacute;n de Moneda.</h1>
+            <p>Retorna la raz&oacute;n de conversi&oacute;n entre las monedas.</p>
+            <h2>Attributes</h2>
+            
+            
+            
+                <table class="attributes">
+                  
+                  
+                      <tr>
+                        <td>ratio</td>
+                        <td>Raz&oacute;n de conversi&oacute;n entre la moneda from y to.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>mercado_pago_ratio</td>
+                        <td>Raz&oacute;n de conversi&oacute;n de MercadoPago entre la moneda from y to
+
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+            <h2>Allowed methods</h2>
+            <ul class="methods">
+              
+                  <li>
+                    <h3>GET <span>/currency_conversions/search?from=:from&to=:to&date=dd/MM/yyyy-HH:mm</span></h3>
+                    <p>Devuelve la conversi&oacute;n entre las 2 monedas. </p>
+                  </li>
+              
+            </ul>
+            <h2>Related resources</h2>
+            <ul class="related">
+              
+            </ul>
+            
+        </section>
+    </body>
+</html>

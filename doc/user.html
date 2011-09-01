@@ -1,0 +1,1086 @@
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <script type="text/javascript">
+            document.addEventListener('DOMContentLoaded', function() {
+              // Click handler for collapsing and expanding objects and arrays
+              function collapse(evt) {
+                var collapser = evt.target;
+               
+                var target = collapser.parentNode.getElementsByClassName('collapsible');
+                
+                if ( ! target.length ) {
+                  return;
+                }
+                
+                target = target[0];
+
+                if ( target.style.display == 'none' ) {
+                  var ellipsis = target.parentNode.getElementsByClassName('ellipsis')[0];
+                  target.parentNode.removeChild(ellipsis);
+                  target.style.display = '';
+                } else {
+                  target.style.display = 'none';
+                  
+                  var ellipsis = document.createElement('span');
+                  ellipsis.className = 'ellipsis';
+                  ellipsis.innerHTML = ' &hellip; ';
+                  target.parentNode.insertBefore(ellipsis, target);
+                }
+                
+                collapser.innerHTML = ( collapser.innerHTML == '-' ) ? '+' : '-';
+              }
+              
+              function addCollapser(item) {
+                // This mainly filters out the root object (which shouldn't be collapsible)
+                if ( item.nodeName != 'LI' ) {
+                  return;
+                }
+                
+                var collapser = document.createElement('div');
+                collapser.className = 'collapser';
+                collapser.innerHTML = '-';
+                collapser.addEventListener('click', collapse, false);
+                item.insertBefore(collapser, item.firstChild);
+              }
+              
+              var items = document.getElementsByClassName('collapsible');
+              for( var i = 0; i < items.length; i++) {
+                addCollapser(items[i].parentNode);
+              }
+            }, false);
+        </script>
+        <style>
+          body { font-family: "Helvetica Neue", sans-serif; font-size: 12px; margin: 0; padding: 15px 15px 15px 550px; line-height: 1.4em; } 
+          .json-name { font-weight: bold; } 
+          .json-null { color: red; } 
+          .json-boolean { color: blue; } 
+          .json-number { color: blue; } 
+          .json-string { color: green; white-space: pre-wrap; } 
+          .collapser { position: absolute; left: -1em; cursor: pointer; } 
+          .code li { position: relative; } 
+          .code li:after { content: ','; } 
+          .code li:last-child:after { content: ''; } 
+          .code ul { list-style: none; margin: 0 0 0 2em; padding: 0; } 
+          .code { background-color: #f0f0f0; border-color:#D8DFEA; border-style:solid; border-width:1px 1px 1px 3px; margin: 0; overflow:auto; padding: 15px 10px; font-family: "Menlo", "Monaco", monospace; clear: both; line-height: 16px;
+          } 
+
+          h1 {
+            font-size: 26px;
+          }
+
+          h2 {
+            font-size: 18px;
+          }
+
+          h3 {
+            font-size: 15px;
+            margin-bottom: 5px;
+          }
+
+          section {
+            display: block;
+          }
+
+          body > section {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 50%;
+            overflow: auto;
+          }
+
+          body > section:first-child {
+            left: 0;
+          }
+          
+          body > section:last-child {
+            right: 0;
+          }
+
+          section.text {
+
+          }
+
+          section.text > * {
+            margin-left: 20px;
+            margin-right: 20px;
+          }
+
+          table {
+            border-collapse: collapse;
+            border-width: 0;
+          }
+
+          table td {
+            vertical-align: top;
+            padding: 4px 6px;
+            text-align: left;
+          }
+
+          table td {
+            border: 1px solid #ccc;
+          }
+          
+          table.attributes td:first-child {
+            font-family: "Menlo", "Monaco", monospace;
+            font-weight: bold;
+          }
+
+          ul h3 {
+            font-family: "Menlo", "Monaco", monospace;
+          }
+          
+          ul h3 span {
+            color: #999;
+          }
+          a {
+            font-weight: bold;
+          }
+       </style>
+       <title>Users</title>
+    </head>
+    <body>
+        <section>
+            <div class="code">{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="">20</span></li><li id="nickname"><span class="json-name">nickname</span>: <span class="json-string">&quot;MPAGO_MLB&quot;</span></li><li id="registration_date"><span class="json-name">registration_date</span>: <span class="json-string">&quot;2003-12-02T08:45:34.000-04:00&quot;</span></li><li id="country_id"><span class="json-name">country_id</span>: <span class="json-string"><a href="/countries/BR">"BR"</a></span></li><li id="user_type"><span class="json-name">user_type</span>: <span class="json-string">&quot;normal&quot;</span></li><li id="logo"><span class="json-name">logo</span>: <span class="json-null">null</span></li><li id="points"><span class="json-name">points</span>: <span class="">0</span></li><li id="site_id"><span class="json-name">site_id</span>: <span class="json-string"><a href="/sites/MLB">"MLB"</a></span></li><li id="permalink"><span class="json-name">permalink</span>: <span class="json-string"><a href="http://perfil.mercadolivre.com.br/MPAGO_MLB">&quot;http://perfil.mercadolivre.com.br/MPAGO_MLB&quot;</a></span></li><li id="seller_reputation"><span class="json-name">seller_reputation</span>: {<ul class="json-object collapsible"><li id="level_id"><span class="json-name">level_id</span>: <span class="json-null">null</span></li><li id="power_seller_status"><span class="json-name">power_seller_status</span>: <span class="json-null">null</span></li><li id="transactions"><span class="json-name">transactions</span>: {<ul class="json-object collapsible"><li id="period"><span class="json-name">period</span>: <span class="json-string">&quot;historic&quot;</span></li><li id="total"><span class="json-name">total</span>: <span class="">0</span></li><li id="completed"><span class="json-name">completed</span>: <span class="">0</span></li><li id="canceled"><span class="json-name">canceled</span>: <span class="">0</span></li><li id="ratings"><span class="json-name">ratings</span>: {<ul class="json-object collapsible"><li id="positive"><span class="json-name">positive</span>: <span class="">0</span></li><li id="negative"><span class="json-name">negative</span>: <span class="">0</span></li><li id="neutral"><span class="json-name">neutral</span>: <span class="">0</span></li></ul>}</ul>}</ul>}<li id="status"><span class="json-name">status</span>: {<ul class="json-object collapsible"><li id="site_status"><span class="json-name">site_status</span>: <span class="json-string">&quot;active&quot;</span></li></ul>}</ul>}</div>
+        </section>
+        <section class="text">
+            <h1>Users</h1>
+            <p>Users API</p>
+            <h2>Attributes</h2>
+            
+            
+            
+                <table class="attributes">
+                  
+                  
+                      <tr>
+                        <td>id</td>
+                        <td>User identifier.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>nickname</td>
+                        <td>User nickname.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>registration_date</td>
+                        <td>User registration date.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>first_name</td>
+                        <td>User first name.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>last_name</td>
+                        <td>User last name.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>country_id</td>
+                        <td>Country identifier.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>email</td>
+                        <td>E-mail address.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>identification</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">Personal identification.</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>identification_type</td>
+                        <td>Personal identification type.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>identification_number</td>
+                        <td>Personal identification number.
+
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>phone</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">Phone.</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>area_code</td>
+                        <td>Phone area code.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>number</td>
+                        <td>Phone number.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>verified</td>
+                        <td>The phone has been verified by MercadoLibre.
+
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>user_type</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">User Type</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>car_dealer</td>
+                        <td>Car dealer user
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>real_estate_agency</td>
+                        <td>Real estate user
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>branch</td>
+                        <td>Branch
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>franchise</td>
+                        <td>Franchise
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>normal</td>
+                        <td>Normal User
+
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>logo</td>
+                        <td>Real stage or car dealer agency logo.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>points</td>
+                        <td>Points.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>site_id</td>
+                        <td>Site/Operation identifier.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>permalink</td>
+                        <td>Link to the resource.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>seller_experience</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">Experience as a seller.</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>newbie</td>
+                        <td>Newbie
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>intermediate</td>
+                        <td>Intermediate
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>advanced</td>
+                        <td>Advanced
+
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>seller_reputation</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">User reputation as a seller.</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>level_id</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">Reputation level as a seller.</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>1_red</td>
+                        <td>Red
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>2_orange</td>
+                        <td>Orange
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>3_yellow</td>
+                        <td>Yellow
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>4_light_green</td>
+                        <td>Light Green
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>5_green</td>
+                        <td>Green
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>null</td>
+                        <td>Null
+
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>power_seller_status</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">Power seller level.</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>silver</td>
+                        <td>Silver
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>gold</td>
+                        <td>Gold
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>platinum</td>
+                        <td>Platinum
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>null</td>
+                        <td>Null
+
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>transactions</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">Transactions as a seller.</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>period</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">Transaction Period</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>historic</td>
+                        <td>historic
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>12 months</td>
+                        <td>12 Months
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>3 months</td>
+                        <td>3 Months
+
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>total</td>
+                        <td>Total transactions.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>completed</td>
+                        <td>Completed transactions.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>canceled</td>
+                        <td>Cancelled transactions.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>ratings</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">Rated transactions.</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>positive</td>
+                        <td>Positive ratings.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>negative</td>
+                        <td>Negative ratings.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>neutral</td>
+                        <td>Neutral ratings.
+
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>buyer_reputation</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">User reputation as a buyer.</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>transactions</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">User transactions as a buyer.</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>period</td>
+                        <td>Transaction Period
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>total</td>
+                        <td>Total transactions.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>completed</td>
+                        <td>Completed transactions.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>canceled</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">Cancelled transactions.</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>total</td>
+                        <td>Total transactions.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>paid</td>
+                        <td>Paid transactions.
+
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>unrated</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">Unrated transactions.</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>total</td>
+                        <td>Total transactions.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>paid</td>
+                        <td>Paid transactions.
+
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>not_yet_rated</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">Transactions under rating process.</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>total</td>
+                        <td>Total transactions.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>paid</td>
+                        <td>Paid transactions.
+
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>status</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">Status.</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>site_status</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">General user status on site.</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>active</td>
+                        <td>Active
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>pending</td>
+                        <td>Pending e-mail confirmation
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>deactive</td>
+                        <td>Deactive
+
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>list</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">To List</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>allow</td>
+                        <td>Allowed
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>codes</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">Codes</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>feedback_restriction</td>
+                        <td>Restringido por Feedback
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>has_debt</td>
+                        <td>Has debt in MercadoLibre
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>credit_limit_exeeded</td>
+                        <td>Credit limit has been exceeded
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>internal_control</td>
+                        <td>Internal control
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>historical_behaviour</td>
+                        <td>Historical behavior
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>mercadopago_restrictions</td>
+                        <td>Has a restriction imposed by MercadoPago
+
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>buy</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">To Buy</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>allow</td>
+                        <td>Allowed
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>codes</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">Codes</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>internal_control</td>
+                        <td>Internal control
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>historical_behaviour</td>
+                        <td>Historical behavior
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>mercadopago_restrictions</td>
+                        <td>Has a restriction imposed by MercadoPago
+
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>sell</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">To Sell</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>allow</td>
+                        <td>Allowed
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>codes</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">Codes</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>feedback_restriction</td>
+                        <td>Restringido por Feedback
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>has_debt</td>
+                        <td>Has debt in MercadoLibre
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>credit_limit_exeeded</td>
+                        <td>Credit limit has been exceeded
+
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>mercadopago_tc_accepted</td>
+                        <td>Accept terms and conditions of MercadoPago.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>immediate_payment</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">Represents if the user has to pay with credit card in order to buy.</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>required</td>
+                        <td>Required
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>optional</td>
+                        <td>Optional
+
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>credit</td>
+                        <td>
+                <table class="attributes">
+                  
+                    <thead>
+                        <th colspan="2">Credit level.</th>
+                    </thead>
+                  
+                  
+                      <tr>
+                        <td>consumed</td>
+                        <td>Represents the credit consumed.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>credit_level_id</td>
+                        <td>Credit level identifier.
+
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+            <h2>Allowed methods</h2>
+            <ul class="methods">
+              
+                  <li>
+                    <h3>GET <span>/users/:id</span></h3>
+                    <p>Returns user data based on its user identifier. </p>
+                  </li>
+              
+                  <li>
+                    <h3>GET <span>/users/me/</span></h3>
+                    <p>Returns the logged user data. </p>
+                  </li>
+              
+                  <li>
+                    <h3>GET <span>/users/:ids=id,id...,id</span></h3>
+                    <p>Returns a list of users. </p>
+                  </li>
+              
+            </ul>
+            <h2>Related resources</h2>
+            <ul class="related">
+              
+            </ul>
+            
+        </section>
+    </body>
+</html>

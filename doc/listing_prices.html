@@ -1,0 +1,270 @@
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <script type="text/javascript">
+            document.addEventListener('DOMContentLoaded', function() {
+              // Click handler for collapsing and expanding objects and arrays
+              function collapse(evt) {
+                var collapser = evt.target;
+               
+                var target = collapser.parentNode.getElementsByClassName('collapsible');
+                
+                if ( ! target.length ) {
+                  return;
+                }
+                
+                target = target[0];
+
+                if ( target.style.display == 'none' ) {
+                  var ellipsis = target.parentNode.getElementsByClassName('ellipsis')[0];
+                  target.parentNode.removeChild(ellipsis);
+                  target.style.display = '';
+                } else {
+                  target.style.display = 'none';
+                  
+                  var ellipsis = document.createElement('span');
+                  ellipsis.className = 'ellipsis';
+                  ellipsis.innerHTML = ' &hellip; ';
+                  target.parentNode.insertBefore(ellipsis, target);
+                }
+                
+                collapser.innerHTML = ( collapser.innerHTML == '-' ) ? '+' : '-';
+              }
+              
+              function addCollapser(item) {
+                // This mainly filters out the root object (which shouldn't be collapsible)
+                if ( item.nodeName != 'LI' ) {
+                  return;
+                }
+                
+                var collapser = document.createElement('div');
+                collapser.className = 'collapser';
+                collapser.innerHTML = '-';
+                collapser.addEventListener('click', collapse, false);
+                item.insertBefore(collapser, item.firstChild);
+              }
+              
+              var items = document.getElementsByClassName('collapsible');
+              for( var i = 0; i < items.length; i++) {
+                addCollapser(items[i].parentNode);
+              }
+            }, false);
+        </script>
+        <style>
+          body { font-family: "Helvetica Neue", sans-serif; font-size: 12px; margin: 0; padding: 15px 15px 15px 550px; line-height: 1.4em; } 
+          .json-name { font-weight: bold; } 
+          .json-null { color: red; } 
+          .json-boolean { color: blue; } 
+          .json-number { color: blue; } 
+          .json-string { color: green; white-space: pre-wrap; } 
+          .collapser { position: absolute; left: -1em; cursor: pointer; } 
+          .code li { position: relative; } 
+          .code li:after { content: ','; } 
+          .code li:last-child:after { content: ''; } 
+          .code ul { list-style: none; margin: 0 0 0 2em; padding: 0; } 
+          .code { background-color: #f0f0f0; border-color:#D8DFEA; border-style:solid; border-width:1px 1px 1px 3px; margin: 0; overflow:auto; padding: 15px 10px; font-family: "Menlo", "Monaco", monospace; clear: both; line-height: 16px;
+          } 
+
+          h1 {
+            font-size: 26px;
+          }
+
+          h2 {
+            font-size: 18px;
+          }
+
+          h3 {
+            font-size: 15px;
+            margin-bottom: 5px;
+          }
+
+          section {
+            display: block;
+          }
+
+          body > section {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 50%;
+            overflow: auto;
+          }
+
+          body > section:first-child {
+            left: 0;
+          }
+          
+          body > section:last-child {
+            right: 0;
+          }
+
+          section.text {
+
+          }
+
+          section.text > * {
+            margin-left: 20px;
+            margin-right: 20px;
+          }
+
+          table {
+            border-collapse: collapse;
+            border-width: 0;
+          }
+
+          table td {
+            vertical-align: top;
+            padding: 4px 6px;
+            text-align: left;
+          }
+
+          table td {
+            border: 1px solid #ccc;
+          }
+          
+          table.attributes td:first-child {
+            font-family: "Menlo", "Monaco", monospace;
+            font-weight: bold;
+          }
+
+          ul h3 {
+            font-family: "Menlo", "Monaco", monospace;
+          }
+          
+          ul h3 span {
+            color: #999;
+          }
+          a {
+            font-weight: bold;
+          }
+       </style>
+       <title>Costo del Tipo Publicaci&oacute;n.</title>
+    </head>
+    <body>
+        <section>
+            <div class="code">[<ul class="json-array collapsible"><li>{<ul class="json-object collapsible"><li id="listing_type_id"><span class="json-name">listing_type_id</span>: <span class="json-string">&quot;gold_premium&quot;</span></li><li id="listing_type_name"><span class="json-name">listing_type_name</span>: <span class="json-string">&quot;Oro Premium&quot;</span></li><li id="listing_exposure"><span class="json-name">listing_exposure</span>: <span class="json-string">&quot;highest&quot;</span></li><li id="requires_picture"><span class="json-name">requires_picture</span>: <span class="">true</span></li><li id="currency_id"><span class="json-name">currency_id</span>: <span class="json-string"><a href="/currencies/ARS">"ARS"</a></span></li><li id="listing_fee_amount"><span class="json-name">listing_fee_amount</span>: <span class="">120</span></li><li id="sale_fee_amount"><span class="json-name">sale_fee_amount</span>: <span class="">2</span></li></ul>}</li><li>{<ul class="json-object collapsible"><li id="listing_type_id"><span class="json-name">listing_type_id</span>: <span class="json-string">&quot;gold&quot;</span></li><li id="listing_type_name"><span class="json-name">listing_type_name</span>: <span class="json-string">&quot;Oro&quot;</span></li><li id="listing_exposure"><span class="json-name">listing_exposure</span>: <span class="json-string">&quot;high&quot;</span></li><li id="requires_picture"><span class="json-name">requires_picture</span>: <span class="">true</span></li><li id="currency_id"><span class="json-name">currency_id</span>: <span class="json-string"><a href="/currencies/ARS">"ARS"</a></span></li><li id="listing_fee_amount"><span class="json-name">listing_fee_amount</span>: <span class="">45</span></li><li id="sale_fee_amount"><span class="json-name">sale_fee_amount</span>: <span class="">2</span></li></ul>}</li><li>{<ul class="json-object collapsible"><li id="listing_type_id"><span class="json-name">listing_type_id</span>: <span class="json-string">&quot;silver&quot;</span></li><li id="listing_type_name"><span class="json-name">listing_type_name</span>: <span class="json-string">&quot;Plata&quot;</span></li><li id="listing_exposure"><span class="json-name">listing_exposure</span>: <span class="json-string">&quot;mid&quot;</span></li><li id="requires_picture"><span class="json-name">requires_picture</span>: <span class="">false</span></li><li id="currency_id"><span class="json-name">currency_id</span>: <span class="json-string"><a href="/currencies/ARS">"ARS"</a></span></li><li id="listing_fee_amount"><span class="json-name">listing_fee_amount</span>: <span class="">2</span></li><li id="sale_fee_amount"><span class="json-name">sale_fee_amount</span>: <span class="">2</span></li></ul>}</li><li>{<ul class="json-object collapsible"><li id="listing_type_id"><span class="json-name">listing_type_id</span>: <span class="json-string">&quot;bronze&quot;</span></li><li id="listing_type_name"><span class="json-name">listing_type_name</span>: <span class="json-string">&quot;Bronce&quot;</span></li><li id="listing_exposure"><span class="json-name">listing_exposure</span>: <span class="json-string">&quot;low&quot;</span></li><li id="requires_picture"><span class="json-name">requires_picture</span>: <span class="">false</span></li><li id="currency_id"><span class="json-name">currency_id</span>: <span class="json-string"><a href="/currencies/ARS">"ARS"</a></span></li><li id="listing_fee_amount"><span class="json-name">listing_fee_amount</span>: <span class="">0</span></li><li id="sale_fee_amount"><span class="json-name">sale_fee_amount</span>: <span class="">2</span></li></ul>}</li><li>{<ul class="json-object collapsible"><li id="listing_type_id"><span class="json-name">listing_type_id</span>: <span class="json-string">&quot;free&quot;</span></li><li id="listing_type_name"><span class="json-name">listing_type_name</span>: <span class="json-string">&quot;Gratuita&quot;</span></li><li id="listing_exposure"><span class="json-name">listing_exposure</span>: <span class="json-string">&quot;lowest&quot;</span></li><li id="requires_picture"><span class="json-name">requires_picture</span>: <span class="">false</span></li><li id="currency_id"><span class="json-name">currency_id</span>: <span class="json-string"><a href="/currencies/ARS">"ARS"</a></span></li><li id="listing_fee_amount"><span class="json-name">listing_fee_amount</span>: <span class="">0</span></li><li id="sale_fee_amount"><span class="json-name">sale_fee_amount</span>: <span class="">0</span></li></ul>}</li></ul>]</div>
+        </section>
+        <section class="text">
+            <h1>Costo del Tipo Publicaci&oacute;n.</h1>
+            <p>Retorna el costo por vender y comprar en MercadoLibre. Este se calcula en base al tipo de publicaci&oacute;n, a la categor&iacute;a, a la cantidad, al precio y a la moneda en la que el art&iacute;culo se desea publicar.</p>
+            <h2>Attributes</h2>
+            
+            
+            
+                <table class="attributes">
+                  
+                  
+                      <tr>
+                        <td>listing_type_id</td>
+                        <td>Identificador &uacute;nico del tipo de publicaci&oacute;n.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>listing_type_name</td>
+                        <td>Nombre del tipo de publicaci&oacute;n.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>listing_exposure</td>
+                        <td>Nivel de exposici&oacute;n asociado al tipo de publicaci&oacute;n.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>requires_picture</td>
+                        <td>Indica si el tipo de publicaci&oacute;n requiere que el art&iacute;culo tenga al menos una imagen.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>currency_id</td>
+                        <td>Indica el tipo de moneda en el cual se est&aacute;n expresando los costos.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>listing_fee_amount</td>
+                        <td>Monto a cobrar del costo por publicar.
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>sale_fee_amount</td>
+                        <td>Monto a cobrar del costo por vender.
+
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+            <h2>Allowed methods</h2>
+            <ul class="methods">
+              
+                  <li>
+                    <h3>GET <span>/sites/:site_id/listing_prices?price=5000</span></h3>
+                    <p>Retorna los diferentes tipos de publicaci&oacute;n y sus costos asociados en moneda local, con el precio del art&iacute;culo igual a 5000 (moneda local). </p>
+                  </li>
+              
+                  <li>
+                    <h3>GET <span>/sites/:site_id/listing_prices?price=5000&listing_type_id=gold</span></h3>
+                    <p>Retorna el costo asociado al tipo de publicaci&oacute;n Gold en moneda local, con el precio del art&iacute;culo igual a 5000 (moneda local). </p>
+                  </li>
+              
+                  <li>
+                    <h3>GET <span>/sites/:site_id/listing_prices?price=5000&quantity=5</span></h3>
+                    <p>Retorna los diferentes tipos de publicaci&oacute;n y sus costos asociados en moneda local, con el precio del art&iacute;culo igual a 5000 (moneda local), y con una cantidad de art&iacute;culos igual a 5. </p>
+                  </li>
+              
+                  <li>
+                    <h3>GET <span>/sites/:site_id/listing_prices?price=5000&category_id=MLA1744</span></h3>
+                    <p>Retorna los diferentes tipos de publicaci&oacute;n y sus costos asociados en moneda local, con el precio del art&iacute;culo igual a 5000 (moneda local), y para la categor&iacute;a MLA1744. </p>
+                  </li>
+              
+                  <li>
+                    <h3>GET <span>/sites/:site_id/listing_prices?price=5000&currency_id=USD</span></h3>
+                    <p>Retorna los diferentes tipos de publicaci&oacute;n y sus costos asociados en moneda local, con el precio del art&iacute;culo igual a 5000 (moneda USD). </p>
+                  </li>
+              
+            </ul>
+            <h2>Related resources</h2>
+            <ul class="related">
+              
+                <li><h3><span>listing_types</span></h3></li>
+              
+                <li><h3><span>listing_exposures</span></h3></li>
+              
+            </ul>
+            
+                <table class="variables">
+                    <tbody>
+                        <tr>
+                            <th>Variable</th>
+                            <th>Value</th>
+                        </tr>
+                        <tr>
+                            <td>Host</td>
+                            <td>172.16.133.105</td>
+                        </tr>
+                        <tr>
+                            <td>Total Time</td>
+                            <td>121</td>
+                        </tr>
+                        <tr>
+                            <td># DB Statements</td>
+                            <td>42</td>
+                        </tr>
+                    </tbody>
+                </table>
+            
+        </section>
+    </body>
+</html>

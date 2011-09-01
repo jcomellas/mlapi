@@ -1,0 +1,213 @@
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <script type="text/javascript">
+            document.addEventListener('DOMContentLoaded', function() {
+              // Click handler for collapsing and expanding objects and arrays
+              function collapse(evt) {
+                var collapser = evt.target;
+               
+                var target = collapser.parentNode.getElementsByClassName('collapsible');
+                
+                if ( ! target.length ) {
+                  return;
+                }
+                
+                target = target[0];
+
+                if ( target.style.display == 'none' ) {
+                  var ellipsis = target.parentNode.getElementsByClassName('ellipsis')[0];
+                  target.parentNode.removeChild(ellipsis);
+                  target.style.display = '';
+                } else {
+                  target.style.display = 'none';
+                  
+                  var ellipsis = document.createElement('span');
+                  ellipsis.className = 'ellipsis';
+                  ellipsis.innerHTML = ' &hellip; ';
+                  target.parentNode.insertBefore(ellipsis, target);
+                }
+                
+                collapser.innerHTML = ( collapser.innerHTML == '-' ) ? '+' : '-';
+              }
+              
+              function addCollapser(item) {
+                // This mainly filters out the root object (which shouldn't be collapsible)
+                if ( item.nodeName != 'LI' ) {
+                  return;
+                }
+                
+                var collapser = document.createElement('div');
+                collapser.className = 'collapser';
+                collapser.innerHTML = '-';
+                collapser.addEventListener('click', collapse, false);
+                item.insertBefore(collapser, item.firstChild);
+              }
+              
+              var items = document.getElementsByClassName('collapsible');
+              for( var i = 0; i < items.length; i++) {
+                addCollapser(items[i].parentNode);
+              }
+            }, false);
+        </script>
+        <style>
+          body { font-family: "Helvetica Neue", sans-serif; font-size: 12px; margin: 0; padding: 15px 15px 15px 550px; line-height: 1.4em; } 
+          .json-name { font-weight: bold; } 
+          .json-null { color: red; } 
+          .json-boolean { color: blue; } 
+          .json-number { color: blue; } 
+          .json-string { color: green; white-space: pre-wrap; } 
+          .collapser { position: absolute; left: -1em; cursor: pointer; } 
+          .code li { position: relative; } 
+          .code li:after { content: ','; } 
+          .code li:last-child:after { content: ''; } 
+          .code ul { list-style: none; margin: 0 0 0 2em; padding: 0; } 
+          .code { background-color: #f0f0f0; border-color:#D8DFEA; border-style:solid; border-width:1px 1px 1px 3px; margin: 0; overflow:auto; padding: 15px 10px; font-family: "Menlo", "Monaco", monospace; clear: both; line-height: 16px;
+          } 
+
+          h1 {
+            font-size: 26px;
+          }
+
+          h2 {
+            font-size: 18px;
+          }
+
+          h3 {
+            font-size: 15px;
+            margin-bottom: 5px;
+          }
+
+          section {
+            display: block;
+          }
+
+          body > section {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 50%;
+            overflow: auto;
+          }
+
+          body > section:first-child {
+            left: 0;
+          }
+          
+          body > section:last-child {
+            right: 0;
+          }
+
+          section.text {
+
+          }
+
+          section.text > * {
+            margin-left: 20px;
+            margin-right: 20px;
+          }
+
+          table {
+            border-collapse: collapse;
+            border-width: 0;
+          }
+
+          table td {
+            vertical-align: top;
+            padding: 4px 6px;
+            text-align: left;
+          }
+
+          table td {
+            border: 1px solid #ccc;
+          }
+          
+          table.attributes td:first-child {
+            font-family: "Menlo", "Monaco", monospace;
+            font-weight: bold;
+          }
+
+          ul h3 {
+            font-family: "Menlo", "Monaco", monospace;
+          }
+          
+          ul h3 span {
+            color: #999;
+          }
+          a {
+            font-weight: bold;
+          }
+       </style>
+       <title>Fotos</title>
+    </head>
+    <body>
+        <section>
+            <div class="code">{<ul class="json-object collapsible"><li id="id"><span class="json-name">id</span>: <span class="json-string">&quot;MLA719522498_032011&quot;</span></li><li id="variations"><span class="json-name">variations</span>: [<ul class="json-array collapsible"><li>{<ul class="json-object collapsible"><li id="size"><span class="json-name">size</span>: <span class="json-string">&quot;&quot;</span></li><li id="url"><span class="json-name">url</span>: <span class="json-string"><a href="http://img2.mlstatic.com/s_MLA_v_F_f_719522498_032011.jpg">&quot;http://img2.mlstatic.com/s_MLA_v_F_f_719522498_032011.jpg&quot;</a></span></li><li id="secure_url"><span class="json-name">secure_url</span>: <span class="json-string"><a href="https://www.mercadolibre.com/jm/img?s=MLA&v=F&f=719522498_032011.jpg">&quot;https://www.mercadolibre.com/jm/img?s=MLA&amp;v=F&amp;f=719522498_032011.jpg&quot;</a></span></li></ul>}</li><li>{<ul class="json-object collapsible"><li id="size"><span class="json-name">size</span>: <span class="json-string">&quot;&quot;</span></li><li id="url"><span class="json-name">url</span>: <span class="json-string"><a href="http://img2.mlstatic.com/s_MLA_v_O_f_719522498_032011.jpg">&quot;http://img2.mlstatic.com/s_MLA_v_O_f_719522498_032011.jpg&quot;</a></span></li><li id="secure_url"><span class="json-name">secure_url</span>: <span class="json-string"><a href="https://www.mercadolibre.com/jm/img?s=MLA&v=O&f=719522498_032011.jpg">&quot;https://www.mercadolibre.com/jm/img?s=MLA&amp;v=O&amp;f=719522498_032011.jpg&quot;</a></span></li></ul>}</li><li>{<ul class="json-object collapsible"><li id="size"><span class="json-name">size</span>: <span class="json-string">&quot;320x320&quot;</span></li><li id="url"><span class="json-name">url</span>: <span class="json-string"><a href="http://img2.mlstatic.com/s_MLA_v_V_f_719522498_032011.jpg">&quot;http://img2.mlstatic.com/s_MLA_v_V_f_719522498_032011.jpg&quot;</a></span></li><li id="secure_url"><span class="json-name">secure_url</span>: <span class="json-string"><a href="https://www.mercadolibre.com/jm/img?s=MLA&v=V&f=719522498_032011.jpg">&quot;https://www.mercadolibre.com/jm/img?s=MLA&amp;v=V&amp;f=719522498_032011.jpg&quot;</a></span></li></ul>}</li><li>{<ul class="json-object collapsible"><li id="size"><span class="json-name">size</span>: <span class="json-string">&quot;280x280&quot;</span></li><li id="url"><span class="json-name">url</span>: <span class="json-string"><a href="http://img2.mlstatic.com/s_MLA_v_E_f_719522498_032011.jpg">&quot;http://img2.mlstatic.com/s_MLA_v_E_f_719522498_032011.jpg&quot;</a></span></li><li id="secure_url"><span class="json-name">secure_url</span>: <span class="json-string"><a href="https://www.mercadolibre.com/jm/img?s=MLA&v=E&f=719522498_032011.jpg">&quot;https://www.mercadolibre.com/jm/img?s=MLA&amp;v=E&amp;f=719522498_032011.jpg&quot;</a></span></li></ul>}</li><li>{<ul class="json-object collapsible"><li id="size"><span class="json-name">size</span>: <span class="json-string">&quot;250x250&quot;</span></li><li id="url"><span class="json-name">url</span>: <span class="json-string"><a href="http://img2.mlstatic.com/s_MLA_v_P_f_719522498_032011.jpg">&quot;http://img2.mlstatic.com/s_MLA_v_P_f_719522498_032011.jpg&quot;</a></span></li><li id="secure_url"><span class="json-name">secure_url</span>: <span class="json-string"><a href="https://www.mercadolibre.com/jm/img?s=MLA&v=P&f=719522498_032011.jpg">&quot;https://www.mercadolibre.com/jm/img?s=MLA&amp;v=P&amp;f=719522498_032011.jpg&quot;</a></span></li></ul>}</li><li>{<ul class="json-object collapsible"><li id="size"><span class="json-name">size</span>: <span class="json-string">&quot;160x160&quot;</span></li><li id="url"><span class="json-name">url</span>: <span class="json-string"><a href="http://img2.mlstatic.com/s_MLA_v_T_f_719522498_032011.jpg">&quot;http://img2.mlstatic.com/s_MLA_v_T_f_719522498_032011.jpg&quot;</a></span></li><li id="secure_url"><span class="json-name">secure_url</span>: <span class="json-string"><a href="https://www.mercadolibre.com/jm/img?s=MLA&v=T&f=719522498_032011.jpg">&quot;https://www.mercadolibre.com/jm/img?s=MLA&amp;v=T&amp;f=719522498_032011.jpg&quot;</a></span></li></ul>}</li><li>{<ul class="json-object collapsible"><li id="size"><span class="json-name">size</span>: <span class="json-string">&quot;120x120&quot;</span></li><li id="url"><span class="json-name">url</span>: <span class="json-string"><a href="http://img2.mlstatic.com/s_MLA_v_G_f_719522498_032011.jpg">&quot;http://img2.mlstatic.com/s_MLA_v_G_f_719522498_032011.jpg&quot;</a></span></li><li id="secure_url"><span class="json-name">secure_url</span>: <span class="json-string"><a href="https://www.mercadolibre.com/jm/img?s=MLA&v=G&f=719522498_032011.jpg">&quot;https://www.mercadolibre.com/jm/img?s=MLA&amp;v=G&amp;f=719522498_032011.jpg&quot;</a></span></li></ul>}</li><li>{<ul class="json-object collapsible"><li id="size"><span class="json-name">size</span>: <span class="json-string">&quot;90x90&quot;</span></li><li id="url"><span class="json-name">url</span>: <span class="json-string"><a href="http://img2.mlstatic.com/s_MLA_v_I_f_719522498_032011.jpg">&quot;http://img2.mlstatic.com/s_MLA_v_I_f_719522498_032011.jpg&quot;</a></span></li><li id="secure_url"><span class="json-name">secure_url</span>: <span class="json-string"><a href="https://www.mercadolibre.com/jm/img?s=MLA&v=I&f=719522498_032011.jpg">&quot;https://www.mercadolibre.com/jm/img?s=MLA&amp;v=I&amp;f=719522498_032011.jpg&quot;</a></span></li></ul>}</li><li>{<ul class="json-object collapsible"><li id="size"><span class="json-name">size</span>: <span class="json-string">&quot;70x70&quot;</span></li><li id="url"><span class="json-name">url</span>: <span class="json-string"><a href="http://img2.mlstatic.com/s_MLA_v_R_f_719522498_032011.jpg">&quot;http://img2.mlstatic.com/s_MLA_v_R_f_719522498_032011.jpg&quot;</a></span></li><li id="secure_url"><span class="json-name">secure_url</span>: <span class="json-string"><a href="https://www.mercadolibre.com/jm/img?s=MLA&v=R&f=719522498_032011.jpg">&quot;https://www.mercadolibre.com/jm/img?s=MLA&amp;v=R&amp;f=719522498_032011.jpg&quot;</a></span></li></ul>}</li><li>{<ul class="json-object collapsible"><li id="size"><span class="json-name">size</span>: <span class="json-string">&quot;40x40&quot;</span></li><li id="url"><span class="json-name">url</span>: <span class="json-string"><a href="http://img2.mlstatic.com/s_MLA_v_M_f_719522498_032011.jpg">&quot;http://img2.mlstatic.com/s_MLA_v_M_f_719522498_032011.jpg&quot;</a></span></li><li id="secure_url"><span class="json-name">secure_url</span>: <span class="json-string"><a href="https://www.mercadolibre.com/jm/img?s=MLA&v=M&f=719522498_032011.jpg">&quot;https://www.mercadolibre.com/jm/img?s=MLA&amp;v=M&amp;f=719522498_032011.jpg&quot;</a></span></li></ul>}</li></ul>]</ul>}</li></div>
+        </section>
+        <section class="text">
+            <h1>Fotos</h1>
+            <p>Muestra informaci&oacute;n de las fotos en MercadoLibre</p>
+            <h2>Attributes</h2>
+            
+            
+            
+                <table class="attributes">
+                  
+                  
+                      <tr>
+                        <td>id</td>
+                        <td>Identificaci&oacute;n &uacute;nico de la foto
+
+                        </td>
+                      </tr>
+                  
+                      <tr>
+                        <td>variations</td>
+                        <td>Las distintas variaciones que ofrece MercadoLibre para ver la foto
+
+                        </td>
+                      </tr>
+                  
+                </table>
+            
+            <h2>Allowed methods</h2>
+            <ul class="methods">
+              
+                  <li>
+                    <h3>GET <span>/pictures/:id</span></h3>
+                    <p>Retorna una foto con sus variaciones </p>
+                  </li>
+              
+            </ul>
+            <h2>Related resources</h2>
+            <ul class="related">
+              
+                <li><h3><span>/items</span></h3></li>
+              
+            </ul>
+            
+                <table class="variables">
+                    <tbody>
+                        <tr>
+                            <th>Variable</th>
+                            <th>Value</th>
+                        </tr>
+                        <tr>
+                            <td>Host</td>
+                            <td>172.16.143.182</td>
+                        </tr>
+                        <tr>
+                            <td>Total Time</td>
+                            <td>12</td>
+                        </tr>
+                        <tr>
+                            <td># DB Statements</td>
+                            <td>1</td>
+                        </tr>
+                    </tbody>
+                </table>
+            
+        </section>
+    </body>
+</html>
