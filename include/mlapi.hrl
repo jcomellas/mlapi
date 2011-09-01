@@ -114,7 +114,7 @@
 
 -record(mlapi_listing_price, {
           %% site_id added to be able to store the record in Mnesia
-          site_id                                           :: mlapi_site_id(),
+          %% site_id                                           :: mlapi_site_id(),
           listing_type_id                                   :: mlapi_listing_type_id(),
           listing_type_name                                 :: binary(),
           listing_exposure                                  :: mlapi_listing_exposure_id(),
@@ -272,7 +272,7 @@
 -record(mlapi_user, {
           id,
           nickname,
-          registration_date,
+          registration_date                                 :: calendar:datetime(),
           first_name                                        :: binary(),
           last_name                                         :: binary(),
           country_id                                        :: mlapi_country_id(),
@@ -346,6 +346,15 @@
           min_allowed_amount                                :: float(),
           max_allowed_amount                                :: float(),
           minimum_charge                                    :: float()
+         }).
+
+-record(mlapi_exceptions_by_card_issuer, {
+          card_issuer                                       :: #mlapi_card_issuer{},
+          labels = []                                       :: [binary()],
+          thumbnail                                         :: mlapi_url(),
+          secure_thumbnail                                  :: mlapi_url(),
+          payer_costs                                       :: [#mlapi_payer_costs{}],
+          total_financial_cost                              :: float()
          }).
 
 -record(mlapi_payment_method_ext, {
