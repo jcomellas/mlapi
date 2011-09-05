@@ -509,7 +509,7 @@ json_to_term(Doc, RecordName, record) ->
 json_to_record({Elements}, RecordOrName) when is_list(Elements) ->
     JsonHelperFun = #json_helper{
       child_to_term = fun json_to_record/2,
-      append = fun (Name, Value, Record) -> set_value(element(1, Record), Name, Record, Value) end,
+      append = fun (Name, Value, Record) -> set_value(Name, Value, Record) end,
       finish = fun (Record) -> Record end
      },
     {RecordName, Record} = if
