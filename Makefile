@@ -18,6 +18,9 @@ doc:
 	@rebar skip_deps=true doc
 
 clean:
+	@rebar skip_deps=true clean
+
+depclean:
 	@rebar clean
 
 distclean:
