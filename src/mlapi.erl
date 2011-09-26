@@ -88,6 +88,8 @@
 -define(TRENDS,               "/trends/search").
 -define(GEOLOCATION,          "/geolocation").
 
+-define(SET_RECORD(RecordName, Options), (lists:keystore(record, 1, Options, {record, RecordName}))).
+
 
 %% @doc Start the application and all its dependencies.
 start() ->
@@ -135,7 +137,7 @@ get_sites() ->
 
 -spec get_sites([option()]) -> response().
 get_sites(Options) ->
-    request(?SITES, Options).
+    request(?SITES, ?SET_RECORD(mlapi_site, Options)).
 
 -spec get_site(mlapi_site_id() | string()) -> response().
 get_site(SiteId) ->
@@ -143,7 +145,7 @@ get_site(SiteId) ->
 
 -spec get_site(mlapi_site_id() | string(), [option()]) -> response().
 get_site(SiteId, Options) ->
-    request(?SITES "/" ++ to_string(SiteId), Options).
+    request(?SITES "/" ++ to_string(SiteId), ?SET_RECORD(mlapi_site_ext, Options)).
 
 
 -spec get_countries() -> response().
@@ -152,7 +154,7 @@ get_countries() ->
 
 -spec get_countries([option()]) -> response().
 get_countries(Options) ->
-    request(?COUNTRIES, Options).
+    request(?COUNTRIES, ?SET_RECORD(mlapi_country, Options)).
 
 -spec get_country(mlapi_country_id() | string()) -> response().
 get_country(CountryId) ->
@@ -160,7 +162,7 @@ get_country(CountryId) ->
 
 -spec get_country(mlapi_country_id() | string(), [option()]) -> response().
 get_country(CountryId, Options) ->
-    request(?COUNTRIES "/" ++ to_string(CountryId), Options).
+    request(?COUNTRIES "/" ++ to_string(CountryId), ?SET_RECORD(mlapi_country_ext, Options)).
 
 
 -spec get_state(mlapi_state_id() | string()) -> response().
@@ -169,7 +171,7 @@ get_state(StateId) ->
 
 -spec get_state(mlapi_state_id() | string(), [option()]) -> response().
 get_state(StateId, Options) ->
-    request(?STATES "/" ++ to_string(StateId), Options).
+    request(?STATES "/" ++ to_string(StateId), ?SET_RECORD(mlapi_state_ext, Options)).
 
 
 -spec get_city(mlapi_city_id() | string()) -> response().
@@ -178,7 +180,7 @@ get_city(CityId) ->
 
 -spec get_city(mlapi_city_id() | string(), [option()]) -> response().
 get_city(CityId, Options) ->
-    request(?CITIES "/" ++ to_string(CityId), Options).
+    request(?CITIES "/" ++ to_string(CityId), ?SET_RECORD(mlapi_city_ext, Options)).
 
 
 -spec get_currencies() -> response().
@@ -187,7 +189,7 @@ get_currencies() ->
 
 -spec get_currencies([option()]) -> response().
 get_currencies(Options) ->
-    request(?CURRENCIES, Options).
+    request(?CURRENCIES, ?SET_RECORD(mlapi_currency, Options)).
 
 -spec get_currency(mlapi_currency_id() | string()) -> response().
 get_currency(CurrencyId) ->
@@ -195,7 +197,7 @@ get_currency(CurrencyId) ->
 
 -spec get_currency(mlapi_currency_id() | string(), [option()]) -> response().
 get_currency(CurrencyId, Options) ->
-    request(?CURRENCIES "/" ++ to_string(CurrencyId), Options).
+    request(?CURRENCIES "/" ++ to_string(CurrencyId), ?SET_RECORD(mlapi_currency_ext, Options)).
 
 
 -spec get_currency_conversion(FromCurrencyId :: mlapi_currency_id() | string(),
@@ -206,7 +208,8 @@ get_currency_conversion(FromCurrencyId, ToCurrencyId) ->
 -spec get_currency_conversion(FromCurrencyId :: mlapi_currency_id() | string(),
                               ToCurrencyId :: mlapi_currency_id() | string(), [option()] | calendar:datetime()) -> response().
 get_currency_conversion(FromCurrencyId, ToCurrencyId, Options) when is_list(Options) ->
-    request(?CURRENCY_CONVERSIONS "?from=" ++ to_string(FromCurrencyId) ++ "&to=" ++ to_string(ToCurrencyId), Options);
+    request(?CURRENCY_CONVERSIONS "?from=" ++ to_string(FromCurrencyId) ++ "&to=" ++ to_string(ToCurrencyId),
+            ?SET_RECORD(mlapi_currency_conversion, Options));
 get_currency_conversion(FromCurrencyId, ToCurrencyId, DateTime) ->
     get_currency_conversion(FromCurrencyId, ToCurrencyId, DateTime, []).
 
@@ -215,7 +218,8 @@ get_currency_conversion(FromCurrencyId, ToCurrencyId, DateTime) ->
 get_currency_conversion(FromCurrencyId, ToCurrencyId, {{Year, Month, Day}, {Hour, Min, _Sec}}, Options) ->
     %% The conversion date must be formatted as: dd/MM/yyyy-HH:mm
     DateArg = io_lib:format("&date=~2.2.0w/~2.2.0w/~4.4.0w-~2.2.0w:~2.2.0w", [Day, Month, Year, Hour, Min]),
-    request(?CURRENCY_CONVERSIONS "?from=" ++ to_string(FromCurrencyId) ++ "&to=" ++ to_string(ToCurrencyId) ++ DateArg, Options).
+    request(?CURRENCY_CONVERSIONS "?from=" ++ to_string(FromCurrencyId) ++ "&to=" ++ to_string(ToCurrencyId) ++ DateArg,
+            ?SET_RECORD(mlapi_currency_conversion, Options)).
 
 
 -spec get_listing_exposures(mlapi_site_id() | string()) -> response().
@@ -224,7 +228,7 @@ get_listing_exposures(SiteId) ->
 
 -spec get_listing_exposures(mlapi_site_id() | string(), [option()]) -> response().
 get_listing_exposures(SiteId, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_EXPOSURES, Options).
+    request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_EXPOSURES, ?SET_RECORD(mlapi_listing_exposures, Options)).
 
 -spec get_listing_exposure(mlapi_site_id() | string(), mlapi_listing_exposure_id() | string()) -> response().
 get_listing_exposure(SiteId, ListingExposureId) ->
@@ -232,7 +236,8 @@ get_listing_exposure(SiteId, ListingExposureId) ->
 
 -spec get_listing_exposure(mlapi_site_id() | string(), mlapi_listing_exposure_id() | string(), [option()]) -> response().
 get_listing_exposure(SiteId, ListingExposureId, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_EXPOSURES "/" ++ to_string(ListingExposureId), Options).
+    request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_EXPOSURES "/" ++ to_string(ListingExposureId),
+            ?SET_RECORD(mlapi_listing_exposure, Options)).
 
 
 -spec get_listing_types(mlapi_site_id() | string()) -> response().
@@ -241,7 +246,7 @@ get_listing_types(SiteId) ->
 
 -spec get_listing_types(mlapi_site_id() | string(), [option()]) -> response().
 get_listing_types(SiteId, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_TYPES, Options).
+    request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_TYPES, ?SET_RECORD(mlapi_listing_type, Options)).
 
 
 -spec get_listing_prices(mlapi_site_id() | string()) -> response().
@@ -250,7 +255,7 @@ get_listing_prices(SiteId) ->
 
 -spec get_listing_prices(mlapi_site_id() | string(), [option()]) -> response().
 get_listing_prices(SiteId, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_PRICES "?price=1", Options).
+    request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_PRICES "?price=1", ?SET_RECORD(mlapi_listing_price, Options)).
 
 
 -spec get_payment_types() -> response().
@@ -259,7 +264,7 @@ get_payment_types() ->
 
 -spec get_payment_types([option()]) -> response().
 get_payment_types(Options) ->
-    request(?PAYMENT_TYPES, Options).
+    request(?PAYMENT_TYPES, ?SET_RECORD(mlapi_payment_type, Options)).
 
 -spec get_payment_type(mlapi_payment_type_id() | string()) -> response().
 get_payment_type(PaymentTypeId) ->
@@ -267,7 +272,7 @@ get_payment_type(PaymentTypeId) ->
 
 -spec get_payment_type(mlapi_payment_type_id() | string(), [option()]) -> response().
 get_payment_type(PaymentTypeId, Options) ->
-    request(?PAYMENT_TYPES "/" ++ to_string(PaymentTypeId), Options).
+    request(?PAYMENT_TYPES "/" ++ to_string(PaymentTypeId), ?SET_RECORD(mlapi_payment_type, Options)).
 
 
 -spec get_payment_methods(mlapi_site_id() | string()) -> response().
@@ -276,7 +281,7 @@ get_payment_methods(SiteId) ->
 
 -spec get_payment_methods(mlapi_site_id() | string(), [option()]) -> response().
 get_payment_methods(SiteId, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?PAYMENT_METHODS, Options).
+    request(?SITES "/" ++ to_string(SiteId) ++ ?PAYMENT_METHODS, ?SET_RECORD(mlapi_payment_method, Options)).
 
 -spec get_payment_method(mlapi_site_id() | string(), mlapi_payment_method_id() | string()) -> response().
 get_payment_method(SiteId, PaymentMethodId) ->
@@ -284,7 +289,8 @@ get_payment_method(SiteId, PaymentMethodId) ->
 
 -spec get_payment_method(mlapi_site_id() | string(), mlapi_payment_method_id() | string(), [option()]) -> response().
 get_payment_method(SiteId, PaymentMethodId, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?PAYMENT_METHODS "/" ++ to_string(PaymentMethodId), Options).
+    request(?SITES "/" ++ to_string(SiteId) ++ ?PAYMENT_METHODS "/" ++ to_string(PaymentMethodId),
+            ?SET_RECORD(mlapi_payment_method_ext, Options)).
 
 
 -spec get_card_issuers(mlapi_site_id() | string()) -> response().
@@ -293,7 +299,7 @@ get_card_issuers(SiteId) ->
 
 -spec get_card_issuers(mlapi_site_id() | string(), [option()]) -> response().
 get_card_issuers(SiteId, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?CARD_ISSUERS, Options).
+    request(?SITES "/" ++ to_string(SiteId) ++ ?CARD_ISSUERS, ?SET_RECORD(mlapi_card_issuer, Options)).
 
 -spec get_card_issuer(mlapi_site_id() | string(), mlapi_card_issuer_id() | string()) -> response().
 get_card_issuer(SiteId, CardIssuerId) ->
@@ -301,7 +307,8 @@ get_card_issuer(SiteId, CardIssuerId) ->
 
 -spec get_card_issuer(mlapi_site_id() | string(), mlapi_card_issuer_id() | string(), [option()]) -> response().
 get_card_issuer(SiteId, CardIssuerId, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?CARD_ISSUERS "/" ++ to_string(CardIssuerId), Options).
+    request(?SITES "/" ++ to_string(SiteId) ++ ?CARD_ISSUERS "/" ++ to_string(CardIssuerId),
+            ?SET_RECORD(mlapi_card_issuer_ext, Options)).
 
 
 -spec get_category(mlapi_category_id() | string()) -> response().
@@ -310,7 +317,7 @@ get_category(CategoryId) ->
 
 -spec get_category(mlapi_category_id() | string(), [option()]) -> response().
 get_category(CategoryId, Options) ->
-    request(?CATEGORIES "/" ++ to_string(CategoryId), Options).
+    request(?CATEGORIES "/" ++ to_string(CategoryId), ?SET_RECORD(mlapi_category_ext, Options)).
 
 
 -spec get_user(mlapi_user_id() | string()) -> response().
@@ -319,7 +326,7 @@ get_user(UserId) ->
 
 -spec get_user(mlapi_user_id() | string(), [option()]) -> response().
 get_user(UserId, Options) ->
-    request(?USERS "/" ++ to_string(UserId), Options).
+    request(?USERS "/" ++ to_string(UserId), ?SET_RECORD(mlapi_user, Options)).
 
 
 -spec get_item(mlapi_item_id() | string()) -> response().
@@ -328,7 +335,7 @@ get_item(ItemId) ->
 
 -spec get_item(mlapi_item_id() | string(), [option()]) -> response().
 get_item(ItemId, Options) ->
-    request(?ITEMS "/" ++ to_string(ItemId), Options).
+    request(?ITEMS "/" ++ to_string(ItemId), ?SET_RECORD(mlapi_item, Options)).
 
 
 -spec get_picture(mlapi_picture_id() | string()) -> response().
@@ -337,7 +344,7 @@ get_picture(PictureId) ->
 
 -spec get_picture(mlapi_picture_id() | string(), [option()]) -> response().
 get_picture(PictureId, Options) ->
-    request(?PICTURES "/" ++ to_string(PictureId), Options).
+    request(?PICTURES "/" ++ to_string(PictureId), ?SET_RECORD(mlapi_picture, Options)).
 
 
 -spec get_trends(mlapi_site_id() | string()) -> response().
@@ -346,7 +353,7 @@ get_trends(SiteId) ->
 
 -spec get_trends(mlapi_site_id() | string(), [option()]) -> response().
 get_trends(SiteId, Options) when is_list(Options) ->
-    request(?TRENDS "?site=" ++ to_string(SiteId), Options).
+    request(?TRENDS "?site=" ++ to_string(SiteId), ?SET_RECORD(mlapi_trend, Options)).
 
 
 -spec get_category_trends(mlapi_site_id() | string(), mlapi_category_id() | string()) -> response().
@@ -355,13 +362,15 @@ get_category_trends(SiteId, CategoryId) ->
 
 -spec get_category_trends(mlapi_site_id() | string(), mlapi_category_id() | string(), [option()] | non_neg_integer()) -> response().
 get_category_trends(SiteId, CategoryId, Options) when is_list(Options) ->
-    request(?TRENDS "?site=" ++ to_string(SiteId) ++ "&category=" ++ to_string(CategoryId), Options);
+    request(?TRENDS "?site=" ++ to_string(SiteId) ++ "&category=" ++ to_string(CategoryId),
+            ?SET_RECORD(mlapi_trend, Options));
 get_category_trends(SiteId, CategoryId, Limit) ->
     get_category_trends(SiteId, CategoryId, Limit, []).
 
 -spec get_category_trends(mlapi_site_id() | string(), mlapi_category_id() | string(), Limit :: non_neg_integer(), [option()]) -> response().
 get_category_trends(SiteId, CategoryId, Limit, Options) ->
-    request(?TRENDS "?site=" ++ to_string(SiteId) ++ "&category=" ++ to_string(CategoryId) ++ io_lib:format("&limit=~w", [Limit]), Options).
+    request(?TRENDS "?site=" ++ to_string(SiteId) ++ "&category=" ++ to_string(CategoryId) ++ io_lib:format("&limit=~w", [Limit]),
+            ?SET_RECORD(mlapi_trend, Options)).
 
 
 -spec get_local_geolocation() -> response().
@@ -370,7 +379,7 @@ get_local_geolocation() ->
 
 -spec get_local_geolocation([option()]) -> response().
 get_local_geolocation(Options) ->
-    request(?GEOLOCATION "/whereami", Options).
+    request(?GEOLOCATION "/whereami", ?SET_RECORD(mlapi_geolocation, Options)).
 
 -spec get_geolocation(mlapi_ip_address() | string()) -> response().
 get_geolocation(IpAddr) ->
@@ -378,7 +387,7 @@ get_geolocation(IpAddr) ->
 
 -spec get_geolocation(mlapi_ip_address() | string(), [option()]) -> response().
 get_geolocation(IpAddr, Options) ->
-    request(?GEOLOCATION "/ip/" ++ to_string(IpAddr), Options).
+    request(?GEOLOCATION "/ip/" ++ to_string(IpAddr), ?SET_RECORD(mlapi_geolocation, Options)).
 
 
 -spec search(mlapi_site_id() | string(), Query :: string()) -> response().
@@ -387,7 +396,8 @@ search(SiteId, Query) ->
 
 -spec search(mlapi_site_id() | string(), Query :: string(), [option()]) -> response().
 search(SiteId, Query, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?SEARCH ++ "?q=" ++ ibrowse_lib:url_encode(to_string(Query)), Options).
+    request(?SITES "/" ++ to_string(SiteId) ++ ?SEARCH ++ "?q=" ++ ibrowse_lib:url_encode(to_string(Query)),
+            ?SET_RECORD(mlapi_search_result, Options)).
 
 -spec search(mlapi_site_id() | string(), Query :: string(),
              Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> response().
@@ -398,7 +408,8 @@ search(SiteId, Query, Offset, Limit) ->
              Offset :: non_neg_integer(), Limit :: non_neg_integer(), [option()]) -> response().
 search(SiteId, Query, Offset, Limit, Options) ->
     request(io_lib:format(?SITES "/~s" ?SEARCH "?q=~s&offset=~w&limit=~w",
-                          [SiteId, ibrowse_lib:url_encode(to_string(Query)), Offset, Limit]), Options).
+                          [SiteId, ibrowse_lib:url_encode(to_string(Query)), Offset, Limit]),
+            ?SET_RECORD(mlapi_search_result, Options)).
 
 
 -spec search_category(mlapi_site_id() | string(), mlapi_category_id() | string()) -> response().
@@ -407,7 +418,8 @@ search_category(SiteId, CategoryId) ->
 
 -spec search_category(mlapi_site_id() | string(), mlapi_category_id() | string(), [option()]) -> response().
 search_category(SiteId, CategoryId, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?SEARCH "?category=" ++ ibrowse_lib:url_encode(to_string(CategoryId)), Options).
+    request(?SITES "/" ++ to_string(SiteId) ++ ?SEARCH "?category=" ++ ibrowse_lib:url_encode(to_string(CategoryId)),
+            ?SET_RECORD(mlapi_search_result, Options)).
 
 -spec search_category(mlapi_site_id() | string(), mlapi_category_id() | string(),
                       Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> response().
@@ -418,7 +430,8 @@ search_category(SiteId, CategoryId, Offset, Limit) ->
                       Offset :: non_neg_integer(), Limit :: non_neg_integer(), [option()]) -> response().
 search_category(SiteId, CategoryId, Offset, Limit, Options) ->
     request(io_lib:format(?SITES "/~s" ?SEARCH "?category=~s&offset=~w&limit=~w",
-                          [SiteId, ibrowse_lib:url_encode(to_string(CategoryId)), Offset, Limit]), Options).
+                          [SiteId, ibrowse_lib:url_encode(to_string(CategoryId)), Offset, Limit]),
+            ?SET_RECORD(mlapi_search_result, Options)).
 
 
 -spec search_seller_id(mlapi_site_id() | string(), mlapi_user_id() | string()) -> response().
@@ -427,7 +440,8 @@ search_seller_id(SiteId, SellerId) ->
 
 -spec search_seller_id(mlapi_site_id() | string(), mlapi_user_id() | string(), [option()]) -> response().
 search_seller_id(SiteId, SellerId, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?SEARCH "?seller_id=" ++ ibrowse_lib:url_encode(to_string(SellerId)), Options).
+    request(?SITES "/" ++ to_string(SiteId) ++ ?SEARCH "?seller_id=" ++ ibrowse_lib:url_encode(to_string(SellerId)),
+            ?SET_RECORD(mlapi_search_result, Options)).
 
 -spec search_seller_id(mlapi_site_id() | string(), mlapi_user_id() | string(),
                        Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> response().
@@ -438,7 +452,8 @@ search_seller_id(SiteId, SellerId, Offset, Limit) ->
                        Offset :: non_neg_integer(), Limit :: non_neg_integer(), [option()]) -> response().
 search_seller_id(SiteId, SellerId, Offset, Limit, Options) ->
     request(io_lib:format(?SITES "/~s" ?SEARCH "?seller_id=~s&offset=~w&limit=~w",
-                          [SiteId, ibrowse_lib:url_encode(to_string(SellerId)), Offset, Limit]), Options).
+                          [SiteId, ibrowse_lib:url_encode(to_string(SellerId)), Offset, Limit]),
+            ?SET_RECORD(mlapi_search_result, Options)).
 
 
 -spec search_nickname(mlapi_site_id() | string(), Nickname :: string()) -> response().
@@ -447,7 +462,8 @@ search_nickname(SiteId, Nickname) ->
 
 -spec search_nickname(mlapi_site_id() | string(), Nickname :: string(), [option()]) -> response().
 search_nickname(SiteId, Nickname, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?SEARCH "?nickname=" ++ ibrowse_lib:url_encode(to_string(Nickname)), Options).
+    request(?SITES "/" ++ to_string(SiteId) ++ ?SEARCH "?nickname=" ++ ibrowse_lib:url_encode(to_string(Nickname)),
+            ?SET_RECORD(mlapi_search_result, Options)).
 
 -spec search_nickname(mlapi_site_id() | string(), Nickname :: string(),
                       Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> response().
@@ -458,7 +474,8 @@ search_nickname(SiteId, Nickname, Offset, Limit) ->
                       Offset :: non_neg_integer(), Limit :: non_neg_integer(), [option()]) -> response().
 search_nickname(SiteId, Nickname, Offset, Limit, Options) ->
     request(io_lib:format(?SITES "/~s" ?SEARCH "?nickname=~s&offset=~w&limit=~w",
-                          [SiteId, ibrowse_lib:url_encode(to_string(Nickname)), Offset, Limit]), Options).
+                          [SiteId, ibrowse_lib:url_encode(to_string(Nickname)), Offset, Limit]),
+            ?SET_RECORD(mlapi_search_result, Options)).
 
 
 -spec request(url_path()) -> response().
