@@ -114,7 +114,7 @@
 
 -record(mlapi_listing_price, {
           %% site_id added to be able to store the record in Mnesia
-          %% site_id                                           :: mlapi_site_id(),
+          site_id                                           :: mlapi_site_id(),
           listing_type_id                                   :: mlapi_listing_type_id(),
           listing_type_name                                 :: binary(),
           listing_exposure                                  :: mlapi_listing_exposure_id(),
