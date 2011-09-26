@@ -8,14 +8,14 @@
 %%% a copy of the New BSD license with this software. If not, it can be
 %%% retrieved from: http://www.opensource.org/licenses/bsd-license.php
 %%%-------------------------------------------------------------------
--module(mlapi_cache).
+-module(mlapi_scache).
 -author('Juan Jose Comellas <juanjo@comellas.org>').
 
 -export([init/0, init/1, create_tables/1, create_table/2, upgrade_table/1, tables/0]).
 -export([import/1, import_currencies/0, import_payment_types/0, import_countries/0, import_sites/0,
          import_site/1, import_country/1, import_state/1, import_city/1,
          import_listing_exposures/1, import_listing_types/1, import_listing_prices/1,
-         import_payment_methods/1, import_card_issuers/1, import_category/1]).
+         import_payment_methods/1, import_card_issuers/1, import_category/1, import_categories/2]).
 -export([get_sites/0, get_site/1,
          get_countries/0, get_country/1,
          get_state/1, get_city/1, %% get_neighborhood/1,
@@ -29,22 +29,6 @@
          %% get_categories/1, get_category/1]).
 
 -include("include/mlapi.hrl").
-
-%% Wrappers for records that don't have the table-wide ID in them that is needed
-%% to store them grouped together in Mnesia.
-%% -record(mlapi_listing_price_wrapper, {
-%%           site_id                                           :: mlapi_site_id(),
-%%           listing_price                                     :: #mlapi_listing_price{}
-%%          }).
-%% -record(mlapi_payment_method_wrapper, {
-%%           site_id                                           :: mlapi_site_id(),
-%%           payment_method                                    :: #mlapi_payment_method{}
-%%          }).
-%% -record(mlapi_card_issuer_wrapper, {
-%%           site_id                                           :: mlapi_site_id(),
-%%           card_issuer                                       :: #mlapi_card_issuer{}
-%%          }).
-
 
 -spec init() -> ok | {aborted, Reason :: any()}.
 init() ->
@@ -91,29 +75,6 @@ create_table(Table, Nodes) ->
     end.
 
 
-%% -spec create_table_wrapper(mlapi_table(), [node()]) ->  ok | {aborted, Reason :: any()}.
-%% create_table_wrapper(mlapi_listing_price, Nodes) ->
-%%     create_table_wrapper(mlapi_listing_price_wrapper, Nodes, [site_id, listing_price]);
-%% create_table_wrapper(mlapi_payment_method, Nodes) ->
-%%     create_table_wrapper(mlapi_payment_method_wrapper, Nodes, [site_id, payment_method]);
-%% create_table_wrapper(mlapi_card_issuer, Nodes) ->
-%%     create_table_wrapper(mlapi_card_issuer_wrapper, Nodes, [site_id, card_issuer]).
-
-
-%% -spec create_table_wrapper(mlapi_table(), [node()], [mlapi_field()]) ->  ok | {aborted, Reason :: any()}.
-%% create_table_wrapper(Table, Nodes, Fields) ->
-%%     case mnesia:create_table(Table, [{access_mode, read_write},
-%%                                      {attributes, Fields},
-%%                                      {disc_copies, Nodes},
-%%                                      {type, bag},
-%%                                      {local_content, true}]) of
-%%         {atomic, ok} ->
-%%             ok;
-%%         Error ->
-%%             Error
-%%     end.
-
-
 -spec upgrade_table(mlapi_table()) -> {atomic, ok} | {aborted, Reason :: any()}.
 upgrade_table(Table) ->
     %% Replace 'ignore' with a function that performs the schema upgrade once the schema changes.
@@ -123,26 +84,26 @@ upgrade_table(Table) ->
 -spec tables() -> [mlapi_table()].
 tables() ->
     [
-     mlapi_last_update,
-     mlapi_currency,
-     mlapi_payment_type,
-     mlapi_country,
-     mlapi_country_ext,
-     mlapi_state,
-     mlapi_state_ext,
-     mlapi_city,
-     mlapi_city_ext,
-     mlapi_site,
-     mlapi_site_ext,
-     mlapi_listing_exposure,
-     mlapi_listing_type,
-     mlapi_listing_price,
-     mlapi_payment_method,
-     mlapi_payment_method_ext,
-     mlapi_card_issuer,
-     mlapi_card_issuer_ext,
-     mlapi_category,
-     mlapi_category_ext
+     {mlapi_last_update,            1},
+     {mlapi_currency,               1},
+     {mlapi_payment_type,           1},
+     {mlapi_country,                1},
+     {mlapi_country_ext,            1},
+     {mlapi_state,                  1},
+     {mlapi_state_ext,              1},
+     {mlapi_city,                   1},
+     {mlapi_city_ext,               1},
+     {mlapi_site,                   1},
+     {mlapi_site_ext,               1},
+     {mlapi_listing_exposure,       1},
+     {mlapi_listing_type,           1},
+     {mlapi_listing_price,          1},
+     {mlapi_payment_method,         1},
+     {mlapi_payment_method_ext,     1},
+     {mlapi_card_issuer,            1},
+     {mlapi_card_issuer_ext,        1},
+     {mlapi_category,               1},
+     {mlapi_category_ext,           1}
     ].
 
 
@@ -155,7 +116,11 @@ table_type(mlapi_listing_price) ->
     bag;
 table_type(mlapi_payment_method) ->
     bag;
+table_type(mlapi_payment_method_ext) ->
+    bag;
 table_type(mlapi_card_issuer) ->
+    bag;
+table_type(mlapi_card_issuer_ext) ->
     bag;
 table_type(_Table) ->
     set.
@@ -375,7 +340,7 @@ import_card_issuers(SiteId) ->
     case mlapi:get_card_issuers(SiteId) of
         RawCardIssuers when is_list(RawCardIssuers) ->
             %% Delete all the previous entries for this site.
-            mnesia:dirty_delete(mlapi_card_issuer_wrapper, SiteId),
+            mnesia:dirty_delete(mlapi_card_issuer, SiteId),
             lists:foreach(fun (RawCardIssuer) ->
                                   CardIssuer = mlapi:json_to_record(RawCardIssuer, mlapi_card_issuer),
                                   %% Add site_id to be able to group the card issuers for the same site together.
@@ -484,9 +449,7 @@ get_listing_exposures(SiteId) ->
 
 -spec get_listing_exposure(mlapi_site_id(), mlapi_listing_exposure_id()) -> #mlapi_listing_exposure{} | undefined.
 get_listing_exposure(SiteId, ListingExposureId) ->
-    match_single(#mlapi_listing_exposure{site_id = SiteId, id = ListingExposureId,
-                                         name = '_', home_page = '_', category_home_page = '_',
-                                         advertising_on_listing_page = '_', priority_in_search = '_'}).
+    match_single(#mlapi_listing_exposure{site_id = SiteId, id = ListingExposureId, _ = '_'}).
 
 
 get_listing_types(SiteId) ->
@@ -511,9 +474,7 @@ get_payment_methods(SiteId) ->
     read_multi(mlapi_payment_method, SiteId).
 
 get_payment_method(SiteId, PaymentMethodId) ->
-    match_single(#mlapi_payment_method{site_id = SiteId, id = PaymentMethodId,
-                                       name = '_', payment_type_id = '_',
-                                       thumbnail = '_', secure_thumbnail = '_'}).
+    match_single(#mlapi_payment_method_ext{site_id = SiteId, id = PaymentMethodId, _ = '_'}).
 
 
 -spec get_card_issuers(mlapi_site_id()) -> [#mlapi_card_issuer{}].
@@ -522,7 +483,7 @@ get_card_issuers(SiteId) ->
 
 -spec get_card_issuer(mlapi_site_id(), mlapi_card_issuer_id()) -> #mlapi_card_issuer{} | undefined.
 get_card_issuer(SiteId, CardIssuerId) ->
-    match_single(#mlapi_card_issuer{site_id = SiteId, id = CardIssuerId, name = '_'}).
+    match_single(#mlapi_card_issuer{site_id = SiteId, id = CardIssuerId, _ = '_'}).
 
 
 %%get_subcategories/1, get_category/1]).
@@ -558,7 +519,7 @@ read_multi(Table, Key) ->
 
 
 match_single(Record) ->
-    case mnesia:match_object(Record) of
+    case mnesia:dirty_match_object(Record) of
         [Result] ->
             Result;
         [] ->
@@ -566,12 +527,3 @@ match_single(Record) ->
         Error ->
             Error
     end.
-
-
-%% read_multi_wrapper(Table, Key) ->
-%%     case mnesia:dirty_read(Table, Key) of
-%%         [_Head | _Tail] = Result ->
-%%             [WrappedRecord || {_RecordName, _Key, WrappedRecord} <- Result];
-%%         Error ->
-%%             Error
-%%     end.
