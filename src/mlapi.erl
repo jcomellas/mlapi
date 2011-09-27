@@ -59,7 +59,7 @@
           finish         :: fun()
          }).
 
--export_type([url_path/0, ejson/0, option/0, response/0, error/0]).
+-export_type([url_path/0, ejson/0, option/0, format/0, response/0, error/0]).
 
 -define(APP, mlapi).
 -define(PROTOCOL, "https").
