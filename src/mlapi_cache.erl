@@ -12,7 +12,7 @@
 
 -export([init/0, init/1, init_metatable/1, init_table/3,
          create_tables/1, create_metatable/1, create_table/2,
-         upgrade_metatable/0, upgrade_table/1, tables/0]).
+         upgrade_metatable/0, upgrade_table/1, tables/0, table_info/1, table_version/1, table_ttl/1]).
 -export([get_sites/0, get_sites/1, get_site/1, get_site/2,
          get_countries/0, get_countries/1, get_country/1, get_country/2,
          get_state/1, get_state/2, get_city/1, get_city/2,
@@ -37,18 +37,26 @@
 
 -include("include/mlapi.hrl").
 
-%% Cache entries are kept for 1 hour by default (this can be overridden per table, see mlapi_metatable).
 -define(META_VERSION, 1).
--define(DEFAULT_CACHE_TTL, 3600).
+-define(MIN_IN_SECS,        60).
+-define(HOUR_IN_SECS,     3600).
+-define(DAY_IN_SECS,     86400).
+-define(WEEK_IN_SECS,   604800).
+-define(MONTH_IN_SECS, 2592000).
+-define(YEAR_IN_SECS, 31536000).
+%% Cache entries are kept for 1 hour by default (this can be overridden per table, see mlapi_metatable).
+-define(DEFAULT_CACHE_TTL, ?HOUR_IN_SECS).
 
+-type table_key()       :: any().
+-type table_version()   :: non_neg_integer().
 -type timestamp()       :: non_neg_integer().
 -type last_update()     :: timestamp().
 -type time_to_live()    :: non_neg_integer().
 
 
 -record(mlapi_metatable, {
-          table                                             :: atom(),
-          version                                           :: non_neg_integer(),
+          table                                             :: mlapi_table(),
+          version                                           :: table_version(),
           time_to_live                                      :: time_to_live(),    %% in seconds
           last_update                                       :: calendar:datetime(),
           reason                                            :: any()
@@ -69,7 +77,7 @@ init() ->
 -spec init([node()]) -> ok | no_return(). %% exit({aborted, Reason :: any()}).
 init(Nodes) ->
     init_metatable(Nodes),
-    lists:foreach(fun ({Table, Version}) -> init_table(Table, Version, Nodes) end, tables()).
+    lists:foreach(fun ({Table, Version, _TimeToLive}) -> init_table(Table, Version, Nodes) end, tables()).
 
 
 -spec init_metatable([node()]) -> ok | {aborted, Reason :: any()}.
@@ -88,7 +96,7 @@ init_metatable(Nodes) ->
     end.
 
 
--spec init_table(mlapi_table(), Version :: non_neg_integer(), [node()]) -> ok | {aborted, Reason :: any()}.
+-spec init_table(mlapi_table(), table_version(), [node()]) -> ok | {aborted, Reason :: any()}.
 init_table(Table, NewVersion, Nodes) ->
     Fields = record_info(fields, mlapi_cache),
     OldVersion = case mnesia:dirty_read(mlapi_metatable, Table) of
@@ -124,7 +132,16 @@ create_metatable(Nodes) ->
 
 -spec create_table(mlapi_table(), [node()]) -> ok | {aborted, Reason :: any()}.
 create_table(Table, Nodes) ->
-    create_table(Table, mlapi_cache, record_info(fields, mlapi_cache), Nodes).
+    create_table(Table, mlapi_cache, record_info(fields, mlapi_cache), Nodes),
+    {Version, TimeToLive} = table_info(Table),
+    mnesia:dirty_write(mlapi_metatable,
+                       #mlapi_metatable{
+                         table = Table,
+                         version = Version,
+                         time_to_live = TimeToLive,
+                         last_update = current_time_in_gregorian_seconds(),
+                         reason = create_table
+                        }).
 
 
 -spec create_table(mlapi_table(), RecordName :: atom(), [mlapi_field()], [node()]) -> ok | {aborted, Reason :: any()}.
@@ -168,26 +185,52 @@ upgrade_table(Table, _OldVersion, _NewVersion, Fields) ->
 -spec tables() -> [mlapi_table()].
 tables() ->
     [
-     {mlapi_cached_list,            1},
-     {mlapi_site_ext,               1},
-     {mlapi_country_ext,            1},
-     {mlapi_state_ext,              1},
-     {mlapi_city_ext,               1},
-     {mlapi_currency,               1},
-     {mlapi_currency_conversion,    1},
-     {mlapi_listing_exposure,       1},
-     {mlapi_card_issuer_ext,        1},
-     {mlapi_payment_type,           1},
-     {mlapi_payment_method_ext,     1},
-     {mlapi_category_ext,           1},
-     {mlapi_user,                   1},
-     {mlapi_item,                   1},
-     {mlapi_picture,                1}
-
-     %{mlapi_listing_type,           1},
-     %{mlapi_listing_price,          1},
-     %{mlapi_card_issuer,            1},
+     %% Table                 Version  Time-to-live
+     {mlapi_cached_list,            1, ?HOUR_IN_SECS},
+     {mlapi_site_ext,               1, ?MONTH_IN_SECS},
+     {mlapi_country_ext,            1, ?MONTH_IN_SECS},
+     {mlapi_state_ext,              1, ?WEEK_IN_SECS},
+     {mlapi_city_ext,               1, ?WEEK_IN_SECS},
+     {mlapi_currency,               1, ?MONTH_IN_SECS},
+     {mlapi_currency_conversion,    1, ?HOUR_IN_SECS},
+     {mlapi_listing_exposure,       1, ?WEEK_IN_SECS},
+     {mlapi_card_issuer_ext,        1, ?DAY_IN_SECS},
+     {mlapi_payment_type,           1, ?DAY_IN_SECS},
+     {mlapi_payment_method_ext,     1, ?DAY_IN_SECS},
+     {mlapi_category_ext,           1, ?WEEK_IN_SECS},
+     {mlapi_user,                   1, ?DAY_IN_SECS},
+     {mlapi_item,                   1, 30 * ?MIN_IN_SECS},
+     {mlapi_picture,                1, ?WEEK_IN_SECS}
     ].
+
+
+-spec table_info(mlapi_table()) -> {table_version(), time_to_live()} | undefined.
+table_info(Table) ->
+    case lists:keyfind(Table, 1, tables()) of
+        {Table, Version, TimeToLive} ->
+            {Version, TimeToLive};
+        false ->
+            undefined
+    end.
+
+-spec table_version(mlapi_table()) -> table_version().
+table_version(Table) ->
+    case lists:keyfind(Table, 1, tables()) of
+        {Table, Version, _TimeToLive} ->
+            Version;
+        false ->
+            undefined
+    end.
+
+
+-spec table_ttl(mlapi_table()) -> time_to_live().
+table_ttl(Table) ->
+    case lists:keyfind(Table, 1, tables()) of
+        {Table, _Version, TimeToLive} ->
+            TimeToLive;
+        false ->
+            mlapi:get_env(cache_ttl)
+    end.
 
 
 -spec get_sites() -> mlapi:response().
@@ -412,37 +455,53 @@ get_picture(PictureId) ->
 get_picture(PictureId, Options) ->
     get_data(mlapi_picture, PictureId, Options, fun (NewOptions) -> mlapi:get_picture(PictureId, NewOptions) end).
 
--spec get_data(mlapi_table(), Key :: any(), [mlapi:option()], RefreshFun :: fun()) -> mlapi:response().
+-spec get_data(mlapi_table(), table_key(), [mlapi:option()], RefreshFun :: fun()) -> mlapi:response().
 get_data(Table, Key, Options, RefreshFun) ->
-    {LastUpdate, CachedData} = get_cache_entry(Table, Key),
-    %% We store the datetime as seconds since Jan 1, 0001 at 00:00:00.
-    CurrentTime = calendar:datetime_to_gregorian_seconds(calendar:universal_time()),
-    case is_cache_expired(Table, LastUpdate, CurrentTime) of
-        true ->
-            %% As we cache responses as parsed JSON documents we need to remove the format
-            %% from the list of Options and apply it manually before returning the response.
-            {Format, NewOptions} = split_format_option(Options),
-            case RefreshFun(NewOptions) of
-                {error, _Reason} = Error ->
-                    Error;
-                Data ->
-                    WriteFun = fun () ->
-                                       mnesia:write(#mlapi_cache{key = Key,
-                                                                 last_update = CurrentTime,
-                                                                 data = Data
-                                                                })
-                               end,
-                    %% Write the entry in a separate process to speed up the response to the caller.
-                    %% There's no need to supervise this process; if it fails we'll just refresh the cache.
-                    proc_lib:spawn(mnesia, transaction, WriteFun),
-                    mlapi:json_to_term(Data, Format)
-            end;
-        false ->
-            CachedData
+    CurrentTime = current_time_in_gregorian_seconds(),
+    %% As we cache responses as parsed JSON documents we need to remove the format
+    %% from the list of Options and apply it manually before returning the response.
+    {Format, NewOptions} = split_format_option(Options),
+    Data = case lists:member(refresh, NewOptions) of
+               true ->
+                   get_fresh_data(Table, Key, NewOptions, RefreshFun, CurrentTime);
+               false ->
+                   {LastUpdate, CachedData} = get_cache_entry(Table, Key),
+                   %% We store the datetime as seconds since Jan 1, 0001 at 00:00:00.
+                   case is_cache_valid(Table, LastUpdate, CurrentTime) of
+                       true ->
+                           CachedData;
+                       false ->
+                           get_fresh_data(Table, Key, NewOptions, RefreshFun, CurrentTime)
+                   end
+           end,
+    mlapi:json_to_term(Data, record_name(Table, Key), Format).
+
+
+%% -spec get_fresh_data(mlapi_table(), table_key(), [mlapi:option()], RefreshFun :: fun()) -> mlapi:response().
+%% get_fresh_data(Table, Key, Options, RefreshFun) ->
+%%     get_fresh_data(Table, Key, Options, RefreshFun, current_time_in_gregorian_seconds()).
+
+-spec get_fresh_data(mlapi_table(), table_key(), [mlapi:option()], RefreshFun :: fun(),
+                     CurrentTime :: non_neg_integer()) -> mlapi:response().
+get_fresh_data(Table, Key, Options, RefreshFun, CurrentTime) ->
+    case RefreshFun(Options) of
+        {error, _Reason} = Error ->
+            Error;
+        Data ->
+            WriteFun = fun () ->
+                               mnesia:write(Table, #mlapi_cache{key = Key,
+                                                                last_update = CurrentTime,
+                                                                data = Data
+                                                               }, write)
+                       end,
+            %% Write the entry in a separate process to speed up the response to the caller.
+            %% There's no need to supervise this process; if it fails we'll just refresh the cache.
+            proc_lib:spawn(mnesia, transaction, [WriteFun]),
+            Data
     end.
 
 
--spec get_cache_entry(mlapi_table(), Key :: any()) -> {last_update() | 'undefined', Data :: any() | 'undefined'}.
+-spec get_cache_entry(mlapi_table(), table_key()) -> {last_update() | 'undefined', Data :: any() | 'undefined'}.
 get_cache_entry(Table, Key) ->
     case mnesia:dirty_read(Table, Key) of
         [#mlapi_cache{last_update = LastUpdate, data = Data}] ->
@@ -462,17 +521,17 @@ get_cache_ttl(Table) ->
     end.
 
 
--spec is_cache_expired(mlapi_table(), last_update() | 'undefined', timestamp()) -> boolean().
-is_cache_expired(_Table, undefined, _CurrentTime) ->
+-spec is_cache_valid(mlapi_table(), last_update() | 'undefined', timestamp()) -> boolean().
+is_cache_valid(_Table, undefined, _CurrentTime) ->
     %% The entry was never updated.
-    true;
-is_cache_expired(Table, LastUpdate, CurrentTime) ->
+    false;
+is_cache_valid(Table, LastUpdate, CurrentTime) ->
     LastUpdate + get_cache_ttl(Table) > CurrentTime.
 
 
 -spec split_format_option([mlapi:option()]) -> {mlapi:format(), [mlapi:option()]}.
 split_format_option(Options) ->
-    case lists:keytake(format, Options) of
+    case lists:keytake(format, 1, Options) of
         {value, {format, Format}, NewOptions} ->
             {Format, NewOptions};
         false ->
@@ -480,15 +539,21 @@ split_format_option(Options) ->
     end.
 
 
-%% record_name(Table, Key) ->
-%%     case Table of
-%%         mlapi_cached_list ->
-%%             if
-%%                 is_atom(Key) ->
-%%                     Key;
-%%                 is_tuple(Key) ->
-%%                     element(1, Key)
-%%             end;
-%%         _ ->
-%%             Table
-%%     end.
+-spec current_time_in_gregorian_seconds() -> non_neg_integer().
+current_time_in_gregorian_seconds() ->
+    calendar:datetime_to_gregorian_seconds(calendar:universal_time()).
+
+
+-spec record_name(mlapi_table(), table_key()) -> RecordName :: atom().
+record_name(Table, Key) ->
+    case Table of
+        mlapi_cached_list ->
+            if
+                is_atom(Key) ->
+                    Key;
+                is_tuple(Key) ->
+                    element(1, Key)
+            end;
+        _ ->
+            Table
+    end.
