@@ -349,7 +349,7 @@ get_picture(PictureId, Options) ->
 
 -spec get_trends(mlapi_site_id() | string()) -> response().
 get_trends(SiteId) ->
-    request(?TRENDS "?site=" ++ to_string(SiteId)).
+    get_trends(SiteId, []).
 
 -spec get_trends(mlapi_site_id() | string(), [option()]) -> response().
 get_trends(SiteId, Options) when is_list(Options) ->
