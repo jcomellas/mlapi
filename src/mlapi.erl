@@ -34,7 +34,7 @@
          search_category/2, search_category/3, search_category/4, search_category/5,
          search_seller_id/2, search_seller_id/3, search_seller_id/4, search_seller_id/5,
          search_nickname/2, search_nickname/3, search_nickname/4, search_nickname/5]).
--export([json_to_record/2, json_to_proplist/2, json_to_orddict/2,
+-export([json_to_record/2, json_to_proplist/2, json_to_orddict/2, json_to_term/3,
          json_field_to_record_name/2,
          is_json_datetime_field/2, iso_datetime_to_tuple/1]).
 -export([site_to_country/1, country_to_site/1]).
@@ -49,7 +49,7 @@
 -type ejson()             :: {[{ejson_key(), ejson_value() | ejson()}]}.
 -type proplist()          :: [proplists:property()].
 -type format()            :: 'binary' | 'json' | 'proplist' | 'orddict' | 'record'.
--type option()            :: {format, format()} | {record, RecordName :: atom()}.
+-type option()            :: {format, format()} | {record, RecordName :: atom()} | 'refresh'.
 -type response()          :: binary() | ejson() | proplist() | orddict:orddict() | tuple() | error().
 
 
