@@ -11,7 +11,7 @@ user using [OAuth](http://oauth.net/) authentication in an application.
 
 This implementation only addresses the public side of the API so far, but it
 will grow to support the private interface too. There are two main modules:
-1)``mlapi``: which provides uncached access to the API; and 2) ``mlapi_cache``:
+1) ``mlapi``: which provides uncached access to the API; and 2) ``mlapi_cache``:
 which caches the results returned by the API. Bear in mind that the current
 implementation still does not clean up stale cache entries once they've expired
 unless they are being overwritten.
