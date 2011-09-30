@@ -28,10 +28,10 @@ Installation
 Clone the [mlapi](https://github.com/jcomellas/mlapi) repository and issue the
 following commands:
 
-  git clone https://github.com/jcomellas/mlapi.git
-  cd mlapi
-  make deps
-  make
+    git clone https://github.com/jcomellas/mlapi.git
+    cd mlapi
+    make deps
+    make
 
 That will download all the required Erlang dependencies and compile the project.
 After that you can start using the modules in it.
@@ -41,37 +41,37 @@ Usage
 You can easily test the modules within the Erlang shell. To enter the shell with
 the required paths already set run:
 
-  make console
+    make console
 
 Once you're in the Erlang shell you need to start the ``mlapi`` application. You
 can start it and its dependencies by doing:
 
-  mlapi:start().
+    mlapi:start().
 
 Now we're ready to rock. Keep in mind the following type specifications:
 
-  -type error()             :: {error, Reason :: atom() | {atom(), any()}}.
-  -type ejson_key()         :: binary().
-  -type ejson_value()       :: binary() | boolean() | integer() | float() | 'null'.
-  -type ejson()             :: {[{ejson_key(), ejson_value() | ejson()}]}.
-  -type proplist()          :: [proplists:property()].
-  -type format()            :: 'binary' | 'ejson' | 'proplist' | 'orddict' | 'record'.
-  -type option()            :: {format, format()} | {record, RecordName :: atom()} | 'refresh'.
-  -type response()          :: binary() | ejson() | proplist() | orddict:orddict() | tuple() | error().
+    -type error()             :: {error, Reason :: atom() | {atom(), any()}}.
+    -type ejson_key()         :: binary().
+    -type ejson_value()       :: binary() | boolean() | integer() | float() | 'null'.
+    -type ejson()             :: {[{ejson_key(), ejson_value() | ejson()}]}.
+    -type proplist()          :: [proplists:property()].
+    -type format()            :: 'binary' | 'ejson' | 'proplist' | 'orddict' | 'record'.
+    -type option()            :: {format, format()} | {record, RecordName :: atom()} | 'refresh'.
+    -type response()          :: binary() | ejson() | proplist() | orddict:orddict() | tuple() | error().
 
 All of the available functions that retrieve information from [MLAPI](http://www.mercadolibre.io/)
 are very similar and follow a syntax like the following one:
 
-  -spec mlapi:get_user(mlapi_user_id(), [mlapi:option()]) -> mlapi:response().
+    -spec mlapi:get_user(mlapi_user_id(), [mlapi:option()]) -> mlapi:response().
 
 This is also a short version like:
 
-  -spec mlapi:get_user(mlapi_user_id()) -> mlapi:response().
+    -spec mlapi:get_user(mlapi_user_id()) -> mlapi:response().
 
 All the functions can receive options in the last argument. The most important
 one would be the one to specify the format of the result. It follows the syntax:
 
-  {format, Format :: mlapi:format()}
+    {format, Format :: mlapi:format()}
 
 where ``Format`` can be one of:
 
@@ -90,23 +90,23 @@ where ``Format`` can be one of:
 
 For example, if we wanted to format the result as a proplist we'd do:
 
-  mlapi:get_sites([{format, proplist}]).
+    mlapi:get_sites([{format, proplist}]).
 
 And we'd receive:
 
-  [[{id,<<"MLA">>},{name,<<"Argentina">>}],
-   [{id,<<"MLB">>},{name,<<"Brasil">>}],
-   [{id,<<"MCO">>},{name,<<"Colombia">>}],
-   [{id,<<"MCR">>},{name,<<"Costa Rica">>}],
-   [{id,<<"MEC">>},{name,<<"Ecuador">>}],
-   [{id,<<"MLC">>},{name,<<"Chile">>}],
-   [{id,<<"MLM">>},{name,<<"Mexico">>}],
-   [{id,<<"MLU">>},{name,<<"Uruguay">>}],
-   [{id,<<"MLV">>},{name,<<"Venezuela">>}],
-   [{id,<<"MPA">>},{name,<<"Panamá">>}],
-   [{id,<<"MPE">>},{name,<<"Perú">>}],
-   [{id,<<"MPT">>},{name,<<"Portugal">>}],
-   [{id,<<"MRD">>},{name,<<"Dominicana">>}]]
+    [[{id,<<"MLA">>},{name,<<"Argentina">>}],
+     [{id,<<"MLB">>},{name,<<"Brasil">>}],
+     [{id,<<"MCO">>},{name,<<"Colombia">>}],
+     [{id,<<"MCR">>},{name,<<"Costa Rica">>}],
+     [{id,<<"MEC">>},{name,<<"Ecuador">>}],
+     [{id,<<"MLC">>},{name,<<"Chile">>}],
+     [{id,<<"MLM">>},{name,<<"Mexico">>}],
+     [{id,<<"MLU">>},{name,<<"Uruguay">>}],
+     [{id,<<"MLV">>},{name,<<"Venezuela">>}],
+     [{id,<<"MPA">>},{name,<<"Panamá">>}],
+     [{id,<<"MPE">>},{name,<<"Perú">>}],
+     [{id,<<"MPT">>},{name,<<"Portugal">>}],
+     [{id,<<"MRD">>},{name,<<"Dominicana">>}]]
 
 You can check the exported functions in ``src/mlapi.erl`` to see the complete interface.
 
