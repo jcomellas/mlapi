@@ -33,6 +33,7 @@
 -type mlapi_state_id()                :: mlapi_id().
 -type mlapi_timezone_id()             :: mlapi_id().
 -type mlapi_user_id()                 :: mlapi_id().
+-type mlapi_user_name()               :: mlapi_id().
 -type mlapi_picture_id()              :: mlapi_id().
 
 -type mlapi_url()                     :: binary().
