@@ -26,14 +26,14 @@
          get_category/1, get_category/2,
          get_user/1, get_user/2,
          get_item/1, get_item/2,
-         get_picture/1, get_picture/2
+         get_picture/1, get_picture/2,
+         get_trends/1, get_trends/2, get_category_trends/2, get_category_trends/3, get_category_trends/4,
+         get_local_geolocation/0, get_local_geolocation/1, get_geolocation/1, get_geolocation/2,
+         search/2, search/3, search/4, search/5,
+         search_category/2, search_category/3, search_category/4, search_category/5,
+         search_seller_id/2, search_seller_id/3, search_seller_id/4, search_seller_id/5,
+         search_seller_nick/2, search_seller_nick/3, search_seller_nick/4, search_seller_nick/5
         ]).
-         %% get_trends/1, get_trends/2, get_category_trends/2, get_category_trends/3, get_category_trends/4
-         %get_geolocation/0, get_geolocation/1,
-         %search/2, search/4,
-         %search_category/2, search_category/4,
-         %search_seller_id/2, search_seller_id/4,
-         %search_nickname/2, search_nickname/4
 
 -include("include/mlapi.hrl").
 
@@ -200,7 +200,9 @@ tables() ->
      {mlapi_category_ext,           1, ?WEEK_IN_SECS},
      {mlapi_user,                   1, ?DAY_IN_SECS},
      {mlapi_item,                   1, 30 * ?MIN_IN_SECS},
-     {mlapi_picture,                1, ?WEEK_IN_SECS}
+     {mlapi_picture,                1, ?WEEK_IN_SECS},
+     {mlapi_geolocation,            1, ?WEEK_IN_SECS},
+     {mlapi_search_result,          1, 30 * ?MIN_IN_SECS}
     ].
 
 
@@ -455,6 +457,136 @@ get_picture(PictureId) ->
 get_picture(PictureId, Options) ->
     get_data(mlapi_picture, PictureId, Options, fun (NewOptions) -> mlapi:get_picture(PictureId, NewOptions) end).
 
+
+-spec get_trends(mlapi_site_id()) -> mlapi:response().
+get_trends(SiteId) ->
+    get_trends(SiteId, []).
+
+-spec get_trends(mlapi_site_id(), [mlapi:option()]) -> mlapi:response().
+get_trends(SiteId, Options) when is_list(Options) ->
+    get_data(mlapi_cached_list, {mlapi_trend, SiteId}, Options,
+             fun (NewOptions) -> mlapi:get_trends(SiteId, NewOptions) end).
+
+
+-spec get_category_trends(mlapi_site_id(), mlapi_category_id()) -> mlapi:response().
+get_category_trends(SiteId, CategoryId) ->
+    get_category_trends(SiteId, CategoryId, []).
+
+-spec get_category_trends(mlapi_site_id(), mlapi_category_id(), [mlapi:option()] | non_neg_integer()) -> mlapi:response().
+get_category_trends(SiteId, CategoryId, Options) when is_list(Options) ->
+    get_data(mlapi_cached_list, {mlapi_trend, SiteId, CategoryId}, Options,
+             fun (NewOptions) -> mlapi:get_category_trends(SiteId, CategoryId, NewOptions) end);
+get_category_trends(SiteId, CategoryId, Limit) ->
+    get_category_trends(SiteId, CategoryId, Limit, []).
+
+-spec get_category_trends(mlapi_site_id(), mlapi_category_id(), Limit :: non_neg_integer(), [mlapi:option()]) -> mlapi:response().
+get_category_trends(SiteId, CategoryId, Limit, Options) ->
+    %% Dumb function: this could take advantage of the data cached by the version
+    %% of get_category_trends that does not have a limit.
+    get_data(mlapi_cached_list, {mlapi_trend, SiteId, CategoryId, Limit}, Options,
+             fun (NewOptions) -> mlapi:get_category_trends(SiteId, CategoryId, Limit, NewOptions) end).
+
+
+-spec get_local_geolocation() -> mlapi:response().
+get_local_geolocation() ->
+    get_local_geolocation([]).
+
+-spec get_local_geolocation([mlapi:option()]) -> mlapi:response().
+get_local_geolocation(Options) ->
+    get_data(mlapi_geolocation, whereami, Options, fun (NewOptions) -> mlapi:get_local_geolocation(NewOptions) end).
+
+-spec get_geolocation(mlapi_ip_address()) -> mlapi:response().
+get_geolocation(IpAddr) ->
+    get_geolocation(IpAddr, []).
+
+-spec get_geolocation(mlapi_ip_address(), [mlapi:option()]) -> mlapi:response().
+get_geolocation(IpAddr, Options) ->
+    get_data(mlapi_geolocation, IpAddr, Options, fun (NewOptions) -> mlapi:get_geolocation(IpAddr, NewOptions) end).
+
+
+-spec search(mlapi_site_id(), Query :: string()) -> mlapi:response().
+search(SiteId, Query) ->
+    search(SiteId, Query, []).
+
+-spec search(mlapi_site_id(), Query :: string(), [mlapi:option()]) -> mlapi:response().
+search(SiteId, Query, Options) ->
+    get_data(mlapi_search_result, {fulltext, SiteId, Query}, Options, fun (NewOptions) -> mlapi:search(SiteId, Query, NewOptions) end).
+
+-spec search(mlapi_site_id(), Query :: string(), Offset :: non_neg_integer(),
+             Limit :: non_neg_integer()) -> mlapi:response().
+search(SiteId, Query, Offset, Limit) ->
+    search(SiteId, Query, Offset, Limit, []).
+
+-spec search(mlapi_site_id(), Query :: string(), Offset :: non_neg_integer(),
+             Limit :: non_neg_integer(), [mlapi:option()]) -> mlapi:response().
+search(SiteId, Query, Offset, Limit, Options) ->
+    get_data(mlapi_search_result, {fulltext, SiteId, Query, Offset, Limit}, Options,
+             fun (NewOptions) -> mlapi:search(SiteId, Query, Offset, Limit, NewOptions) end).
+
+
+-spec search_category(mlapi_site_id(), mlapi_category_id()) -> mlapi:response().
+search_category(SiteId, CategoryId) ->
+    search_category(SiteId, CategoryId, []).
+
+-spec search_category(mlapi_site_id(), mlapi_category_id(), [mlapi:option()]) -> mlapi:response().
+search_category(SiteId, CategoryId, Options) ->
+    get_data(mlapi_search_result, {category, SiteId, CategoryId}, Options,
+             fun (NewOptions) -> mlapi:search_category(SiteId, CategoryId, NewOptions) end).
+
+-spec search_category(mlapi_site_id(), mlapi_category_id(), Offset :: non_neg_integer(),
+                      Limit :: non_neg_integer()) -> mlapi:response().
+search_category(SiteId, CategoryId, Offset, Limit) ->
+    search_category(SiteId, CategoryId, Offset, Limit, []).
+
+-spec search_category(mlapi_site_id(), mlapi_category_id(), Offset :: non_neg_integer(),
+                      Limit :: non_neg_integer(), [mlapi:option()]) -> mlapi:response().
+search_category(SiteId, CategoryId, Offset, Limit, Options) ->
+    get_data(mlapi_search_result, {category, SiteId, CategoryId, Offset, Limit}, Options,
+             fun (NewOptions) -> mlapi:search_category(SiteId, CategoryId, Offset, Limit, NewOptions) end).
+
+
+-spec search_seller_id(mlapi_site_id(), mlapi_user_id()) -> mlapi:response().
+search_seller_id(SiteId, SellerId) ->
+    search_seller_id(SiteId, SellerId).
+
+-spec search_seller_id(mlapi_site_id(), mlapi_user_id(), [mlapi:option()]) -> mlapi:response().
+search_seller_id(SiteId, SellerId, Options) ->
+    get_data(mlapi_search_result, {seller_id, SiteId, SellerId}, Options,
+             fun (NewOptions) -> mlapi:search_seller_id(SiteId, SellerId, NewOptions) end).
+
+-spec search_seller_id(mlapi_site_id(), mlapi_user_id(), Offset :: non_neg_integer(),
+                       Limit :: non_neg_integer()) -> mlapi:response().
+search_seller_id(SiteId, SellerId, Offset, Limit) ->
+    search_seller_id(SiteId, SellerId, Offset, Limit, []).
+
+-spec search_seller_id(mlapi_site_id(), mlapi_user_id(), Offset :: non_neg_integer(),
+                       Limit :: non_neg_integer(), [mlapi:option()]) -> mlapi:response().
+search_seller_id(SiteId, SellerId, Offset, Limit, Options) ->
+    get_data(mlapi_search_result, {seller_id, SiteId, SellerId, Offset, Limit}, Options,
+             fun (NewOptions) -> mlapi:search_seller_id(SiteId, SellerId, Offset, Limit, NewOptions) end).
+
+
+-spec search_seller_nick(mlapi_site_id(), mlapi_user_name()) -> mlapi:response().
+search_seller_nick(SiteId, Nickname) ->
+    search_seller_nick(SiteId, Nickname, []).
+
+-spec search_seller_nick(mlapi_site_id(), mlapi_user_name(), [mlapi:option()]) -> mlapi:response().
+search_seller_nick(SiteId, Nickname, Options) ->
+    get_data(mlapi_search_result, {seller_nick, SiteId, Nickname}, Options,
+             fun (NewOptions) -> mlapi:search_seller_nick(SiteId, Nickname, NewOptions) end).
+
+-spec search_seller_nick(mlapi_site_id(), mlapi_user_name(), Offset :: non_neg_integer(),
+                         Limit :: non_neg_integer()) -> mlapi:response().
+search_seller_nick(SiteId, Nickname, Offset, Limit) ->
+    search_seller_nick(SiteId, Nickname, Offset, Limit, []).
+
+-spec search_seller_nick(mlapi_site_id(), mlapi_user_name(), Offset :: non_neg_integer(),
+                         Limit :: non_neg_integer(), [mlapi:option()]) -> mlapi:response().
+search_seller_nick(SiteId, Nickname, Offset, Limit, Options) ->
+    get_data(mlapi_search_result, {seller_nick, SiteId, Nickname, Offset, Limit}, Options,
+             fun (NewOptions) -> mlapi:search_seller_nick(SiteId, Nickname, Offset, Limit, NewOptions) end).
+
+
 -spec get_data(mlapi_table(), table_key(), [mlapi:option()], RefreshFun :: fun()) -> mlapi:response().
 get_data(Table, Key, Options, RefreshFun) ->
     CurrentTime = current_time_in_gregorian_seconds(),
@@ -466,7 +598,7 @@ get_data(Table, Key, Options, RefreshFun) ->
                    get_fresh_data(Table, Key, NewOptions, RefreshFun, CurrentTime);
                false ->
                    {LastUpdate, CachedData} = get_cache_entry(Table, Key),
-                   %% We store the datetime as seconds since Jan 1, 0001 at 00:00:00.
+                   %% We store the datetime as seconds in the Gregorian calendar (since Jan 1, 0001 at 00:00:00).
                    case is_cache_valid(Table, LastUpdate, CurrentTime) of
                        true ->
                            CachedData;
@@ -477,10 +609,6 @@ get_data(Table, Key, Options, RefreshFun) ->
     mlapi:json_to_term(Data, record_name(Table, Key), Format).
 
 
-%% -spec get_fresh_data(mlapi_table(), table_key(), [mlapi:option()], RefreshFun :: fun()) -> mlapi:response().
-%% get_fresh_data(Table, Key, Options, RefreshFun) ->
-%%     get_fresh_data(Table, Key, Options, RefreshFun, current_time_in_gregorian_seconds()).
-
 -spec get_fresh_data(mlapi_table(), table_key(), [mlapi:option()], RefreshFun :: fun(),
                      CurrentTime :: non_neg_integer()) -> mlapi:response().
 get_fresh_data(Table, Key, Options, RefreshFun, CurrentTime) ->
@@ -488,15 +616,19 @@ get_fresh_data(Table, Key, Options, RefreshFun, CurrentTime) ->
         {error, _Reason} = Error ->
             Error;
         Data ->
+            %% mnesia:dirty_write(Table, #mlapi_cache{key = Key,
+            %%                                        last_update = CurrentTime,
+            %%                                        data = Data
+            %%                                       })
+            %% Write the entry in a separate process to speed up the response to the caller.
+            %% There's no need to supervise this process; if it fails we'll just refresh the cache.
             WriteFun = fun () ->
                                mnesia:write(Table, #mlapi_cache{key = Key,
                                                                 last_update = CurrentTime,
                                                                 data = Data
                                                                }, write)
                        end,
-            %% Write the entry in a separate process to speed up the response to the caller.
-            %% There's no need to supervise this process; if it fails we'll just refresh the cache.
-            proc_lib:spawn(mnesia, transaction, [WriteFun]),
+            proc_lib:spawn(fun () -> {atomic, _Result} = mnesia:transaction(WriteFun) end),
             Data
     end.
 
