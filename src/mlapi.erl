@@ -94,11 +94,11 @@
 %% @doc Start the application and all its dependencies.
 start() ->
     application:start(sasl),
+    application:start(mnesia),
     application:start(crypto),
     application:start(public_key),
     application:start(ssl),
     application:start(ibrowse),
-    application:start(mnesia),
     %% application:start(eper),
     application:start(mlapi).
 
