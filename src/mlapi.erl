@@ -33,7 +33,7 @@
          search/2, search/3, search/4, search/5,
          search_category/2, search_category/3, search_category/4, search_category/5,
          search_seller_id/2, search_seller_id/3, search_seller_id/4, search_seller_id/5,
-         search_nickname/2, search_nickname/3, search_nickname/4, search_nickname/5]).
+         search_seller_nick/2, search_seller_nick/3, search_seller_nick/4, search_seller_nick/5]).
 -export([json_to_record/2, json_to_proplist/2, json_to_orddict/2, json_to_term/3,
          json_field_to_record_name/2,
          is_json_datetime_field/2, iso_datetime_to_tuple/1]).
@@ -456,23 +456,23 @@ search_seller_id(SiteId, SellerId, Offset, Limit, Options) ->
             ?SET_RECORD(mlapi_search_result, Options)).
 
 
--spec search_nickname(mlapi_site_id() | string(), Nickname :: string()) -> response().
-search_nickname(SiteId, Nickname) ->
-    search_nickname(SiteId, Nickname, []).
+-spec search_seller_nick(mlapi_site_id() | string(), Nickname :: mlapi_user_name() | string()) -> response().
+search_seller_nick(SiteId, Nickname) ->
+    search_seller_nick(SiteId, Nickname, []).
 
--spec search_nickname(mlapi_site_id() | string(), Nickname :: string(), [option()]) -> response().
-search_nickname(SiteId, Nickname, Options) ->
+-spec search_seller_nick(mlapi_site_id() | string(), Nickname :: mlapi_user_name() | string(), [option()]) -> response().
+search_seller_nick(SiteId, Nickname, Options) ->
     request(?SITES "/" ++ to_string(SiteId) ++ ?SEARCH "?nickname=" ++ ibrowse_lib:url_encode(to_string(Nickname)),
             ?SET_RECORD(mlapi_search_result, Options)).
 
--spec search_nickname(mlapi_site_id() | string(), Nickname :: string(),
-                      Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> response().
-search_nickname(SiteId, Nickname, Offset, Limit) ->
-    search_nickname(SiteId, Nickname, Offset, Limit, []).
+-spec search_seller_nick(mlapi_site_id() | string(), Nickname :: mlapi_user_name() | string(),
+                         Offset :: non_neg_integer(), Limit :: non_neg_integer()) -> response().
+search_seller_nick(SiteId, Nickname, Offset, Limit) ->
+    search_seller_nick(SiteId, Nickname, Offset, Limit, []).
 
--spec search_nickname(mlapi_site_id() | string(), Nickname :: string(),
-                      Offset :: non_neg_integer(), Limit :: non_neg_integer(), [option()]) -> response().
-search_nickname(SiteId, Nickname, Offset, Limit, Options) ->
+-spec search_seller_nick(mlapi_site_id() | string(), Nickname :: mlapi_user_name() | string(),
+                         Offset :: non_neg_integer(), Limit :: non_neg_integer(), [option()]) -> response().
+search_seller_nick(SiteId, Nickname, Offset, Limit, Options) ->
     request(io_lib:format(?SITES "/~s" ?SEARCH "?nickname=~s&offset=~w&limit=~w",
                           [SiteId, ibrowse_lib:url_encode(to_string(Nickname)), Offset, Limit]),
             ?SET_RECORD(mlapi_search_result, Options)).
