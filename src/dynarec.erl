@@ -179,18 +179,16 @@ gen_reversed_fields_tokens(Record, Fields) ->
 
 
 
-%%%-------------------------------------------------------------------
-%%% Generates the new_record function
-%%%
-%%% This returns code in the syntactic tree form.
-%%% but I generate it using erl_parse:parse_form/1 over my
-%%% generated list of tokens. It is a bit cryptic because of some
-%%% lists:reversed lists, but you can try in the console:
-%%%
-%%%  > erl_scan:tokens([],"new_record(record_name) -> #record_name{}.\n",0).
-%%%
-%%% to see what it generates and how to build syntactic tree by hand.
-%%%-------------------------------------------------------------------
+%% @doc Generates the new_record function
+%%
+%% <p>It returns code in the syntactic tree form, but we generate it using
+%% <code>erl_parse:parse_form/1</code> over the generated list of tokens.</p>
+%% <p>It is a bit cryptic because of the Erlang token format, but you can try
+%% the following expression in the Erlang shell to see what it generates and
+%% and how to build the token list manually:</p>
+%% <pre>
+%%  > erl_scan:tokens([],"new_record(record_name) -> #record_name{}.\n",0).
+%% </pre>
 gen_new_record(Tuples) ->
     Names = sets:to_list(sets:from_list([Name || {Name, _} <- Tuples])),
     List = lists:foldl(fun(RecordName, Acc) -> [gen_new_record_clause(RecordName) | Acc] end, [], Names),
