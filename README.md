@@ -62,11 +62,11 @@ Now we're ready to rock. Keep in mind the following type specifications:
 All of the available functions that retrieve information from [MLAPI](http://www.mercadolibre.io/)
 are very similar and follow a syntax like the following one:
 
-    -spec mlapi:get_user(mlapi_user_id(), [mlapi:option()]) -> mlapi:response().
+    -spec mlapi:user(mlapi_user_id(), [mlapi:option()]) -> mlapi:response().
 
 This is also a short version like:
 
-    -spec mlapi:get_user(mlapi_user_id()) -> mlapi:response().
+    -spec mlapi:user(mlapi_user_id()) -> mlapi:response().
 
 All the functions can receive options in the last argument. The most important
 one would be the one to specify the format of the result. It follows the syntax:
@@ -90,7 +90,7 @@ where ``Format`` can be one of:
 
 For example, if we wanted to format the result as a proplist we'd do:
 
-    mlapi:get_sites([{format, proplist}]).
+    mlapi:sites([{format, proplist}]).
 
 And we'd receive:
 

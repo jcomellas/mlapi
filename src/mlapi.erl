@@ -14,29 +14,29 @@
 %%-export([query/2, query_category/2, query_seller_id/2, query_seller_nick]).
 
 -export([start/0, stop/0, request/1, get_env/0, get_env/1, get_env/2]).
--export([get_sites/0, get_sites/1, get_site/1, get_site/2,
-         get_countries/0, get_countries/1, get_country/1, get_country/2,
-         get_state/1, get_state/2, get_city/1, get_city/2,
-         get_currencies/0, get_currencies/1, get_currency/1, get_currency/2,
-         get_currency_conversion/2, get_currency_conversion/3, get_currency_conversion/4,
-         get_listing_exposures/1, get_listing_exposures/2, get_listing_exposure/2, get_listing_exposure/3,
-         get_listing_types/1, get_listing_types/2, get_listing_prices/1, get_listing_prices/2,
-         get_payment_types/0, get_payment_types/1, get_payment_type/1, get_payment_type/2,
-         get_payment_methods/1, get_payment_methods/2, get_payment_method/2, get_payment_method/3,
-         get_card_issuers/1, get_card_issuers/2, get_card_issuer/2, get_card_issuer/3,
-         get_category/1, get_category/2,
-         get_user/1, get_user/2,
-         get_item/1, get_item/2,
-         get_picture/1, get_picture/2,
-         get_trends/1, get_trends/2, get_category_trends/2, get_category_trends/3, get_category_trends/4,
-         get_local_geolocation/0, get_local_geolocation/1, get_geolocation/1, get_geolocation/2,
+-export([sites/0, sites/1, site/1, site/2,
+         countries/0, countries/1, country/1, country/2,
+         state/1, state/2, city/1, city/2,
+         currencies/0, currencies/1, currency/1, currency/2,
+         currency_conversion/2, currency_conversion/3, currency_conversion/4,
+         listing_exposures/1, listing_exposures/2, listing_exposure/2, listing_exposure/3,
+         listing_types/1, listing_types/2, listing_prices/1, listing_prices/2,
+         payment_types/0, payment_types/1, payment_type/1, payment_type/2,
+         payment_methods/1, payment_methods/2, payment_method/2, payment_method/3,
+         card_issuers/1, card_issuers/2, card_issuer/2, card_issuer/3,
+         category/1, category/2,
+         user/1, user/2,
+         item/1, item/2,
+         picture/1, picture/2,
+         trends/1, trends/2, category_trends/2, category_trends/3, category_trends/4,
+         local_geolocation/0, local_geolocation/1, geolocation/1, geolocation/2,
          search/2, search/3, search/4, search/5,
          search_category/2, search_category/3, search_category/4, search_category/5,
          search_seller_id/2, search_seller_id/3, search_seller_id/4, search_seller_id/5,
          search_seller_nick/2, search_seller_nick/3, search_seller_nick/4, search_seller_nick/5]).
--export([json_to_record/2, json_to_proplist/2, json_to_orddict/2, json_to_term/3,
-         json_field_to_record_name/2,
-         is_json_datetime_field/2, iso_datetime_to_tuple/1]).
+-export([ejson_to_record/2, ejson_to_proplist/2, ejson_to_orddict/2, ejson_to_term/3,
+         ejson_field_to_record_name/2,
+         is_ejson_datetime_field/2, iso_datetime_to_tuple/1]).
 -export([site_to_country/1, country_to_site/1]).
 
 -include("include/mlapi.hrl").
@@ -48,7 +48,7 @@
 -type ejson_value()       :: binary() | boolean() | integer() | float() | 'null'.
 -type ejson()             :: {[{ejson_key(), ejson_value() | ejson()}]}.
 -type proplist()          :: [proplists:property()].
--type format()            :: 'binary' | 'json' | 'proplist' | 'orddict' | 'record'.
+-type format()            :: 'binary' | 'ejson' | 'proplist' | 'orddict' | 'record'.
 -type option()            :: {format, format()} | {record, RecordName :: atom()} | 'refresh'.
 -type response()          :: binary() | ejson() | proplist() | orddict:orddict() | tuple() | error().
 
@@ -131,262 +131,262 @@ get_env(Key, Default) ->
     end.
 
 
--spec get_sites() -> response().
-get_sites() ->
-    get_sites([]).
+-spec sites() -> response().
+sites() ->
+    sites([]).
 
--spec get_sites([option()]) -> response().
-get_sites(Options) ->
+-spec sites([option()]) -> response().
+sites(Options) ->
     request(?SITES, ?SET_RECORD(mlapi_site, Options)).
 
--spec get_site(mlapi_site_id() | string()) -> response().
-get_site(SiteId) ->
-    get_site(SiteId, []).
+-spec site(mlapi_site_id() | string()) -> response().
+site(SiteId) ->
+    site(SiteId, []).
 
--spec get_site(mlapi_site_id() | string(), [option()]) -> response().
-get_site(SiteId, Options) ->
+-spec site(mlapi_site_id() | string(), [option()]) -> response().
+site(SiteId, Options) ->
     request(?SITES "/" ++ to_string(SiteId), ?SET_RECORD(mlapi_site_ext, Options)).
 
 
--spec get_countries() -> response().
-get_countries() ->
-    get_countries([]).
+-spec countries() -> response().
+countries() ->
+    countries([]).
 
--spec get_countries([option()]) -> response().
-get_countries(Options) ->
+-spec countries([option()]) -> response().
+countries(Options) ->
     request(?COUNTRIES, ?SET_RECORD(mlapi_country, Options)).
 
--spec get_country(mlapi_country_id() | string()) -> response().
-get_country(CountryId) ->
-    get_country(CountryId, []).
+-spec country(mlapi_country_id() | string()) -> response().
+country(CountryId) ->
+    country(CountryId, []).
 
--spec get_country(mlapi_country_id() | string(), [option()]) -> response().
-get_country(CountryId, Options) ->
+-spec country(mlapi_country_id() | string(), [option()]) -> response().
+country(CountryId, Options) ->
     request(?COUNTRIES "/" ++ to_string(CountryId), ?SET_RECORD(mlapi_country_ext, Options)).
 
 
--spec get_state(mlapi_state_id() | string()) -> response().
-get_state(StateId) ->
-    get_state(StateId, []).
+-spec state(mlapi_state_id() | string()) -> response().
+state(StateId) ->
+    state(StateId, []).
 
--spec get_state(mlapi_state_id() | string(), [option()]) -> response().
-get_state(StateId, Options) ->
+-spec state(mlapi_state_id() | string(), [option()]) -> response().
+state(StateId, Options) ->
     request(?STATES "/" ++ to_string(StateId), ?SET_RECORD(mlapi_state_ext, Options)).
 
 
--spec get_city(mlapi_city_id() | string()) -> response().
-get_city(CityId) ->
-    get_city(CityId, []).
+-spec city(mlapi_city_id() | string()) -> response().
+city(CityId) ->
+    city(CityId, []).
 
--spec get_city(mlapi_city_id() | string(), [option()]) -> response().
-get_city(CityId, Options) ->
+-spec city(mlapi_city_id() | string(), [option()]) -> response().
+city(CityId, Options) ->
     request(?CITIES "/" ++ to_string(CityId), ?SET_RECORD(mlapi_city_ext, Options)).
 
 
--spec get_currencies() -> response().
-get_currencies() ->
-    get_currencies([]).
+-spec currencies() -> response().
+currencies() ->
+    currencies([]).
 
--spec get_currencies([option()]) -> response().
-get_currencies(Options) ->
+-spec currencies([option()]) -> response().
+currencies(Options) ->
     request(?CURRENCIES, ?SET_RECORD(mlapi_currency, Options)).
 
--spec get_currency(mlapi_currency_id() | string()) -> response().
-get_currency(CurrencyId) ->
-    get_currency(CurrencyId, []).
+-spec currency(mlapi_currency_id() | string()) -> response().
+currency(CurrencyId) ->
+    currency(CurrencyId, []).
 
--spec get_currency(mlapi_currency_id() | string(), [option()]) -> response().
-get_currency(CurrencyId, Options) ->
+-spec currency(mlapi_currency_id() | string(), [option()]) -> response().
+currency(CurrencyId, Options) ->
     request(?CURRENCIES "/" ++ to_string(CurrencyId), ?SET_RECORD(mlapi_currency_ext, Options)).
 
 
--spec get_currency_conversion(FromCurrencyId :: mlapi_currency_id() | string(),
+-spec currency_conversion(FromCurrencyId :: mlapi_currency_id() | string(),
                               ToCurrencyId :: mlapi_currency_id() | string()) -> response().
-get_currency_conversion(FromCurrencyId, ToCurrencyId) ->
-    get_currency_conversion(FromCurrencyId, ToCurrencyId, []).
+currency_conversion(FromCurrencyId, ToCurrencyId) ->
+    currency_conversion(FromCurrencyId, ToCurrencyId, []).
 
--spec get_currency_conversion(FromCurrencyId :: mlapi_currency_id() | string(),
+-spec currency_conversion(FromCurrencyId :: mlapi_currency_id() | string(),
                               ToCurrencyId :: mlapi_currency_id() | string(), [option()] | calendar:datetime()) -> response().
-get_currency_conversion(FromCurrencyId, ToCurrencyId, Options) when is_list(Options) ->
+currency_conversion(FromCurrencyId, ToCurrencyId, Options) when is_list(Options) ->
     request(?CURRENCY_CONVERSIONS "?from=" ++ to_string(FromCurrencyId) ++ "&to=" ++ to_string(ToCurrencyId),
             ?SET_RECORD(mlapi_currency_conversion, Options));
-get_currency_conversion(FromCurrencyId, ToCurrencyId, DateTime) ->
-    get_currency_conversion(FromCurrencyId, ToCurrencyId, DateTime, []).
+currency_conversion(FromCurrencyId, ToCurrencyId, DateTime) ->
+    currency_conversion(FromCurrencyId, ToCurrencyId, DateTime, []).
 
--spec get_currency_conversion(FromCurrencyId :: mlapi_currency_id() | string(),
+-spec currency_conversion(FromCurrencyId :: mlapi_currency_id() | string(),
                               ToCurrencyId :: mlapi_currency_id() | string(), calendar:datetime(), [option()]) -> response().
-get_currency_conversion(FromCurrencyId, ToCurrencyId, {{Year, Month, Day}, {Hour, Min, _Sec}}, Options) ->
+currency_conversion(FromCurrencyId, ToCurrencyId, {{Year, Month, Day}, {Hour, Min, _Sec}}, Options) ->
     %% The conversion date must be formatted as: dd/MM/yyyy-HH:mm
     DateArg = io_lib:format("&date=~2.2.0w/~2.2.0w/~4.4.0w-~2.2.0w:~2.2.0w", [Day, Month, Year, Hour, Min]),
     request(?CURRENCY_CONVERSIONS "?from=" ++ to_string(FromCurrencyId) ++ "&to=" ++ to_string(ToCurrencyId) ++ DateArg,
             ?SET_RECORD(mlapi_currency_conversion, Options)).
 
 
--spec get_listing_exposures(mlapi_site_id() | string()) -> response().
-get_listing_exposures(SiteId) ->
-    get_listing_exposures(SiteId, []).
+-spec listing_exposures(mlapi_site_id() | string()) -> response().
+listing_exposures(SiteId) ->
+    listing_exposures(SiteId, []).
 
--spec get_listing_exposures(mlapi_site_id() | string(), [option()]) -> response().
-get_listing_exposures(SiteId, Options) ->
+-spec listing_exposures(mlapi_site_id() | string(), [option()]) -> response().
+listing_exposures(SiteId, Options) ->
     request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_EXPOSURES, ?SET_RECORD(mlapi_listing_exposures, Options)).
 
--spec get_listing_exposure(mlapi_site_id() | string(), mlapi_listing_exposure_id() | string()) -> response().
-get_listing_exposure(SiteId, ListingExposureId) ->
-    get_listing_exposure(SiteId, ListingExposureId, []).
+-spec listing_exposure(mlapi_site_id() | string(), mlapi_listing_exposure_id() | string()) -> response().
+listing_exposure(SiteId, ListingExposureId) ->
+    listing_exposure(SiteId, ListingExposureId, []).
 
--spec get_listing_exposure(mlapi_site_id() | string(), mlapi_listing_exposure_id() | string(), [option()]) -> response().
-get_listing_exposure(SiteId, ListingExposureId, Options) ->
+-spec listing_exposure(mlapi_site_id() | string(), mlapi_listing_exposure_id() | string(), [option()]) -> response().
+listing_exposure(SiteId, ListingExposureId, Options) ->
     request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_EXPOSURES "/" ++ to_string(ListingExposureId),
             ?SET_RECORD(mlapi_listing_exposure, Options)).
 
 
--spec get_listing_types(mlapi_site_id() | string()) -> response().
-get_listing_types(SiteId) ->
-    get_listing_types(SiteId, []).
+-spec listing_types(mlapi_site_id() | string()) -> response().
+listing_types(SiteId) ->
+    listing_types(SiteId, []).
 
--spec get_listing_types(mlapi_site_id() | string(), [option()]) -> response().
-get_listing_types(SiteId, Options) ->
+-spec listing_types(mlapi_site_id() | string(), [option()]) -> response().
+listing_types(SiteId, Options) ->
     request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_TYPES, ?SET_RECORD(mlapi_listing_type, Options)).
 
 
--spec get_listing_prices(mlapi_site_id() | string()) -> response().
-get_listing_prices(SiteId) ->
-    get_listing_prices(SiteId, []).
+-spec listing_prices(mlapi_site_id() | string()) -> response().
+listing_prices(SiteId) ->
+    listing_prices(SiteId, []).
 
--spec get_listing_prices(mlapi_site_id() | string(), [option()]) -> response().
-get_listing_prices(SiteId, Options) ->
+-spec listing_prices(mlapi_site_id() | string(), [option()]) -> response().
+listing_prices(SiteId, Options) ->
     request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_PRICES "?price=1", ?SET_RECORD(mlapi_listing_price, Options)).
 
 
--spec get_payment_types() -> response().
-get_payment_types() ->
-    get_payment_types([]).
+-spec payment_types() -> response().
+payment_types() ->
+    payment_types([]).
 
--spec get_payment_types([option()]) -> response().
-get_payment_types(Options) ->
+-spec payment_types([option()]) -> response().
+payment_types(Options) ->
     request(?PAYMENT_TYPES, ?SET_RECORD(mlapi_payment_type, Options)).
 
--spec get_payment_type(mlapi_payment_type_id() | string()) -> response().
-get_payment_type(PaymentTypeId) ->
-    get_payment_type(PaymentTypeId, []).
+-spec payment_type(mlapi_payment_type_id() | string()) -> response().
+payment_type(PaymentTypeId) ->
+    payment_type(PaymentTypeId, []).
 
--spec get_payment_type(mlapi_payment_type_id() | string(), [option()]) -> response().
-get_payment_type(PaymentTypeId, Options) ->
+-spec payment_type(mlapi_payment_type_id() | string(), [option()]) -> response().
+payment_type(PaymentTypeId, Options) ->
     request(?PAYMENT_TYPES "/" ++ to_string(PaymentTypeId), ?SET_RECORD(mlapi_payment_type, Options)).
 
 
--spec get_payment_methods(mlapi_site_id() | string()) -> response().
-get_payment_methods(SiteId) ->
-    get_payment_methods(SiteId, []).
+-spec payment_methods(mlapi_site_id() | string()) -> response().
+payment_methods(SiteId) ->
+    payment_methods(SiteId, []).
 
--spec get_payment_methods(mlapi_site_id() | string(), [option()]) -> response().
-get_payment_methods(SiteId, Options) ->
+-spec payment_methods(mlapi_site_id() | string(), [option()]) -> response().
+payment_methods(SiteId, Options) ->
     request(?SITES "/" ++ to_string(SiteId) ++ ?PAYMENT_METHODS, ?SET_RECORD(mlapi_payment_method, Options)).
 
--spec get_payment_method(mlapi_site_id() | string(), mlapi_payment_method_id() | string()) -> response().
-get_payment_method(SiteId, PaymentMethodId) ->
-    get_payment_method(SiteId, PaymentMethodId, []).
+-spec payment_method(mlapi_site_id() | string(), mlapi_payment_method_id() | string()) -> response().
+payment_method(SiteId, PaymentMethodId) ->
+    payment_method(SiteId, PaymentMethodId, []).
 
--spec get_payment_method(mlapi_site_id() | string(), mlapi_payment_method_id() | string(), [option()]) -> response().
-get_payment_method(SiteId, PaymentMethodId, Options) ->
+-spec payment_method(mlapi_site_id() | string(), mlapi_payment_method_id() | string(), [option()]) -> response().
+payment_method(SiteId, PaymentMethodId, Options) ->
     request(?SITES "/" ++ to_string(SiteId) ++ ?PAYMENT_METHODS "/" ++ to_string(PaymentMethodId),
             ?SET_RECORD(mlapi_payment_method_ext, Options)).
 
 
--spec get_card_issuers(mlapi_site_id() | string()) -> response().
-get_card_issuers(SiteId) ->
-    get_card_issuers(SiteId, []).
+-spec card_issuers(mlapi_site_id() | string()) -> response().
+card_issuers(SiteId) ->
+    card_issuers(SiteId, []).
 
--spec get_card_issuers(mlapi_site_id() | string(), [option()]) -> response().
-get_card_issuers(SiteId, Options) ->
+-spec card_issuers(mlapi_site_id() | string(), [option()]) -> response().
+card_issuers(SiteId, Options) ->
     request(?SITES "/" ++ to_string(SiteId) ++ ?CARD_ISSUERS, ?SET_RECORD(mlapi_card_issuer, Options)).
 
--spec get_card_issuer(mlapi_site_id() | string(), mlapi_card_issuer_id() | string()) -> response().
-get_card_issuer(SiteId, CardIssuerId) ->
-    get_card_issuer(SiteId, CardIssuerId, []).
+-spec card_issuer(mlapi_site_id() | string(), mlapi_card_issuer_id() | string()) -> response().
+card_issuer(SiteId, CardIssuerId) ->
+    card_issuer(SiteId, CardIssuerId, []).
 
--spec get_card_issuer(mlapi_site_id() | string(), mlapi_card_issuer_id() | string(), [option()]) -> response().
-get_card_issuer(SiteId, CardIssuerId, Options) ->
+-spec card_issuer(mlapi_site_id() | string(), mlapi_card_issuer_id() | string(), [option()]) -> response().
+card_issuer(SiteId, CardIssuerId, Options) ->
     request(?SITES "/" ++ to_string(SiteId) ++ ?CARD_ISSUERS "/" ++ to_string(CardIssuerId),
             ?SET_RECORD(mlapi_card_issuer_ext, Options)).
 
 
--spec get_category(mlapi_category_id() | string()) -> response().
-get_category(CategoryId) ->
-    get_category(CategoryId, []).
+-spec category(mlapi_category_id() | string()) -> response().
+category(CategoryId) ->
+    category(CategoryId, []).
 
--spec get_category(mlapi_category_id() | string(), [option()]) -> response().
-get_category(CategoryId, Options) ->
+-spec category(mlapi_category_id() | string(), [option()]) -> response().
+category(CategoryId, Options) ->
     request(?CATEGORIES "/" ++ to_string(CategoryId), ?SET_RECORD(mlapi_category_ext, Options)).
 
 
--spec get_user(mlapi_user_id() | string()) -> response().
-get_user(UserId) ->
-    get_user(UserId, []).
+-spec user(mlapi_user_id() | string()) -> response().
+user(UserId) ->
+    user(UserId, []).
 
--spec get_user(mlapi_user_id() | string(), [option()]) -> response().
-get_user(UserId, Options) ->
+-spec user(mlapi_user_id() | string(), [option()]) -> response().
+user(UserId, Options) ->
     request(?USERS "/" ++ to_string(UserId), ?SET_RECORD(mlapi_user, Options)).
 
 
--spec get_item(mlapi_item_id() | string()) -> response().
-get_item(ItemId) ->
-    get_item(ItemId, []).
+-spec item(mlapi_item_id() | string()) -> response().
+item(ItemId) ->
+    item(ItemId, []).
 
--spec get_item(mlapi_item_id() | string(), [option()]) -> response().
-get_item(ItemId, Options) ->
+-spec item(mlapi_item_id() | string(), [option()]) -> response().
+item(ItemId, Options) ->
     request(?ITEMS "/" ++ to_string(ItemId), ?SET_RECORD(mlapi_item, Options)).
 
 
--spec get_picture(mlapi_picture_id() | string()) -> response().
-get_picture(PictureId) ->
-    get_picture(PictureId, []).
+-spec picture(mlapi_picture_id() | string()) -> response().
+picture(PictureId) ->
+    picture(PictureId, []).
 
--spec get_picture(mlapi_picture_id() | string(), [option()]) -> response().
-get_picture(PictureId, Options) ->
+-spec picture(mlapi_picture_id() | string(), [option()]) -> response().
+picture(PictureId, Options) ->
     request(?PICTURES "/" ++ to_string(PictureId), ?SET_RECORD(mlapi_picture, Options)).
 
 
--spec get_trends(mlapi_site_id() | string()) -> response().
-get_trends(SiteId) ->
-    get_trends(SiteId, []).
+-spec trends(mlapi_site_id() | string()) -> response().
+trends(SiteId) ->
+    trends(SiteId, []).
 
--spec get_trends(mlapi_site_id() | string(), [option()]) -> response().
-get_trends(SiteId, Options) when is_list(Options) ->
+-spec trends(mlapi_site_id() | string(), [option()]) -> response().
+trends(SiteId, Options) when is_list(Options) ->
     request(?TRENDS "?site=" ++ to_string(SiteId), ?SET_RECORD(mlapi_trend, Options)).
 
 
--spec get_category_trends(mlapi_site_id() | string(), mlapi_category_id() | string()) -> response().
-get_category_trends(SiteId, CategoryId) ->
-    get_category_trends(SiteId, CategoryId, []).
+-spec category_trends(mlapi_site_id() | string(), mlapi_category_id() | string()) -> response().
+category_trends(SiteId, CategoryId) ->
+    category_trends(SiteId, CategoryId, []).
 
--spec get_category_trends(mlapi_site_id() | string(), mlapi_category_id() | string(), [option()] | non_neg_integer()) -> response().
-get_category_trends(SiteId, CategoryId, Options) when is_list(Options) ->
+-spec category_trends(mlapi_site_id() | string(), mlapi_category_id() | string(), [option()] | non_neg_integer()) -> response().
+category_trends(SiteId, CategoryId, Options) when is_list(Options) ->
     request(?TRENDS "?site=" ++ to_string(SiteId) ++ "&category=" ++ to_string(CategoryId),
             ?SET_RECORD(mlapi_trend, Options));
-get_category_trends(SiteId, CategoryId, Limit) ->
-    get_category_trends(SiteId, CategoryId, Limit, []).
+category_trends(SiteId, CategoryId, Limit) ->
+    category_trends(SiteId, CategoryId, Limit, []).
 
--spec get_category_trends(mlapi_site_id() | string(), mlapi_category_id() | string(), Limit :: non_neg_integer(), [option()]) -> response().
-get_category_trends(SiteId, CategoryId, Limit, Options) ->
+-spec category_trends(mlapi_site_id() | string(), mlapi_category_id() | string(), Limit :: non_neg_integer(), [option()]) -> response().
+category_trends(SiteId, CategoryId, Limit, Options) ->
     request(?TRENDS "?site=" ++ to_string(SiteId) ++ "&category=" ++ to_string(CategoryId) ++ io_lib:format("&limit=~w", [Limit]),
             ?SET_RECORD(mlapi_trend, Options)).
 
 
--spec get_local_geolocation() -> response().
-get_local_geolocation() ->
-    get_local_geolocation([]).
+-spec local_geolocation() -> response().
+local_geolocation() ->
+    local_geolocation([]).
 
--spec get_local_geolocation([option()]) -> response().
-get_local_geolocation(Options) ->
+-spec local_geolocation([option()]) -> response().
+local_geolocation(Options) ->
     request(?GEOLOCATION "/whereami", ?SET_RECORD(mlapi_geolocation, Options)).
 
--spec get_geolocation(mlapi_ip_address() | string()) -> response().
-get_geolocation(IpAddr) ->
-    get_geolocation(IpAddr, []).
+-spec geolocation(mlapi_ip_address() | string()) -> response().
+geolocation(IpAddr) ->
+    geolocation(IpAddr, []).
 
--spec get_geolocation(mlapi_ip_address() | string(), [option()]) -> response().
-get_geolocation(IpAddr, Options) ->
+-spec geolocation(mlapi_ip_address() | string(), [option()]) -> response().
+geolocation(IpAddr, Options) ->
     request(?GEOLOCATION "/ip/" ++ to_string(IpAddr), ?SET_RECORD(mlapi_geolocation, Options)).
 
 
@@ -488,12 +488,12 @@ request(Path, Options) ->
         {ok, "200", Headers, Body} ->
             case lists:keyfind(?HEADER_CONTENT_TYPE, 1, Headers) of
                 {_ContentType, ?MIME_TYPE_JSON ++ _CharSet} ->
-                    case proplists:get_value(format, Options, json) of
+                    case proplists:get_value(format, Options, ejson) of
                         binary ->
                             Body;
                         Format ->
                             try
-                                json_to_term(ejson:decode(Body), proplists:get_value(record, Options), Format)
+                                ejson_to_term(ejson:decode(Body), proplists:get_value(record, Options), Format)
                             catch
                                 throw:Reason ->
                                     {error, Reason}
@@ -510,22 +510,22 @@ request(Path, Options) ->
     end.
 
 
--spec json_to_term(ejson(), RecordName :: atom(), format()) -> ejson() | orddict:orddict() | proplist() | tuple().
-json_to_term(Doc, _RecordName, json) ->
+-spec ejson_to_term(ejson(), RecordName :: atom(), format()) -> ejson() | orddict:orddict() | proplist() | tuple().
+ejson_to_term(Doc, _RecordName, ejson) ->
     Doc;
-json_to_term(Doc, RecordName, orddict) ->
-    json_to_orddict(Doc, RecordName);
-json_to_term(Doc, RecordName, proplist) ->
-    json_to_proplist(Doc, RecordName);
-json_to_term(Doc, RecordName, record) ->
-    json_to_record(Doc, RecordName).
+ejson_to_term(Doc, RecordName, orddict) ->
+    ejson_to_orddict(Doc, RecordName);
+ejson_to_term(Doc, RecordName, proplist) ->
+    ejson_to_proplist(Doc, RecordName);
+ejson_to_term(Doc, RecordName, record) ->
+    ejson_to_record(Doc, RecordName).
 
 
-%% @doc Convert a JSON document or a list of documents into one or more known record.
--spec json_to_record(tuple() | [tuple()], Record :: atom() | tuple()) -> tuple() | [tuple()].
-json_to_record({Elements}, RecordOrName) when is_list(Elements) ->
+%% @doc Convert a parsed JSON document or a list of documents into one or more known record.
+-spec ejson_to_record(tuple() | [tuple()], Record :: atom() | tuple()) -> tuple() | [tuple()].
+ejson_to_record({Elements}, RecordOrName) when is_list(Elements) ->
     JsonHelperFun = #json_helper{
-      child_to_term = fun json_to_record/2,
+      child_to_term = fun ejson_to_record/2,
       append = fun (Name, Value, Record) -> set_value(Name, Value, Record) end,
       finish = fun (Record) -> Record end
      },
@@ -535,54 +535,54 @@ json_to_record({Elements}, RecordOrName) when is_list(Elements) ->
                                is_atom(RecordOrName) ->
                                    {RecordOrName, new_record(RecordOrName)}
                            end,
-    json_list_to_term(RecordName, JsonHelperFun, Elements, Record);
-json_to_record(Elements, RecordName) when is_list(Elements) ->
+    ejson_list_to_term(RecordName, JsonHelperFun, Elements, Record);
+ejson_to_record(Elements, RecordName) when is_list(Elements) ->
     lists:reverse(
       lists:foldl(fun (Element, Acc) ->
-                          [json_to_record(Element, new_record(RecordName)) | Acc]
+                          [ejson_to_record(Element, new_record(RecordName)) | Acc]
                   end, [], Elements)).
 
 
-%% @doc Convert a JSON document or a list of documents into one or more property lists.
--spec json_to_proplist(tuple() | [tuple()], RecordName :: atom()) -> proplist() | [proplist()].
-json_to_proplist({Elements}, RecordName) when is_list(Elements) ->
+%% @doc Convert a parsed JSON document or a list of documents into one or more property lists.
+-spec ejson_to_proplist(tuple() | [tuple()], RecordName :: atom()) -> proplist() | [proplist()].
+ejson_to_proplist({Elements}, RecordName) when is_list(Elements) ->
     JsonHelperFun = #json_helper{
-      child_to_term = fun json_to_proplist/2,
+      child_to_term = fun ejson_to_proplist/2,
       append = fun (Name, Value, Acc) -> [{Name, Value} | Acc] end,
       finish = fun lists:reverse/1
      },
-    json_list_to_term(RecordName, JsonHelperFun, Elements, []);
-json_to_proplist(Elements, RecordName) when is_list(Elements) ->
+    ejson_list_to_term(RecordName, JsonHelperFun, Elements, []);
+ejson_to_proplist(Elements, RecordName) when is_list(Elements) ->
     lists:reverse(
       lists:foldl(fun (Element, Acc) ->
-                          [json_to_proplist(Element, RecordName) | Acc]
+                          [ejson_to_proplist(Element, RecordName) | Acc]
                   end, [], Elements)).
 
 
-%% @doc Convert a JSON document or a list of documents into one or more ordered dictionaries.
--spec json_to_orddict(tuple() | [tuple()], RecordName :: atom()) -> orddict:orddict() | [orddict:orddict()].
-json_to_orddict({Elements}, RecordName) when is_list(Elements) ->
+%% @doc Convert a parsed JSON document or a list of documents into one or more ordered dictionaries.
+-spec ejson_to_orddict(tuple() | [tuple()], RecordName :: atom()) -> orddict:orddict() | [orddict:orddict()].
+ejson_to_orddict({Elements}, RecordName) when is_list(Elements) ->
     JsonHelperFun = #json_helper{
-      child_to_term = fun json_to_orddict/2,
+      child_to_term = fun ejson_to_orddict/2,
       append = fun orddict:append/3,
       finish = fun (Dict) -> Dict end
      },
-    json_list_to_term(RecordName, JsonHelperFun, Elements, orddict:new());
-json_to_orddict(Elements, RecordName) when is_list(Elements) ->
+    ejson_list_to_term(RecordName, JsonHelperFun, Elements, orddict:new());
+ejson_to_orddict(Elements, RecordName) when is_list(Elements) ->
     lists:reverse(
       lists:foldl(fun (Element, Acc) ->
-                          [json_to_orddict(Element, RecordName) | Acc]
+                          [ejson_to_orddict(Element, RecordName) | Acc]
                   end, [], Elements)).
 
--spec json_list_to_term(RecordName :: atom(), #json_helper{}, [{binary(), any()}], tuple() | orddict:orddict() | proplist()) ->
-                               tuple() | orddict:orddict() | proplist().
-json_list_to_term(RecordName, JsonHelperFun, [{Name, Value} | Tail], Acc) ->
+-spec ejson_list_to_term(RecordName :: atom(), #json_helper{}, [{binary(), any()}], tuple() | orddict:orddict() | proplist()) ->
+                                tuple() | orddict:orddict() | proplist().
+ejson_list_to_term(RecordName, JsonHelperFun, [{Name, Value} | Tail], Acc) ->
     FieldName = binary_to_existing_atom(Name, utf8),
     %% Convert the value to a record if possible
     NewValue =
-        case json_field_to_record_name(RecordName, FieldName) of
+        case ejson_field_to_record_name(RecordName, FieldName) of
             undefined ->
-                case is_json_datetime_field(RecordName, FieldName) of
+                case is_ejson_datetime_field(RecordName, FieldName) of
                     true ->
                         iso_datetime_to_tuple(Value);
                     false ->
@@ -596,108 +596,108 @@ json_list_to_term(RecordName, JsonHelperFun, [{Name, Value} | Tail], Acc) ->
                         Value
                 end
         end,
-    json_list_to_term(RecordName, JsonHelperFun, Tail, (JsonHelperFun#json_helper.append)(FieldName, NewValue, Acc));
-json_list_to_term(_RecordName, JsonHelperFun, [], Acc) ->
+    ejson_list_to_term(RecordName, JsonHelperFun, Tail, (JsonHelperFun#json_helper.append)(FieldName, NewValue, Acc));
+ejson_list_to_term(_RecordName, JsonHelperFun, [], Acc) ->
     (JsonHelperFun#json_helper.finish)(Acc).
 
 
 %% @doc Return the record name for those JSON fields that can be converted to a known child record.
--spec json_field_to_record_name(ParentRecordName :: atom(), FieldName :: atom()) -> ChildRecordName :: atom() | undefined.
-json_field_to_record_name(mlapi_buyer_reputation, transactions) ->
+-spec ejson_field_to_record_name(ParentRecordName :: atom(), FieldName :: atom()) -> ChildRecordName :: atom() | undefined.
+ejson_field_to_record_name(mlapi_buyer_reputation, transactions) ->
     mlapi_transactions;
-json_field_to_record_name(mlapi_category_ext, children_categories) ->
+ejson_field_to_record_name(mlapi_category_ext, children_categories) ->
     mlapi_category;
-json_field_to_record_name(mlapi_category_ext, settings) ->
+ejson_field_to_record_name(mlapi_category_ext, settings) ->
     mlapi_settings;
-json_field_to_record_name(mlapi_country_ext, states) ->
+ejson_field_to_record_name(mlapi_country_ext, states) ->
     mlapi_state;
-json_field_to_record_name(mlapi_exceptions_by_card_issuer, card_issuer) ->
+ejson_field_to_record_name(mlapi_exceptions_by_card_issuer, card_issuer) ->
     mlapi_card_issuer;
-json_field_to_record_name(mlapi_exceptions_by_card_issuer, payer_costs) ->
+ejson_field_to_record_name(mlapi_exceptions_by_card_issuer, payer_costs) ->
     mlapi_payer_costs;
-json_field_to_record_name(mlapi_filter, values) ->
+ejson_field_to_record_name(mlapi_filter, values) ->
     mlapi_filter_value;
-json_field_to_record_name(mlapi_geo_information, location) ->
+ejson_field_to_record_name(mlapi_geo_information, location) ->
     mlapi_location;
-json_field_to_record_name(mlapi_item, attributes) ->
+ejson_field_to_record_name(mlapi_item, attributes) ->
     mlapi_attribute;
-json_field_to_record_name(mlapi_item, city) ->
+ejson_field_to_record_name(mlapi_item, city) ->
     mlapi_city;
-json_field_to_record_name(mlapi_item, country) ->
+ejson_field_to_record_name(mlapi_item, country) ->
     mlapi_country;
-json_field_to_record_name(mlapi_item, descriptions) ->
+ejson_field_to_record_name(mlapi_item, descriptions) ->
     mlapi_description;
-json_field_to_record_name(mlapi_item, geolocation) ->
+ejson_field_to_record_name(mlapi_item, geolocation) ->
     mlapi_location;
-json_field_to_record_name(mlapi_payment_method_ext, exceptions_by_card_issuer) ->
+ejson_field_to_record_name(mlapi_payment_method_ext, exceptions_by_card_issuer) ->
     mlapi_exceptions_by_card_issuer;
-json_field_to_record_name(mlapi_item, pictures) ->
+ejson_field_to_record_name(mlapi_item, pictures) ->
     mlapi_picture;
-json_field_to_record_name(mlapi_item, seller_address) ->
+ejson_field_to_record_name(mlapi_item, seller_address) ->
     mlapi_seller_address;
-json_field_to_record_name(mlapi_item, shipping) ->
+ejson_field_to_record_name(mlapi_item, shipping) ->
     mlapi_shipping;
-json_field_to_record_name(mlapi_item, state) ->
+ejson_field_to_record_name(mlapi_item, state) ->
     mlapi_state;
-json_field_to_record_name(mlapi_seller_reputation, transactions) ->
+ejson_field_to_record_name(mlapi_seller_reputation, transactions) ->
     mlapi_transactions;
-json_field_to_record_name(mlapi_search_item, address) ->
+ejson_field_to_record_name(mlapi_search_item, address) ->
     mlapi_search_address;
-json_field_to_record_name(mlapi_search_item, attributes) ->
+ejson_field_to_record_name(mlapi_search_item, attributes) ->
     mlapi_attribute;
-json_field_to_record_name(mlapi_search_item, seller) ->
+ejson_field_to_record_name(mlapi_search_item, seller) ->
     mlapi_seller;
-json_field_to_record_name(mlapi_search_item, installments) ->
+ejson_field_to_record_name(mlapi_search_item, installments) ->
     mlapi_installment;
-json_field_to_record_name(mlapi_site_ext, categories) ->
+ejson_field_to_record_name(mlapi_site_ext, categories) ->
     mlapi_category;
-json_field_to_record_name(mlapi_site_ext, currencies) ->
+ejson_field_to_record_name(mlapi_site_ext, currencies) ->
     mlapi_currency;
-json_field_to_record_name(mlapi_state_ext, cities) ->
+ejson_field_to_record_name(mlapi_state_ext, cities) ->
     mlapi_city;
-json_field_to_record_name(mlapi_search_result, filters) ->
+ejson_field_to_record_name(mlapi_search_result, filters) ->
     mlapi_filter;
-json_field_to_record_name(mlapi_search_result, available_filters) ->
+ejson_field_to_record_name(mlapi_search_result, available_filters) ->
     mlapi_filter;
-json_field_to_record_name(mlapi_search_result, paging) ->
+ejson_field_to_record_name(mlapi_search_result, paging) ->
     mlapi_paging;
-json_field_to_record_name(mlapi_search_result, results) ->
+ejson_field_to_record_name(mlapi_search_result, results) ->
     mlapi_search_item;
-json_field_to_record_name(mlapi_search_result, seller) ->
+ejson_field_to_record_name(mlapi_search_result, seller) ->
     mlapi_seller;
-json_field_to_record_name(mlapi_search_result, sort) ->
+ejson_field_to_record_name(mlapi_search_result, sort) ->
     mlapi_sort;
-json_field_to_record_name(mlapi_search_result, available_sorts) ->
+ejson_field_to_record_name(mlapi_search_result, available_sorts) ->
     mlapi_sort;
-json_field_to_record_name(mlapi_user, identification) ->
+ejson_field_to_record_name(mlapi_user, identification) ->
     mlapi_identification;
-json_field_to_record_name(mlapi_user, buyer_reputation) ->
+ejson_field_to_record_name(mlapi_user, buyer_reputation) ->
     mlapi_buyer_reputation;
-json_field_to_record_name(mlapi_user, phone) ->
+ejson_field_to_record_name(mlapi_user, phone) ->
     mlapi_phone;
-json_field_to_record_name(mlapi_user, seller_reputation) ->
+ejson_field_to_record_name(mlapi_user, seller_reputation) ->
     mlapi_seller_reputation;
-json_field_to_record_name(mlapi_user, status) ->
+ejson_field_to_record_name(mlapi_user, status) ->
     mlapi_status;
-json_field_to_record_name(_RecordName, geo_information) ->
+ejson_field_to_record_name(_RecordName, geo_information) ->
     mlapi_geo_information;
-json_field_to_record_name(_RecordName, _FieldName) ->
+ejson_field_to_record_name(_RecordName, _FieldName) ->
     undefined.
 
 
 %% @doc Check whether a field of a record should be converted to a datetime.
--spec is_json_datetime_field(RecordName :: atom(), FieldName :: atom()) -> boolean().
-is_json_datetime_field(mlapi_shipping_costs, time) ->
+-spec is_ejson_datetime_field(RecordName :: atom(), FieldName :: atom()) -> boolean().
+is_ejson_datetime_field(mlapi_shipping_costs, time) ->
     true;
-is_json_datetime_field(mlapi_item, start_time) ->
+is_ejson_datetime_field(mlapi_item, start_time) ->
     true;
-is_json_datetime_field(mlapi_item, stop_time) ->
+is_ejson_datetime_field(mlapi_item, stop_time) ->
     true;
-is_json_datetime_field(mlapi_search_item, stop_time) ->
+is_ejson_datetime_field(mlapi_search_item, stop_time) ->
     true;
-is_json_datetime_field(mlapi_user, registration_date) ->
+is_ejson_datetime_field(mlapi_user, registration_date) ->
     true;
-is_json_datetime_field(_RecordName, _FieldName) ->
+is_ejson_datetime_field(_RecordName, _FieldName) ->
     false.
 
 

@@ -13,22 +13,22 @@
 -export([init/0, init/1, init_metatable/1, init_table/3,
          create_tables/1, create_metatable/1, create_table/2,
          upgrade_metatable/0, upgrade_table/1, tables/0, table_info/1, table_version/1, table_ttl/1]).
--export([get_sites/0, get_sites/1, get_site/1, get_site/2,
-         get_countries/0, get_countries/1, get_country/1, get_country/2,
-         get_state/1, get_state/2, get_city/1, get_city/2,
-         get_currencies/0, get_currencies/1, get_currency/1, get_currency/2,
-         get_currency_conversion/2, get_currency_conversion/3, get_currency_conversion/4,
-         get_listing_exposures/1, get_listing_exposures/2, get_listing_exposure/2, get_listing_exposure/3,
-         get_listing_types/1, get_listing_types/2, get_listing_prices/1, get_listing_prices/2,
-         get_payment_types/0, get_payment_types/1, get_payment_type/1, get_payment_type/2,
-         get_payment_methods/1, get_payment_methods/2, get_payment_method/2, get_payment_method/3,
-         get_card_issuers/1, get_card_issuers/2, get_card_issuer/2, get_card_issuer/3,
-         get_category/1, get_category/2,
-         get_user/1, get_user/2,
-         get_item/1, get_item/2,
-         get_picture/1, get_picture/2,
-         get_trends/1, get_trends/2, get_category_trends/2, get_category_trends/3, get_category_trends/4,
-         get_local_geolocation/0, get_local_geolocation/1, get_geolocation/1, get_geolocation/2,
+-export([sites/0, sites/1, site/1, site/2,
+         countries/0, countries/1, country/1, country/2,
+         state/1, state/2, city/1, city/2,
+         currencies/0, currencies/1, currency/1, currency/2,
+         currency_conversion/2, currency_conversion/3, currency_conversion/4,
+         listing_exposures/1, listing_exposures/2, listing_exposure/2, listing_exposure/3,
+         listing_types/1, listing_types/2, listing_prices/1, listing_prices/2,
+         payment_types/0, payment_types/1, payment_type/1, payment_type/2,
+         payment_methods/1, payment_methods/2, payment_method/2, payment_method/3,
+         card_issuers/1, card_issuers/2, card_issuer/2, card_issuer/3,
+         category/1, category/2,
+         user/1, user/2,
+         item/1, item/2,
+         picture/1, picture/2,
+         trends/1, trends/2, category_trends/2, category_trends/3, category_trends/4,
+         local_geolocation/0, local_geolocation/1, geolocation/1, geolocation/2,
          search/2, search/3, search/4, search/5,
          search_category/2, search_category/3, search_category/4, search_category/5,
          search_seller_id/2, search_seller_id/3, search_seller_id/4, search_seller_id/5,
@@ -235,273 +235,273 @@ table_ttl(Table) ->
     end.
 
 
--spec get_sites() -> mlapi:response().
-get_sites() ->
-    get_sites([]).
+-spec sites() -> mlapi:response().
+sites() ->
+    sites([]).
 
--spec get_sites([mlapi:option()]) -> mlapi:response().
-get_sites(Options) ->
-    get_data(mlapi_cached_list, mlapi_site, Options, fun (NewOptions) -> mlapi:get_sites(NewOptions) end).
+-spec sites([mlapi:option()]) -> mlapi:response().
+sites(Options) ->
+    get_data(mlapi_cached_list, mlapi_site, Options, fun (NewOptions) -> mlapi:sites(NewOptions) end).
 
--spec get_site(mlapi_site_id()) -> mlapi:response().
-get_site(SiteId) ->
-    get_site(SiteId, []).
+-spec site(mlapi_site_id()) -> mlapi:response().
+site(SiteId) ->
+    site(SiteId, []).
 
--spec get_site(mlapi_site_id(), [mlapi:option()]) -> mlapi:response().
-get_site(SiteId, Options) ->
-    get_data(mlapi_site_ext, SiteId, Options, fun (NewOptions) -> mlapi:get_site(SiteId, NewOptions) end).
-
-
--spec get_countries() -> mlapi:response().
-get_countries() ->
-    get_countries([]).
-
--spec get_countries([mlapi:option()]) -> mlapi:response().
-get_countries(Options) ->
-    get_data(mlapi_cached_list, mlapi_country, Options, fun (NewOptions) -> mlapi:get_countries(NewOptions) end).
-
--spec get_country(mlapi_country_id()) -> mlapi:response().
-get_country(CountryId) ->
-    get_country(CountryId, []).
-
--spec get_country(mlapi_country_id(), [mlapi:option()]) -> mlapi:response().
-get_country(CountryId, Options) ->
-    get_data(mlapi_country_ext, CountryId, Options, fun (NewOptions) -> mlapi:get_country(CountryId, NewOptions) end).
+-spec site(mlapi_site_id(), [mlapi:option()]) -> mlapi:response().
+site(SiteId, Options) ->
+    get_data(mlapi_site_ext, SiteId, Options, fun (NewOptions) -> mlapi:site(SiteId, NewOptions) end).
 
 
--spec get_state(mlapi_state_id()) -> mlapi:response().
-get_state(StateId) ->
-    get_state(StateId, []).
+-spec countries() -> mlapi:response().
+countries() ->
+    countries([]).
 
--spec get_state(mlapi_state_id(), [mlapi:option()]) -> mlapi:response().
-get_state(StateId, Options) ->
-    get_data(mlapi_state_ext, StateId, Options, fun (NewOptions) -> mlapi:get_state(StateId, NewOptions) end).
+-spec countries([mlapi:option()]) -> mlapi:response().
+countries(Options) ->
+    get_data(mlapi_cached_list, mlapi_country, Options, fun (NewOptions) -> mlapi:countries(NewOptions) end).
 
+-spec country(mlapi_country_id()) -> mlapi:response().
+country(CountryId) ->
+    country(CountryId, []).
 
--spec get_city(mlapi_city_id()) -> mlapi:response().
-get_city(CityId) ->
-    get_city(CityId, []).
-
--spec get_city(mlapi_city_id(), [mlapi:option()]) -> mlapi:response().
-get_city(CityId, Options) ->
-    get_data(mlapi_city_ext, CityId, Options, fun (NewOptions) -> mlapi:get_city(CityId, NewOptions) end).
-
-
--spec get_currencies() -> mlapi:response().
-get_currencies() ->
-    get_currencies([]).
-
--spec get_currencies([mlapi:option()]) -> mlapi:response().
-get_currencies(Options) ->
-    get_data(mlapi_cached_list, mlapi_currency, Options, fun (NewOptions) -> mlapi:get_currencies(NewOptions) end).
+-spec country(mlapi_country_id(), [mlapi:option()]) -> mlapi:response().
+country(CountryId, Options) ->
+    get_data(mlapi_country_ext, CountryId, Options, fun (NewOptions) -> mlapi:country(CountryId, NewOptions) end).
 
 
--spec get_currency(mlapi_currency_id()) -> mlapi:response().
-get_currency(CurrencyId) ->
-    get_currency(CurrencyId, []).
+-spec state(mlapi_state_id()) -> mlapi:response().
+state(StateId) ->
+    state(StateId, []).
 
--spec get_currency(mlapi_currency_id(), [mlapi:option()]) -> mlapi:response().
-get_currency(CurrencyId, Options) ->
-    get_data(mlapi_currency, CurrencyId, Options, fun (NewOptions) -> mlapi:get_currency(CurrencyId, NewOptions) end).
+-spec state(mlapi_state_id(), [mlapi:option()]) -> mlapi:response().
+state(StateId, Options) ->
+    get_data(mlapi_state_ext, StateId, Options, fun (NewOptions) -> mlapi:state(StateId, NewOptions) end).
 
--spec get_currency_conversion(FromCurrencyId :: mlapi_currency_id(), ToCurrencyId :: mlapi_currency_id()) -> mlapi:response().
-get_currency_conversion(FromCurrencyId, ToCurrencyId) ->
-    get_currency_conversion(FromCurrencyId, ToCurrencyId, []).
 
--spec get_currency_conversion(FromCurrencyId :: mlapi_currency_id(), ToCurrencyId :: mlapi_currency_id(),
+-spec city(mlapi_city_id()) -> mlapi:response().
+city(CityId) ->
+    city(CityId, []).
+
+-spec city(mlapi_city_id(), [mlapi:option()]) -> mlapi:response().
+city(CityId, Options) ->
+    get_data(mlapi_city_ext, CityId, Options, fun (NewOptions) -> mlapi:city(CityId, NewOptions) end).
+
+
+-spec currencies() -> mlapi:response().
+currencies() ->
+    currencies([]).
+
+-spec currencies([mlapi:option()]) -> mlapi:response().
+currencies(Options) ->
+    get_data(mlapi_cached_list, mlapi_currency, Options, fun (NewOptions) -> mlapi:currencies(NewOptions) end).
+
+
+-spec currency(mlapi_currency_id()) -> mlapi:response().
+currency(CurrencyId) ->
+    currency(CurrencyId, []).
+
+-spec currency(mlapi_currency_id(), [mlapi:option()]) -> mlapi:response().
+currency(CurrencyId, Options) ->
+    get_data(mlapi_currency, CurrencyId, Options, fun (NewOptions) -> mlapi:currency(CurrencyId, NewOptions) end).
+
+-spec currency_conversion(FromCurrencyId :: mlapi_currency_id(), ToCurrencyId :: mlapi_currency_id()) -> mlapi:response().
+currency_conversion(FromCurrencyId, ToCurrencyId) ->
+    currency_conversion(FromCurrencyId, ToCurrencyId, []).
+
+-spec currency_conversion(FromCurrencyId :: mlapi_currency_id(), ToCurrencyId :: mlapi_currency_id(),
                               [mlapi:option()] | calendar:datetime()) -> mlapi:response().
-get_currency_conversion(FromCurrencyId, ToCurrencyId, Options) when is_list(Options) ->
+currency_conversion(FromCurrencyId, ToCurrencyId, Options) when is_list(Options) ->
     get_data(mlapi_currency_conversion, {FromCurrencyId, ToCurrencyId}, Options,
-             fun (NewOptions) -> mlapi:get_currency_conversion(FromCurrencyId, ToCurrencyId, NewOptions) end);
-get_currency_conversion(FromCurrencyId, ToCurrencyId, {_Date, _Time} = Datetime) ->
-    get_currency_conversion(FromCurrencyId, ToCurrencyId, Datetime, []).
+             fun (NewOptions) -> mlapi:currency_conversion(FromCurrencyId, ToCurrencyId, NewOptions) end);
+currency_conversion(FromCurrencyId, ToCurrencyId, {_Date, _Time} = Datetime) ->
+    currency_conversion(FromCurrencyId, ToCurrencyId, Datetime, []).
 
--spec get_currency_conversion(FromCurrencyId :: mlapi_currency_id(),
+-spec currency_conversion(FromCurrencyId :: mlapi_currency_id(),
                               ToCurrencyId :: mlapi_currency_id(), calendar:datetime(), [mlapi:option()]) -> mlapi:response().
-get_currency_conversion(FromCurrencyId, ToCurrencyId, {Date, {Hour, _Min, _Sec}}, Options) ->
+currency_conversion(FromCurrencyId, ToCurrencyId, {Date, {Hour, _Min, _Sec}}, Options) ->
     %% We assume that currency conversions are valid for 1 hour.
     Datetime = {Date, {Hour, 0, 0}},
     get_data(mlapi_currency_conversion, {FromCurrencyId, ToCurrencyId, Datetime}, Options,
-             fun (NewOptions) -> mlapi:get_currency_conversion(FromCurrencyId, ToCurrencyId, Datetime, NewOptions) end).
+             fun (NewOptions) -> mlapi:currency_conversion(FromCurrencyId, ToCurrencyId, Datetime, NewOptions) end).
 
--spec get_listing_exposures(mlapi_site_id()) -> mlapi:response().
-get_listing_exposures(SiteId) ->
-    get_listing_exposures(SiteId, []).
+-spec listing_exposures(mlapi_site_id()) -> mlapi:response().
+listing_exposures(SiteId) ->
+    listing_exposures(SiteId, []).
 
--spec get_listing_exposures(mlapi_site_id(), [mlapi:option()]) -> mlapi:response().
-get_listing_exposures(SiteId, Options) ->
+-spec listing_exposures(mlapi_site_id(), [mlapi:option()]) -> mlapi:response().
+listing_exposures(SiteId, Options) ->
     get_data(mlapi_cached_list, {mlapi_listing_exposure, SiteId}, Options,
-             fun (NewOptions) -> mlapi:get_listing_exposures(SiteId, NewOptions) end).
+             fun (NewOptions) -> mlapi:listing_exposures(SiteId, NewOptions) end).
 
 
--spec get_listing_exposure(mlapi_site_id(), mlapi_listing_exposure_id()) -> mlapi:response().
-get_listing_exposure(SiteId, ListingExposureId) ->
-    get_listing_exposure(SiteId, ListingExposureId, []).
+-spec listing_exposure(mlapi_site_id(), mlapi_listing_exposure_id()) -> mlapi:response().
+listing_exposure(SiteId, ListingExposureId) ->
+    listing_exposure(SiteId, ListingExposureId, []).
 
--spec get_listing_exposure(mlapi_site_id(), mlapi_listing_exposure_id(), [mlapi:option()]) -> mlapi:response().
-get_listing_exposure(SiteId, ListingExposureId, Options) ->
+-spec listing_exposure(mlapi_site_id(), mlapi_listing_exposure_id(), [mlapi:option()]) -> mlapi:response().
+listing_exposure(SiteId, ListingExposureId, Options) ->
     get_data(mlapi_listing_exposure, {SiteId, ListingExposureId}, Options,
-             fun (NewOptions) -> mlapi:get_listing_exposure(SiteId, ListingExposureId, NewOptions) end).
+             fun (NewOptions) -> mlapi:listing_exposure(SiteId, ListingExposureId, NewOptions) end).
 
 
--spec get_listing_types(mlapi_site_id()) -> mlapi:response().
-get_listing_types(SiteId) ->
-    get_listing_types(SiteId, []).
+-spec listing_types(mlapi_site_id()) -> mlapi:response().
+listing_types(SiteId) ->
+    listing_types(SiteId, []).
 
--spec get_listing_types(mlapi_site_id(), [mlapi:option()]) -> mlapi:response().
-get_listing_types(SiteId, Options) ->
+-spec listing_types(mlapi_site_id(), [mlapi:option()]) -> mlapi:response().
+listing_types(SiteId, Options) ->
     get_data(mlapi_cached_list, {mlapi_listing_type, SiteId}, Options,
-             fun (NewOptions) -> mlapi:get_listing_types(SiteId, NewOptions) end).
+             fun (NewOptions) -> mlapi:listing_types(SiteId, NewOptions) end).
 
 
--spec get_listing_prices(mlapi_site_id()) -> mlapi:response().
-get_listing_prices(SiteId) ->
-    get_listing_prices(SiteId, []).
+-spec listing_prices(mlapi_site_id()) -> mlapi:response().
+listing_prices(SiteId) ->
+    listing_prices(SiteId, []).
 
--spec get_listing_prices(mlapi_site_id(), [mlapi:option()]) -> mlapi:response().
-get_listing_prices(SiteId, Options) ->
+-spec listing_prices(mlapi_site_id(), [mlapi:option()]) -> mlapi:response().
+listing_prices(SiteId, Options) ->
     get_data(mlapi_cached_list, {mlapi_listing_price, SiteId}, Options,
-             fun (NewOptions) -> mlapi:get_listing_prices(SiteId, NewOptions) end).
+             fun (NewOptions) -> mlapi:listing_prices(SiteId, NewOptions) end).
 
 
--spec get_payment_types() -> mlapi:response().
-get_payment_types() ->
-    get_payment_types([]).
+-spec payment_types() -> mlapi:response().
+payment_types() ->
+    payment_types([]).
 
--spec get_payment_types([mlapi:option()]) -> mlapi:response().
-get_payment_types(Options) ->
+-spec payment_types([mlapi:option()]) -> mlapi:response().
+payment_types(Options) ->
     get_data(mlapi_cached_list, mlapi_payment_type, Options,
-             fun (NewOptions) -> mlapi:get_payment_types(NewOptions) end).
+             fun (NewOptions) -> mlapi:payment_types(NewOptions) end).
 
--spec get_payment_type(mlapi_payment_type_id()) -> mlapi:response().
-get_payment_type(PaymentTypeId) ->
-    get_payment_type(PaymentTypeId, []).
+-spec payment_type(mlapi_payment_type_id()) -> mlapi:response().
+payment_type(PaymentTypeId) ->
+    payment_type(PaymentTypeId, []).
 
--spec get_payment_type(mlapi_payment_type_id(), [mlapi:option()]) -> mlapi:response().
-get_payment_type(PaymentTypeId, Options) ->
+-spec payment_type(mlapi_payment_type_id(), [mlapi:option()]) -> mlapi:response().
+payment_type(PaymentTypeId, Options) ->
     get_data(mlapi_payment_type, PaymentTypeId, Options,
-             fun (NewOptions) -> mlapi:get_payment_type(PaymentTypeId, NewOptions) end).
+             fun (NewOptions) -> mlapi:payment_type(PaymentTypeId, NewOptions) end).
 
 
--spec get_payment_methods(mlapi_site_id()) -> mlapi:response().
-get_payment_methods(SiteId) ->
-    get_payment_methods(SiteId, []).
+-spec payment_methods(mlapi_site_id()) -> mlapi:response().
+payment_methods(SiteId) ->
+    payment_methods(SiteId, []).
 
--spec get_payment_methods(mlapi_site_id(), [mlapi:option()]) -> mlapi:response().
-get_payment_methods(SiteId, Options) ->
+-spec payment_methods(mlapi_site_id(), [mlapi:option()]) -> mlapi:response().
+payment_methods(SiteId, Options) ->
     get_data(mlapi_cached_list, {mlapi_payment_method, SiteId}, Options,
-             fun (NewOptions) -> mlapi:get_payment_methods(SiteId, NewOptions) end).
+             fun (NewOptions) -> mlapi:payment_methods(SiteId, NewOptions) end).
 
--spec get_payment_method(mlapi_site_id(), mlapi_payment_method_id()) -> mlapi:response().
-get_payment_method(SiteId, PaymentMethodId) ->
-    get_payment_method(SiteId, PaymentMethodId, []).
+-spec payment_method(mlapi_site_id(), mlapi_payment_method_id()) -> mlapi:response().
+payment_method(SiteId, PaymentMethodId) ->
+    payment_method(SiteId, PaymentMethodId, []).
 
--spec get_payment_method(mlapi_site_id(), mlapi_payment_method_id(), [mlapi:option()]) -> mlapi:response().
-get_payment_method(SiteId, PaymentMethodId, Options) ->
+-spec payment_method(mlapi_site_id(), mlapi_payment_method_id(), [mlapi:option()]) -> mlapi:response().
+payment_method(SiteId, PaymentMethodId, Options) ->
     get_data(mlapi_payment_method_ext, {SiteId, PaymentMethodId}, Options,
-             fun (NewOptions) -> mlapi:get_payment_method(SiteId, PaymentMethodId, NewOptions) end).
+             fun (NewOptions) -> mlapi:payment_method(SiteId, PaymentMethodId, NewOptions) end).
 
 
--spec get_card_issuers(mlapi_site_id()) -> mlapi:response().
-get_card_issuers(SiteId) ->
-    get_card_issuers(SiteId, []).
+-spec card_issuers(mlapi_site_id()) -> mlapi:response().
+card_issuers(SiteId) ->
+    card_issuers(SiteId, []).
 
--spec get_card_issuers(mlapi_site_id(), [mlapi:option()]) -> mlapi:response().
-get_card_issuers(SiteId, Options) ->
+-spec card_issuers(mlapi_site_id(), [mlapi:option()]) -> mlapi:response().
+card_issuers(SiteId, Options) ->
     get_data(mlapi_cached_list, {mlapi_card_issuer, SiteId}, Options,
-             fun (NewOptions) -> mlapi:get_card_issuers(SiteId, NewOptions) end).
+             fun (NewOptions) -> mlapi:card_issuers(SiteId, NewOptions) end).
 
--spec get_card_issuer(mlapi_site_id(), mlapi_card_issuer_id()) -> mlapi:response().
-get_card_issuer(SiteId, CardIssuerId) ->
-    get_card_issuer(SiteId, CardIssuerId, []).
+-spec card_issuer(mlapi_site_id(), mlapi_card_issuer_id()) -> mlapi:response().
+card_issuer(SiteId, CardIssuerId) ->
+    card_issuer(SiteId, CardIssuerId, []).
 
--spec get_card_issuer(mlapi_site_id(), mlapi_card_issuer_id(), [mlapi:option()]) -> mlapi:response().
-get_card_issuer(SiteId, CardIssuerId, Options) ->
+-spec card_issuer(mlapi_site_id(), mlapi_card_issuer_id(), [mlapi:option()]) -> mlapi:response().
+card_issuer(SiteId, CardIssuerId, Options) ->
     get_data(mlapi_card_issuer_ext, {SiteId, CardIssuerId}, Options,
-             fun (NewOptions) -> mlapi:get_card_issuer(SiteId, CardIssuerId, NewOptions) end).
+             fun (NewOptions) -> mlapi:card_issuer(SiteId, CardIssuerId, NewOptions) end).
 
 
--spec get_category(mlapi_category_id()) -> mlapi:response().
-get_category(CategoryId) ->
-    get_category(CategoryId, []).
+-spec category(mlapi_category_id()) -> mlapi:response().
+category(CategoryId) ->
+    category(CategoryId, []).
 
--spec get_category(mlapi_category_id(), [mlapi:option()]) -> mlapi:response().
-get_category(CategoryId, Options) ->
+-spec category(mlapi_category_id(), [mlapi:option()]) -> mlapi:response().
+category(CategoryId, Options) ->
     get_data(mlapi_category_ext, CategoryId, Options,
-             fun (NewOptions) -> mlapi:get_category(CategoryId, NewOptions) end).
+             fun (NewOptions) -> mlapi:category(CategoryId, NewOptions) end).
 
 
--spec get_user(mlapi_user_id()) -> mlapi:response().
-get_user(UserId) ->
-    get_user(UserId, []).
+-spec user(mlapi_user_id()) -> mlapi:response().
+user(UserId) ->
+    user(UserId, []).
 
--spec get_user(mlapi_user_id(), [mlapi:option()]) -> mlapi:response().
-get_user(UserId, Options) ->
-    get_data(mlapi_user, UserId, Options, fun (NewOptions) -> mlapi:get_user(UserId, NewOptions) end).
-
-
--spec get_item(mlapi_item_id()) -> mlapi:response().
-get_item(ItemId) ->
-    get_item(ItemId, []).
-
--spec get_item(mlapi_item_id(), [mlapi:option()]) -> mlapi:response().
-get_item(ItemId, Options) ->
-    get_data(mlapi_item, ItemId, Options, fun (NewOptions) -> mlapi:get_item(ItemId, NewOptions) end).
+-spec user(mlapi_user_id(), [mlapi:option()]) -> mlapi:response().
+user(UserId, Options) ->
+    get_data(mlapi_user, UserId, Options, fun (NewOptions) -> mlapi:user(UserId, NewOptions) end).
 
 
--spec get_picture(mlapi_picture_id()) -> mlapi:response().
-get_picture(PictureId) ->
-    get_picture(PictureId, []).
+-spec item(mlapi_item_id()) -> mlapi:response().
+item(ItemId) ->
+    item(ItemId, []).
 
--spec get_picture(mlapi_picture_id(), [mlapi:option()]) -> mlapi:response().
-get_picture(PictureId, Options) ->
-    get_data(mlapi_picture, PictureId, Options, fun (NewOptions) -> mlapi:get_picture(PictureId, NewOptions) end).
+-spec item(mlapi_item_id(), [mlapi:option()]) -> mlapi:response().
+item(ItemId, Options) ->
+    get_data(mlapi_item, ItemId, Options, fun (NewOptions) -> mlapi:item(ItemId, NewOptions) end).
 
 
--spec get_trends(mlapi_site_id()) -> mlapi:response().
-get_trends(SiteId) ->
-    get_trends(SiteId, []).
+-spec picture(mlapi_picture_id()) -> mlapi:response().
+picture(PictureId) ->
+    picture(PictureId, []).
 
--spec get_trends(mlapi_site_id(), [mlapi:option()]) -> mlapi:response().
-get_trends(SiteId, Options) when is_list(Options) ->
+-spec picture(mlapi_picture_id(), [mlapi:option()]) -> mlapi:response().
+picture(PictureId, Options) ->
+    get_data(mlapi_picture, PictureId, Options, fun (NewOptions) -> mlapi:picture(PictureId, NewOptions) end).
+
+
+-spec trends(mlapi_site_id()) -> mlapi:response().
+trends(SiteId) ->
+    trends(SiteId, []).
+
+-spec trends(mlapi_site_id(), [mlapi:option()]) -> mlapi:response().
+trends(SiteId, Options) when is_list(Options) ->
     get_data(mlapi_cached_list, {mlapi_trend, SiteId}, Options,
-             fun (NewOptions) -> mlapi:get_trends(SiteId, NewOptions) end).
+             fun (NewOptions) -> mlapi:trends(SiteId, NewOptions) end).
 
 
--spec get_category_trends(mlapi_site_id(), mlapi_category_id()) -> mlapi:response().
-get_category_trends(SiteId, CategoryId) ->
-    get_category_trends(SiteId, CategoryId, []).
+-spec category_trends(mlapi_site_id(), mlapi_category_id()) -> mlapi:response().
+category_trends(SiteId, CategoryId) ->
+    category_trends(SiteId, CategoryId, []).
 
--spec get_category_trends(mlapi_site_id(), mlapi_category_id(), [mlapi:option()] | non_neg_integer()) -> mlapi:response().
-get_category_trends(SiteId, CategoryId, Options) when is_list(Options) ->
+-spec category_trends(mlapi_site_id(), mlapi_category_id(), [mlapi:option()] | non_neg_integer()) -> mlapi:response().
+category_trends(SiteId, CategoryId, Options) when is_list(Options) ->
     get_data(mlapi_cached_list, {mlapi_trend, SiteId, CategoryId}, Options,
-             fun (NewOptions) -> mlapi:get_category_trends(SiteId, CategoryId, NewOptions) end);
-get_category_trends(SiteId, CategoryId, Limit) ->
-    get_category_trends(SiteId, CategoryId, Limit, []).
+             fun (NewOptions) -> mlapi:category_trends(SiteId, CategoryId, NewOptions) end);
+category_trends(SiteId, CategoryId, Limit) ->
+    category_trends(SiteId, CategoryId, Limit, []).
 
--spec get_category_trends(mlapi_site_id(), mlapi_category_id(), Limit :: non_neg_integer(), [mlapi:option()]) -> mlapi:response().
-get_category_trends(SiteId, CategoryId, Limit, Options) ->
+-spec category_trends(mlapi_site_id(), mlapi_category_id(), Limit :: non_neg_integer(), [mlapi:option()]) -> mlapi:response().
+category_trends(SiteId, CategoryId, Limit, Options) ->
     %% Dumb function: this could take advantage of the data cached by the version
-    %% of get_category_trends that does not have a limit.
+    %% of category_trends that does not have a limit.
     get_data(mlapi_cached_list, {mlapi_trend, SiteId, CategoryId, Limit}, Options,
-             fun (NewOptions) -> mlapi:get_category_trends(SiteId, CategoryId, Limit, NewOptions) end).
+             fun (NewOptions) -> mlapi:category_trends(SiteId, CategoryId, Limit, NewOptions) end).
 
 
--spec get_local_geolocation() -> mlapi:response().
-get_local_geolocation() ->
-    get_local_geolocation([]).
+-spec local_geolocation() -> mlapi:response().
+local_geolocation() ->
+    local_geolocation([]).
 
--spec get_local_geolocation([mlapi:option()]) -> mlapi:response().
-get_local_geolocation(Options) ->
-    get_data(mlapi_geolocation, whereami, Options, fun (NewOptions) -> mlapi:get_local_geolocation(NewOptions) end).
+-spec local_geolocation([mlapi:option()]) -> mlapi:response().
+local_geolocation(Options) ->
+    get_data(mlapi_geolocation, whereami, Options, fun (NewOptions) -> mlapi:local_geolocation(NewOptions) end).
 
--spec get_geolocation(mlapi_ip_address()) -> mlapi:response().
-get_geolocation(IpAddr) ->
-    get_geolocation(IpAddr, []).
+-spec geolocation(mlapi_ip_address()) -> mlapi:response().
+geolocation(IpAddr) ->
+    geolocation(IpAddr, []).
 
--spec get_geolocation(mlapi_ip_address(), [mlapi:option()]) -> mlapi:response().
-get_geolocation(IpAddr, Options) ->
-    get_data(mlapi_geolocation, IpAddr, Options, fun (NewOptions) -> mlapi:get_geolocation(IpAddr, NewOptions) end).
+-spec geolocation(mlapi_ip_address(), [mlapi:option()]) -> mlapi:response().
+geolocation(IpAddr, Options) ->
+    get_data(mlapi_geolocation, IpAddr, Options, fun (NewOptions) -> mlapi:geolocation(IpAddr, NewOptions) end).
 
 
 -spec search(mlapi_site_id(), Query :: string()) -> mlapi:response().
@@ -597,7 +597,7 @@ get_data(Table, Key, Options, RefreshFun) ->
                true ->
                    get_fresh_data(Table, Key, NewOptions, RefreshFun, CurrentTime);
                false ->
-                   {LastUpdate, CachedData} = get_cache_entry(Table, Key),
+                   {LastUpdate, CachedData} = cache_entry(Table, Key),
                    %% We store the datetime as seconds in the Gregorian calendar (since Jan 1, 0001 at 00:00:00).
                    case is_cache_valid(Table, LastUpdate, CurrentTime) of
                        true ->
@@ -633,8 +633,8 @@ get_fresh_data(Table, Key, Options, RefreshFun, CurrentTime) ->
     end.
 
 
--spec get_cache_entry(mlapi_table(), table_key()) -> {last_update() | 'undefined', Data :: any() | 'undefined'}.
-get_cache_entry(Table, Key) ->
+-spec cache_entry(mlapi_table(), table_key()) -> {last_update() | 'undefined', Data :: any() | 'undefined'}.
+cache_entry(Table, Key) ->
     case mnesia:dirty_read(Table, Key) of
         [#mlapi_cache{last_update = LastUpdate, data = Data}] ->
             {LastUpdate, Data};
@@ -643,13 +643,13 @@ get_cache_entry(Table, Key) ->
     end.
 
 
--spec get_cache_ttl(mlapi_table()) -> time_to_live().
-get_cache_ttl(Table) ->
+-spec cache_ttl(mlapi_table()) -> time_to_live().
+cache_ttl(Table) ->
     case mnesia:dirty_read(mlapi_metatable, Table) of
         [#mlapi_metatable{time_to_live = TimeToLive}] ->
             TimeToLive;
         [] ->
-            mlapi:get_env(cache_ttl, ?DEFAULT_CACHE_TTL)
+            mlapi:env(cache_ttl, ?DEFAULT_CACHE_TTL)
     end.
 
 
@@ -658,7 +658,7 @@ is_cache_valid(_Table, undefined, _CurrentTime) ->
     %% The entry was never updated.
     false;
 is_cache_valid(Table, LastUpdate, CurrentTime) ->
-    LastUpdate + get_cache_ttl(Table) > CurrentTime.
+    LastUpdate + cache_ttl(Table) > CurrentTime.
 
 
 -spec split_format_option([mlapi:option()]) -> {mlapi:format(), [mlapi:option()]}.
