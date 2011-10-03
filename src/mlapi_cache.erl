@@ -71,7 +71,7 @@
 
 -spec init() -> ok | {aborted, Reason :: any()}.
 init() ->
-    init([node()]).
+    init(mlapi:get_env(cache_nodes, [node()])).
 
 
 -spec init([node()]) -> ok | no_return(). %% exit({aborted, Reason :: any()}).
@@ -590,9 +590,11 @@ search_seller_nick(SiteId, Nickname, Offset, Limit, Options) ->
 -spec get_data(mlapi_table(), table_key(), [mlapi:option()], RefreshFun :: fun()) -> mlapi:response().
 get_data(Table, Key, Options, RefreshFun) ->
     CurrentTime = current_time_in_gregorian_seconds(),
-    %% As we cache responses as parsed JSON documents we need to remove the format
-    %% from the list of Options and apply it manually before returning the response.
-    {Format, NewOptions} = split_format_option(Options),
+    %% As we cache responses as parsed JSON documents (ejson) we need to remove
+    %% the format from the list of Options and apply it manually before returning
+    %% the response.
+    {Format, PartialOptions} = split_format_option(Options),
+    NewOptions = [{format, ejson} | PartialOptions],
     Data = case lists:member(refresh, NewOptions) of
                true ->
                    get_fresh_data(Table, Key, NewOptions, RefreshFun, CurrentTime);
@@ -606,7 +608,7 @@ get_data(Table, Key, Options, RefreshFun) ->
                            get_fresh_data(Table, Key, NewOptions, RefreshFun, CurrentTime)
                    end
            end,
-    mlapi:json_to_term(Data, record_name(Table, Key), Format).
+    mlapi:ejson_to_term(Data, record_name(Table, Key), Format).
 
 
 -spec get_fresh_data(mlapi_table(), table_key(), [mlapi:option()], RefreshFun :: fun(),
@@ -667,7 +669,7 @@ split_format_option(Options) ->
         {value, {format, Format}, NewOptions} ->
             {Format, NewOptions};
         false ->
-            {json, Options}
+            {mlapi:get_env(default_format, ejson), Options}
     end.
 
 

@@ -488,7 +488,7 @@ request(Path, Options) ->
         {ok, "200", Headers, Body} ->
             case lists:keyfind(?HEADER_CONTENT_TYPE, 1, Headers) of
                 {_ContentType, ?MIME_TYPE_JSON ++ _CharSet} ->
-                    case proplists:get_value(format, Options, ejson) of
+                    case proplists:get_value(format, Options, get_env(default_format, ejson)) of
                         binary ->
                             Body;
                         Format ->
