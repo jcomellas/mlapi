@@ -45,34 +45,34 @@ the required paths already set run:
 
 Once you're in the Erlang shell you need to start the ``mlapi`` application. You
 can start it and its dependencies by doing:
-
-    mlapi:start().
-
+```erlang
+mlapi:start().
+```
 Now we're ready to rock. Keep in mind the following type specifications:
-
-    -type error()             :: {error, Reason :: atom() | {atom(), any()}}.
-    -type ejson_key()         :: binary().
-    -type ejson_value()       :: binary() | boolean() | integer() | float() | 'null'.
-    -type ejson()             :: {[{ejson_key(), ejson_value() | ejson()}]}.
-    -type proplist()          :: [proplists:property()].
-    -type format()            :: 'binary' | 'ejson' | 'proplist' | 'orddict' | 'record'.
-    -type option()            :: {format, format()} | {record, RecordName :: atom()} | 'refresh'.
-    -type response()          :: binary() | ejson() | proplist() | orddict:orddict() | tuple() | error().
-
+```erlang
+-type error()             :: {error, Reason :: atom() | {atom(), any()}}.
+-type ejson_key()         :: binary().
+-type ejson_value()       :: binary() | boolean() | integer() | float() | 'null'.
+-type ejson()             :: {[{ejson_key(), ejson_value() | ejson()}]}.
+-type proplist()          :: [proplists:property()].
+-type format()            :: 'binary' | 'ejson' | 'proplist' | 'orddict' | 'record'.
+-type option()            :: {format, format()} | {record, RecordName :: atom()} | 'refresh'.
+-type response()          :: binary() | ejson() | proplist() | orddict:orddict() | tuple() | error().
+```
 All of the available functions that retrieve information from [MLAPI](http://www.mercadolibre.io/)
 are very similar and follow a syntax like the following one:
-
-    -spec mlapi:user(mlapi_user_id(), [mlapi:option()]) -> mlapi:response().
-
+```erlang
+-spec mlapi:user(mlapi_user_id(), [mlapi:option()]) -> mlapi:response().
+```
 This is also a short version like:
-
-    -spec mlapi:user(mlapi_user_id()) -> mlapi:response().
-
+```erlang
+-spec mlapi:user(mlapi_user_id()) -> mlapi:response().
+```
 All the functions can receive options in the last argument. The most important
 one would be the one to specify the format of the result. It follows the syntax:
-
-    {format, Format :: mlapi:format()}
-
+```erlang
+{format, Format :: mlapi:format()}
+```
 where ``Format`` can be one of:
 
 <table>
@@ -80,20 +80,20 @@ where ``Format`` can be one of:
   <tr><td>Format</td><td>Description</td></tr>
  </thead>
  <tbody>
-  <tr><td>ejson</td><td>returns the JSON document as decoded by the [ejson](https://github.com/benoitc/ejson) Erlang library</td></tr>
-  <tr><td>proplist</td><td>returns the parsed JSON document as a [property list](http://www.erlang.org/doc/man/proplists.html)</td></tr>
-  <tr><td>orddict</td><td>returns the parsed JSON document as an [orddict](http://www.erlang.org/doc/man/orddict.html)</td></tr>
-  <tr><td>record</td><td>returns the parsed JSON document as the corresponding record as defined in the ``include/mlapi.hrl`` header</td></tr>
+  <tr><td>ejson</td><td>returns the JSON document as decoded by the ejson Erlang library (see https://github.com/benoitc/ejson)</td></tr>
+  <tr><td>proplist</td><td>returns the parsed JSON document as a property list (see http://www.erlang.org/doc/man/proplists.html)</td></tr>
+  <tr><td>orddict</td><td>returns the parsed JSON document as an orddict (see http://www.erlang.org/doc/man/orddict.html)</td></tr>
+  <tr><td>record</td><td>returns the parsed JSON document as the corresponding record as defined in the mlapi.hrl header file</td></tr>
   <tr><td>binary</td><td>returns the unparsed binary with the JSON document</td></tr>
  </tbody>
 </table>
 
 For example, if we wanted to format the result as a proplist we'd do:
-
+```erlang
     mlapi:sites([{format, proplist}]).
-
+```
 And we'd receive:
-
+```erlang
     [[{id,<<"MLA">>},{name,<<"Argentina">>}],
      [{id,<<"MLB">>},{name,<<"Brasil">>}],
      [{id,<<"MCO">>},{name,<<"Colombia">>}],
@@ -107,6 +107,24 @@ And we'd receive:
      [{id,<<"MPE">>},{name,<<"Perú">>}],
      [{id,<<"MPT">>},{name,<<"Portugal">>}],
      [{id,<<"MRD">>},{name,<<"Dominicana">>}]]
+```
+Available Functionality
+=======================
+For the time being, you can retrieve the following information provided by [MLAPI](http://www.mercadolibre.io/):
+
+- Search by keywords, by category, by seller ID and by seller nickname
+- Items
+- Users
+- Categories
+- Pictures
+- Global and category trends
+- Geolocation information
+- Credit card issuers
+- Payment types and methods
+- Listing exposures, types and their prices
+- Currencies and their conversion rates
+- Cities, states and countries
+- Sites
 
 You can check the exported functions in ``src/mlapi.erl`` to see the complete interface.
 
