@@ -3,7 +3,7 @@
   {description, "MercadoLibre API Client Library"},
   {vsn, "0.1.0"},
   {registered, []},
-  {applications, [kernel, stdlib, sasl, crypto, public_key, ssl, ibrowse]},
+  {applications, [kernel, stdlib, sasl, mnesia, crypto, public_key, ssl, ibrowse]},
   {mod, {mlapi_app, []}},
   {env, []}
  ]}.
