@@ -39,8 +39,8 @@ test:
 	@rebar skip_deps=true eunit
 
 console:
-	$(ERL) -sname $(APPLICATION) $(EPATH) -s mlapi_deps ensure
+	$(ERL) -sname $(APPLICATION) $(EPATH) -config app -s mlapi_deps ensure
 
 test-console: test
-	$(ERL) -sname $(APPLICATION)_test $(TEST_EPATH)
+	$(ERL) -sname $(APPLICATION)_test $(TEST_EPATH) -config app
 
