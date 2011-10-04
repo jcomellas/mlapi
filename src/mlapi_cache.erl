@@ -10,7 +10,7 @@
 %%%-------------------------------------------------------------------
 -module(mlapi_cache).
 
--export([init/0, init/1, init_metatable/1, init_table/3,
+-export([init/0, init/1, init_metatable/1, init_table/2,
          create_tables/1, create_metatable/1, create_table/2,
          upgrade_metatable/0, upgrade_table/1, tables/0, table_info/1, table_version/1, table_ttl/1]).
 -export([sites/0, sites/1, site/1, site/2,
@@ -77,7 +77,7 @@ init() ->
 -spec init([node()]) -> ok | no_return(). %% exit({aborted, Reason :: any()}).
 init(Nodes) ->
     init_metatable(Nodes),
-    lists:foreach(fun ({Table, Version, _TimeToLive}) -> init_table(Table, Version, Nodes) end, tables()).
+    lists:foreach(fun ({Table, Version, TimeToLive}) -> init_table(Table, Version, TimeToLive, Nodes) end, tables()).
 
 
 -spec init_metatable([node()]) -> ok | {aborted, Reason :: any()}.
@@ -95,65 +95,76 @@ init_metatable(Nodes) ->
             create_metatable(Nodes)
     end.
 
+-spec init_table(mlapi_table(), [node()]) -> ok | {aborted, Reason :: any()}.
+init_table(Table, Nodes) ->
+    {Version, TimeToLive} = table_info(Table),
+    init_table(Table, Version, TimeToLive, Nodes).
 
--spec init_table(mlapi_table(), table_version(), [node()]) -> ok | {aborted, Reason :: any()}.
-init_table(Table, NewVersion, Nodes) ->
+-spec init_table(mlapi_table(), table_version(), time_to_live(), [node()]) -> ok | {aborted, Reason :: any()}.
+init_table(Table, Version, TimeToLive, Nodes) ->
     Fields = record_info(fields, mlapi_cache),
     OldVersion = case mnesia:dirty_read(mlapi_metatable, Table) of
-                     [#mlapi_metatable{version = Version}] ->
-                         Version;
+                     [#mlapi_metatable{version = Number}] ->
+                         Number;
                      [] ->
-                         NewVersion
+                         Version
                  end,
     %% Make sure that the schema of the Mnesia table is up-to-date.
-    try ((OldVersion =:= NewVersion) andalso
+    try ((OldVersion =:= Version) andalso
          (length(Fields) + 1 =:= mnesia:table_info(Table, arity)) andalso
          (Fields -- mnesia:table_info(Table, attributes)) =:= []) of
         true ->
             ok;
         false ->
-            upgrade_table(Table, OldVersion, NewVersion, Fields)
+            upgrade_table(Table, OldVersion, Version, Fields)
     catch
         _ : _ ->
-            create_table(Table, Nodes)
+            create_table(Table, Version, TimeToLive, Nodes)
     end.
 
 
 -spec create_tables([node()]) -> ok | {aborted, Reason :: any()}.
 create_tables(Nodes) ->
     create_metatable(Nodes),
-    lists:foreach(fun ({Table, _Version}) -> create_table(Table, Nodes) end, tables()).
+    lists:foreach(fun ({Table, Version, TimeToLive}) -> create_table(Table, Version, TimeToLive, Nodes) end, tables()).
 
 
 -spec create_metatable([node()]) -> ok | {aborted, Reason :: any()}.
 create_metatable(Nodes) ->
-    create_table(mlapi_metatable, mlapi_metatable, record_info(fields, mlapi_metatable), Nodes).
-
+    case mnesia:create_table(mlapi_metatable, [{access_mode, read_write},
+                                               {record_name, mlapi_metatable},
+                                               {attributes, record_info(fields, mlapi_metatable)},
+                                               {disc_copies, Nodes},
+                                               {type, set},
+                                               {local_content, true}]) of
+        {atomic, ok} ->
+            ok;
+        Error ->
+            Error
+    end.
 
 -spec create_table(mlapi_table(), [node()]) -> ok | {aborted, Reason :: any()}.
 create_table(Table, Nodes) ->
-    create_table(Table, mlapi_cache, record_info(fields, mlapi_cache), Nodes),
     {Version, TimeToLive} = table_info(Table),
-    mnesia:dirty_write(mlapi_metatable,
-                       #mlapi_metatable{
-                         table = Table,
-                         version = Version,
-                         time_to_live = TimeToLive,
-                         last_update = current_time_in_gregorian_seconds(),
-                         reason = create_table
-                        }).
+    create_table(Table, Version, TimeToLive, Nodes).
 
-
--spec create_table(mlapi_table(), RecordName :: atom(), [mlapi_field()], [node()]) -> ok | {aborted, Reason :: any()}.
-create_table(Table, RecordName, Fields, Nodes) ->
+-spec create_table(mlapi_table(), table_version(), time_to_live(), [node()]) -> ok | {aborted, Reason :: any()}.
+create_table(Table, Version, TimeToLive, Nodes) ->
     case mnesia:create_table(Table, [{access_mode, read_write},
-                                     {record_name, RecordName},
-                                     {attributes, Fields},
+                                     {record_name, mlapi_cache},
+                                     {attributes, record_info(fields, mlapi_cache)},
                                      {disc_copies, Nodes},
                                      {type, set},
                                      {local_content, true}]) of
         {atomic, ok} ->
-            ok;
+            mnesia:dirty_write(mlapi_metatable,
+                               #mlapi_metatable{
+                                 table = Table,
+                                 version = Version,
+                                 time_to_live = TimeToLive,
+                                 last_update = current_time_in_gregorian_seconds(),
+                                 reason = create_table
+                                });
         Error ->
             Error
     end.
