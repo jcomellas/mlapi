@@ -14,7 +14,7 @@
 -type mlapi_table()                   :: atom().
 -type mlapi_field()                   :: atom().
 
--type mlapi_id()                      :: binary().
+-type mlapi_id()                      :: binary() | string().
 
 -type mlapi_address_id()              :: mlapi_id().
 -type mlapi_attribute_id()            :: mlapi_id().
@@ -35,10 +35,16 @@
 -type mlapi_user_id()                 :: mlapi_id().
 -type mlapi_user_name()               :: mlapi_id().
 -type mlapi_picture_id()              :: mlapi_id().
+-type mlapi_question_id()             :: mlapi_id().
+-type mlapi_credit_level_id()         :: mlapi_id().
 
 -type mlapi_url()                     :: binary().
 -type mlapi_email_address()           :: binary().
--type mlapi_ip_address()              :: binary().
+-type mlapi_ip_address()              :: binary() | string().
+-type mlapi_access_token()            :: binary() | string().
+-type mlapi_query()                   :: binary() | string().
+-type mlapi_offset()                  :: non_neg_integer().
+-type mlapi_limit()                   :: non_neg_integer().
 
 -type mlapi_required()                :: binary().          %% <<"required">> | <<"optional">>
 -type mlapi_buying_mode_id()          :: binary().          %% <<"buy_it_now">> | <<"auction">>
@@ -50,12 +56,27 @@
 -type mlapi_item_status_id()          :: binary().          %% <<"not_yet_active">> | <<"paused">> | <<"active">> |
                                                             %% <<"closed">> | <<"deleted">> | <<"invisible">> |
                                                             %% <<"under_review">> | <<"suspended_by_user">>
+-type mlapi_mercadopago_account_type_id() :: binary().      %% <<"optional">>
 -type mlapi_user_type_id()            :: binary().          %% <<"car_dealer">>, <<"real_estate_agency">>,
                                                             %% <<"branch">>, <<"franchise">>, <<"normal">>
 -type mlapi_seller_experience_id()    :: binary().          %% <<"newbie">>, <<"intermediate">>, <<"advanced">>
 -type mlapi_seller_level_id()         :: binary().          %% <<"1_red">>, <<"2_orange">>, <<"3_yellow">>, <<"4_light_green">>, <<"5_green">>
 -type mlapi_power_seller_status_id()  :: binary().          %% <<"silver">>, <<"gold">>, <<"platinum">>, <<"null">>
 -type mlapi_period_id()               :: binary().          %% <<"historic">>, <<"12 months">>, <<"3 months">>
+-type mlapi_answer_status_id()        :: binary().          %% <<"ACTIVE">>, <<"DISABLED">>
+-type mlapi_question_status_id()      :: binary().          %% <<"ANSWERED">>, <<"UNANSWERED">>, <<"CLOSED_UNANSWERED">>, <<"UNDER_REVIEW">>
+
+-type mlapi_listing_price_filter()    :: {price, float()} | {listing_type_id, mlapi_listing_type_id()} |
+                                         {quantity, non_neg_integer()} |
+                                         {category_id, mlapi_category_id()} | {currency_id, mlapi_currency_id()}.
+-type mlapi_question_filter()         :: {item, mlapi_item_id()} | {period, non_neg_integer()} |
+                                         {status, mlapi_question_status_id()} |
+                                         {from, mlapi_user_id()} | {seller, mlapi_user_id()}.
+-type mlapi_trend_filter()            :: {site, mlapi_site_id()} | {category, mlapi_category_id()} |
+                                         {limit, mlapi_limit()}.
+-type mlapi_search_filter()           :: {nickname, mlapi_user_name()} | {seller_id, mlapi_user_id()} |
+                                         {category, mlapi_category_id()} | {q, mlapi_query()} |
+                                         {offset, mlapi_offset()} | {limit, mlapi_limit()}.
 
 
 -record(mlapi_last_update, {
@@ -254,9 +275,19 @@
           transactions                                      :: #mlapi_transactions{}
          }).
 
--record(mlapi_status, {
+-record(mlapi_user_action_status, {
+          allow,
+          codes
+         }).
+
+-record(mlapi_user_status, {
           site_status                                       :: mlapi_site_status_id(),
-          list                                              :: binary()
+          list                                              :: #mlapi_user_action_status{},
+          buy                                               :: #mlapi_user_action_status{},
+          sell                                              :: #mlapi_user_action_status{},
+          mercadopago_tc_accepted                           :: boolean(),
+          mercadopago_account_type                          :: mlapi_mercadopago_account_type_id(),
+          immediate_payment                                 :: binary()
          }).
 
 -record(mlapi_identification, {
@@ -268,6 +299,22 @@
           area_code,
           number,
           verified                                          :: boolean()
+         }).
+
+-record(mlapi_user_credit, {
+          consumed                                          :: float(),
+          credit_level_id                                   :: mlapi_credit_level_id()
+         }).
+
+-record(mlapi_credit_exception_by_category, {
+        category_id                                         :: mlapi_category_id(),
+        limit                                               :: float()
+       }).
+
+-record(mlapi_credit_level, {
+          id                                                :: mlapi_credit_level_id(),
+          default_limit                                     :: float(),
+          exception_by_category                             :: [#mlapi_credit_exception_by_category{}]
          }).
 
 -record(mlapi_user, {
@@ -288,11 +335,8 @@
           seller_experience                                 :: mlapi_seller_experience_id(),
           seller_reputation                                 :: #mlapi_seller_reputation{},
           buyer_reputation                                  :: #mlapi_buyer_reputation{},
-          status                                            :: #mlapi_status{}
-         }).
-
--record(mlapi_user_status, {
-          site_status
+          status                                            :: #mlapi_user_status{},
+          credit                                            :: #mlapi_user_credit{}
          }).
 
 
@@ -303,6 +347,28 @@
           size,
           max_size,
           quality
+         }).
+
+-record(mlapi_answer, {
+          date_created                                      :: calendar:datetime(),
+          status                                            :: mlapi_answer_status_id(),
+          text                                              :: binary()
+         }).
+
+-record(mlapi_question, {
+          id                                                :: mlapi_picture_id(),
+          date_created                                      :: calendar:datetime(),
+          item_id                                           :: mlapi_item_id(),
+          seller_id                                         :: mlapi_user_id(),
+          status                                            :: mlapi_question_status_id(),
+          text                                              :: binary(),
+          answer                                            :: #mlapi_answer{}
+         }).
+
+-record(mlapi_question_result, {
+          total                                             :: non_neg_integer(),
+          limit                                             :: non_neg_integer(),
+          questions                                         :: [#mlapi_question{}]
          }).
 
 -record(mlapi_description, {
