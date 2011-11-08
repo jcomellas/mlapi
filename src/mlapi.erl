@@ -28,6 +28,7 @@
          card_issuers/1, card_issuers/2, card_issuer/2, card_issuer/3,
          credit_level/1, credit_level/2,
          category/1, category/2,
+         domains/0, domains/1, domain/1, domain/2,
          user/1, user/2,
          item/1, item/2,
          picture/1, picture/2,
@@ -85,6 +86,7 @@
 -define(PAYMENT_METHODS,         "/payment_methods").
 -define(CARD_ISSUERS,            "/card_issuers").
 -define(CATEGORIES,              "/categories").
+-define(DOMAINS,                 "/domains").
 -define(CREDIT_LEVELS,           "/credit_levels").
 -define(USERS,                   "/users").
 -define(ITEMS,                   "/items").
@@ -357,6 +359,24 @@ category(CategoryId) ->
 -spec category(mlapi_category_id(), [option()]) -> response().
 category(CategoryId, Options) ->
     request(?CATEGORIES "/" ++ to_string(CategoryId), ?SET_RECORD(mlapi_category_ext, Options)).
+
+
+-spec domains() -> response().
+domains() ->
+    domains([]).
+
+-spec domains([option()]) -> response().
+domains(Options) ->
+    request(?DOMAINS, ?SET_RECORD(mlapi_domain, Options)).
+
+
+-spec domain(mlapi_domain_id()) -> response().
+domain(DomainId) ->
+    domain(DomainId, []).
+
+-spec domain(mlapi_domain_id(), [option()]) -> response().
+domain(DomainId, Options) ->
+    request(?DOMAINS "/" ++ to_string(DomainId), ?SET_RECORD(mlapi_domain, Options)).
 
 
 -spec user(mlapi_user_id()) -> response().
@@ -640,7 +660,13 @@ ejson_list_to_term(_RecordName, JsonHelperFun, [], Acc) ->
 %% @doc Return the record name for those JSON fields that can be converted to a known child record.
 -spec ejson_field_to_record_name(ParentRecordName :: atom(), FieldName :: atom()) -> ChildRecordName :: atom() | undefined.
 ejson_field_to_record_name(mlapi_buyer_reputation, transactions) ->
-    mlapi_transactions;
+    mlapi_buyer_transactions;
+ejson_field_to_record_name(mlapi_buyer_transactions, canceled) ->
+    mlapi_buyer_transaction_count;
+ejson_field_to_record_name(mlapi_buyer_transactions, unrated) ->
+    mlapi_buyer_transaction_count;
+ejson_field_to_record_name(mlapi_buyer_transactions, not_yet_rated) ->
+    mlapi_buyer_transaction_count;
 ejson_field_to_record_name(mlapi_category_ext, children_categories) ->
     mlapi_category;
 ejson_field_to_record_name(mlapi_category_ext, settings) ->
@@ -649,6 +675,8 @@ ejson_field_to_record_name(mlapi_credit_level, exception_by_category) ->
     mlapi_credit_exception_by_category;
 ejson_field_to_record_name(mlapi_country_ext, states) ->
     mlapi_state;
+ejson_field_to_record_name(mlapi_domain, attributes) ->
+    mlapi_domain_attribute;
 ejson_field_to_record_name(mlapi_exceptions_by_card_issuer, card_issuer) ->
     mlapi_card_issuer;
 ejson_field_to_record_name(mlapi_exceptions_by_card_issuer, payer_costs) ->
@@ -682,7 +710,7 @@ ejson_field_to_record_name(mlapi_item, shipping) ->
 ejson_field_to_record_name(mlapi_item, state) ->
     mlapi_state;
 ejson_field_to_record_name(mlapi_seller_reputation, transactions) ->
-    mlapi_transactions;
+    mlapi_seller_transactions;
 ejson_field_to_record_name(mlapi_search_item, address) ->
     mlapi_search_address;
 ejson_field_to_record_name(mlapi_search_item, attributes) ->

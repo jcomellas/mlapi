@@ -28,6 +28,7 @@
          card_issuers/1, card_issuers/2, card_issuer/2, card_issuer/3,
          credit_level/1, credit_level/2,
          category/1, category/2,
+         domains/0, domains/1, domain/1, domain/2,
          user/1, user/2,
          item/1, item/2,
          picture/1, picture/2,
@@ -212,6 +213,7 @@ tables() ->
      {mlapi_city_ext,               1, ?WEEK_IN_SECS},
      {mlapi_currency,               1, ?MONTH_IN_SECS},
      {mlapi_currency_conversion,    1, ?HOUR_IN_SECS},
+     {mlapi_domain,                 1, ?WEEK_IN_SECS},
      {mlapi_listing_exposure,       1, ?WEEK_IN_SECS},
      {mlapi_card_issuer_ext,        1, ?DAY_IN_SECS},
      {mlapi_credit_level,           1, ?DAY_IN_SECS},
@@ -462,6 +464,25 @@ category(CategoryId) ->
 category(CategoryId, Options) ->
     get_data(mlapi_category_ext, to_binary(CategoryId), Options,
              fun (NewOptions) -> mlapi:category(CategoryId, NewOptions) end).
+
+
+-spec domains() -> mlapi:response().
+domains() ->
+    domains([]).
+
+-spec domains([mlapi:option()]) -> mlapi:response().
+domains(Options) ->
+    get_data(mlapi_cached_list, mlapi_domain, Options, fun (NewOptions) -> mlapi:domains(NewOptions) end).
+
+
+-spec domain(mlapi_domain_id()) -> mlapi:response().
+domain(DomainId) ->
+    domain(DomainId, []).
+
+-spec domain(mlapi_domain_id(), [mlapi:option()]) -> mlapi:response().
+domain(DomainId, Options) ->
+    get_data(mlapi_domain, to_binary(DomainId), Options,
+             fun (NewOptions) -> mlapi:domain(DomainId, NewOptions) end).
 
 
 -spec user(mlapi_user_id()) -> mlapi:response().

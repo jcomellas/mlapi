@@ -24,6 +24,8 @@
 -type mlapi_country_id()              :: mlapi_id().
 -type mlapi_currency_id()             :: mlapi_id().
 -type mlapi_description_id()          :: mlapi_id().
+-type mlapi_domain_id()               :: mlapi_id().
+-type mlapi_domain_attribute_id()     :: mlapi_id().
 -type mlapi_item_id()                 :: mlapi_id().
 -type mlapi_locale_id()               :: mlapi_id().
 -type mlapi_neighborhood_id()         :: mlapi_id().
@@ -48,6 +50,7 @@
 
 -type mlapi_required()                :: binary().          %% <<"required">> | <<"optional">>
 -type mlapi_buying_mode_id()          :: binary().          %% <<"buy_it_now">> | <<"auction">>
+-type mlapi_domain_attribute_type_id() :: binary().
 -type mlapi_listing_type_id()         :: binary().          %% <<"gold_premium">> | <<"gold">> | <<"silver">> | <<"bronze">> | <<"free">>
 -type mlapi_listing_exposure_id()     :: binary().          %% <<"highest">> | <<"high">> | <<"mid">> | <<"low">> | <<"lowest">>
 -type mlapi_item_condition_id()       :: binary().          %% <<"not_specified">> | <<"new">> | <<"used">>
@@ -162,6 +165,21 @@
           settings                                          :: #mlapi_settings{}
          }).
 
+-record(mlapi_domain_attribute, {
+          id                                                :: mlapi_domain_attribute_id(),
+          name                                              :: binary(),
+          type                                              :: mlapi_domain_attribute_type_id(),
+          attribute_group_id                                :: mlapi_domain_attribute_id(),
+          attribute_group_name                              :: binary(),
+          pk_field_order                                    :: integer()
+         }).
+
+-record(mlapi_domain, {
+          id                                                :: mlapi_domain_id(),
+          name                                              :: binary(),
+          attributes                                        :: [#mlapi_domain_attribute{}]
+         }).
+
 -record(mlapi_site, {
           id                                                :: mlapi_site_id(),
           name                                              :: binary()
@@ -257,22 +275,39 @@
           ratings                                           :: #mlapi_ratings{}
          }).
 
--record(mlapi_transactions, {
+-record(mlapi_seller_transactions, {
           period                                            :: mlapi_period_id(),
-          total                                             :: integer(),
-          completed                                         :: integer(),
-          canceled                                          :: integer(),
+          total = 0                                         :: non_neg_integer(),
+          completed = 0                                     :: non_neg_integer(),
+          canceled = 0                                      :: non_neg_integer(),
+          ratings                                           :: #mlapi_ratings{}
+         }).
+
+-record(mlapi_buyer_transaction_count, {
+          total = 0                                         :: non_neg_integer(),
+          paid = 0                                          :: non_neg_integer(),
+          units = 0                                         :: non_neg_integer()
+         }).
+
+-record(mlapi_buyer_transactions, {
+          period                                            :: mlapi_period_id(),
+          total = 0                                         :: non_neg_integer(),
+          completed = 0                                     :: non_neg_integer(),
+          canceled                                          :: #mlapi_buyer_transaction_count{},
+          unrated                                           :: #mlapi_buyer_transaction_count{},
+          not_yet_rated                                     :: #mlapi_buyer_transaction_count{},
           ratings                                           :: #mlapi_ratings{}
          }).
 
 -record(mlapi_seller_reputation, {
           level_id                                          :: mlapi_seller_level_id(),
           power_seller_status                               :: mlapi_power_seller_status_id(),
-          transactions                                      :: #mlapi_transactions{}
+          transactions                                      :: #mlapi_seller_transactions{}
          }).
 
 -record(mlapi_buyer_reputation, {
-          transactions                                      :: #mlapi_transactions{}
+          canceled_transactions                             :: non_neg_integer(),
+          transactions                                      :: #mlapi_buyer_transactions{}
          }).
 
 -record(mlapi_user_action_status, {
