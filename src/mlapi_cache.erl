@@ -15,7 +15,8 @@
          upgrade_metatable/0, upgrade_table/1, tables/0, table_info/1, table_version/1, table_ttl/1
         ]).
 %% Public APIs
--export([sites/0, sites/1, site/1, site/2,
+-export([applications/0, applications/1, application/1, application/2,
+         sites/0, sites/1, site/1, site/2,
          countries/0, countries/1, country/1, country/2,
          state/1, state/2, city/1, city/2,
          currencies/0, currencies/1, currency/1, currency/2,
@@ -207,6 +208,7 @@ tables() ->
     [
      %% Table                 Version  Time-to-live
      {mlapi_cached_list,            1, ?HOUR_IN_SECS},
+     {mlapi_application,            1, ?DAY_IN_SECS},
      {mlapi_site_ext,               1, ?MONTH_IN_SECS},
      {mlapi_country_ext,            1, ?MONTH_IN_SECS},
      {mlapi_state_ext,              1, ?WEEK_IN_SECS},
@@ -258,6 +260,23 @@ table_ttl(Table) ->
         false ->
             mlapi:get_env(cache_ttl)
     end.
+
+
+-spec applications() -> mlapi:response().
+applications() ->
+    applications([]).
+
+-spec applications([mlapi:option()]) -> mlapi:response().
+applications(Options) ->
+    get_data(mlapi_cached_list, mlapi_application, Options, fun (NewOptions) -> mlapi:applications(NewOptions) end).
+
+-spec application(mlapi_application_id()) -> mlapi:response().
+application(ApplicationId) ->
+    application(ApplicationId, []).
+
+-spec application(mlapi_application_id(), [mlapi:option()]) -> mlapi:response().
+application(ApplicationId, Options) ->
+    get_data(mlapi_application, to_binary(ApplicationId), Options, fun (NewOptions) -> mlapi:application(ApplicationId, NewOptions) end).
 
 
 -spec sites() -> mlapi:response().

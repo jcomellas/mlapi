@@ -17,8 +17,12 @@
 -type mlapi_id()                      :: binary() | string().
 
 -type mlapi_address_id()              :: mlapi_id().
+-type mlapi_application_id()          :: mlapi_id().
+-type mlapi_application_name()        :: mlapi_id().
+-type mlapi_application_short_name()  :: mlapi_id().
 -type mlapi_attribute_id()            :: mlapi_id().
 -type mlapi_card_issuer_id()          :: mlapi_id().
+-type mlapi_catalog_product_id()      :: mlapi_id().
 -type mlapi_category_id()             :: mlapi_id().
 -type mlapi_city_id()                 :: mlapi_id().
 -type mlapi_country_id()              :: mlapi_id().
@@ -48,6 +52,7 @@
 -type mlapi_offset()                  :: non_neg_integer().
 -type mlapi_limit()                   :: non_neg_integer().
 
+-type mlapi_application_scope_id()    :: binary().          %% <<"mclics_advertising">>, <<"offline_access">>, <<"write">>, <<"read">>
 -type mlapi_required()                :: binary().          %% <<"required">> | <<"optional">>
 -type mlapi_buying_mode_id()          :: binary().          %% <<"buy_it_now">> | <<"auction">>
 -type mlapi_domain_attribute_type_id() :: binary().
@@ -81,6 +86,30 @@
                                          {category, mlapi_category_id()} | {q, mlapi_query()} |
                                          {offset, mlapi_offset()} | {limit, mlapi_limit()}.
 
+
+-record(mlapi_application, {
+          id                                                :: mlapi_application_id(),
+          site_id                                           :: mlapi_site_id(),
+          name                                              :: mlapi_application_name(),
+          description                                       :: binary(),
+          thumbnail                                         :: mlapi_url(),
+          owner_id                                          :: mlapi_user_id(),
+          catalog_product_id                                :: mlapi_catalog_product_id(),
+          item_id                                           :: mlapi_item_id(),
+          price                                             :: float(),
+          currency_id                                       :: mlapi_currency_id(),
+          need_authorization                                :: boolean(),
+          short_name                                        :: mlapi_application_short_name(),
+          url                                               :: mlapi_url(),
+          callback_url                                      :: mlapi_url(),
+          sandbox_mode                                      :: boolean(),
+          active                                            :: boolean(),
+          max_requests_per_hour                             :: non_neg_integer(),
+          secret_key                                        :: binary(),
+          scopes                                            :: [mlapi_application_scope_id()],
+          notifications_callback_url                        :: mlapi_url(),
+          notifications_topics                              :: [binary()]
+         }).
 
 -record(mlapi_last_update, {
           table                                             :: atom(),

@@ -15,7 +15,8 @@
 
 -export([start/0, stop/0, request/1, request/2, get_env/0, get_env/1, get_env/2]).
 %% Public APIs
--export([sites/0, sites/1, site/1, site/2,
+-export([applications/0, applications/1, application/1, application/2,
+         sites/0, sites/1, site/1, site/2,
          countries/0, countries/1, country/1, country/2,
          state/1, state/2, city/1, city/2,
          currencies/0, currencies/1, currency/1, currency/2,
@@ -71,6 +72,7 @@
 -define(HEADER_CONTENT_TYPE, "Content-Type").
 -define(MIME_TYPE_JSON, "application/json").
 
+-define(APPLICATIONS,            "/applications").
 -define(SITES,                   "/sites").
 -define(COUNTRIES,               "/countries").
 -define(STATES,                  "/states").
@@ -148,6 +150,23 @@ get_env(Key, Default) ->
         _ ->
             Default
     end.
+
+
+-spec applications() -> response().
+applications() ->
+    applications([]).
+
+-spec applications([option()]) -> response().
+applications(Options) ->
+    request(?APPLICATIONS, ?SET_RECORD(mlapi_application, Options)).
+
+-spec application(mlapi_application_id()) -> response().
+application(ApplicationId) ->
+    application(ApplicationId, []).
+
+-spec application(mlapi_application_id(), [option()]) -> response().
+application(ApplicationId, Options) ->
+    request(?APPLICATIONS "/" ++ to_string(ApplicationId), ?SET_RECORD(mlapi_application, Options)).
 
 
 -spec sites() -> response().
