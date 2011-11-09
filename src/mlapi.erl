@@ -41,7 +41,10 @@
 %% Private APIs
 -export([current_user/1, current_user/2,
          user_listing_types/2, user_listing_types/3,
-         user_items/2, user_items/3
+         user_items/2, user_items/3,
+         user_archived_sales/1, user_archived_sales/2,
+         user_active_sales/1, user_active_sales/2,
+         user_sale/2, user_sale/3
         ]).
 %% post_question/2, delete_question/2, post_answer/2, hide_questions/2,
 
@@ -73,30 +76,32 @@
 -define(MIME_TYPE_JSON, "application/json").
 
 -define(APPLICATIONS,            "/applications").
--define(SITES,                   "/sites").
--define(COUNTRIES,               "/countries").
--define(STATES,                  "/states").
--define(CITIES,                  "/cities").
--define(NEIGHBORHOODS,           "/neighborhoods").
--define(CURRENCIES,              "/currencies").
--define(CURRENCY_CONVERSIONS,    "/currency_conversions/search").
--define(LISTING_EXPOSURES,       "/listing_exposures").
 -define(AVAILABLE_LISTING_TYPES, "/available_listing_types").
--define(LISTING_TYPES,           "/listing_types").
--define(LISTING_PRICES,          "/listing_prices").
--define(PAYMENT_TYPES,           "/payment_types").
--define(PAYMENT_METHODS,         "/payment_methods").
 -define(CARD_ISSUERS,            "/card_issuers").
 -define(CATEGORIES,              "/categories").
--define(DOMAINS,                 "/domains").
+-define(CITIES,                  "/cities").
+-define(COUNTRIES,               "/countries").
+-define(CURRENCIES,              "/currencies").
 -define(CREDIT_LEVELS,           "/credit_levels").
--define(USERS,                   "/users").
+-define(CURRENCY_CONVERSIONS,    "/currency_conversions/search").
+-define(DOMAINS,                 "/domains").
+-define(GEOLOCATION,             "/geolocation").
 -define(ITEMS,                   "/items").
+-define(LISTING_EXPOSURES,       "/listing_exposures").
+-define(LISTING_PRICES,          "/listing_prices").
+-define(LISTING_TYPES,           "/listing_types").
+-define(NEIGHBORHOODS,           "/neighborhoods").
+-define(PAYMENT_METHODS,         "/payment_methods").
+-define(PAYMENT_TYPES,           "/payment_types").
+-define(ORDERS,                  "/orders").
 -define(PICTURES,                "/pictures").
 -define(QUESTIONS,               "/questions").
+-define(SALES,                   "/sales").
 -define(SEARCH,                  "/search").
+-define(SITES,                   "/sites").
+-define(STATES,                  "/states").
 -define(TRENDS,                  "/trends/search").
--define(GEOLOCATION,             "/geolocation").
+-define(USERS,                   "/users").
 
 -define(SET_RECORD(RecordName, Options), (lists:keystore(record, 1, Options, {record, RecordName}))).
 
@@ -520,6 +525,7 @@ search_filter([], Acc) ->
     lists:reverse(Acc).
 
 
+
 -spec current_user(mlapi_access_token()) -> response().
 current_user(AccessToken) ->
     current_user(AccessToken, []).
@@ -527,7 +533,6 @@ current_user(AccessToken) ->
 -spec current_user(mlapi_access_token(), [option()]) -> response().
 current_user(AccessToken, Options) ->
     request(?USERS "/me?access_token=" ++ url_encode(AccessToken), ?SET_RECORD(mlapi_user, Options)).
-
 
 
 -spec user_listing_types(mlapi_user_id(), mlapi_access_token()) -> response().
@@ -550,6 +555,32 @@ user_items(UserId, AccessToken, Options) ->
     request(Path, ?SET_RECORD(mlapi_item, Options)).
 
 
+-spec user_archived_sales(mlapi_access_token()) -> response().
+user_archived_sales(AccessToken) ->
+    user_archived_sales(AccessToken, []).
+
+-spec user_archived_sales(mlapi_access_token(), [option()]) -> response().
+user_archived_sales(AccessToken, Options) ->
+    request(?USERS "/me" ?SALES "/archived?access_token=" ++ AccessToken, ?SET_RECORD(mlapi_sale, Options)).
+
+
+-spec user_active_sales(mlapi_access_token()) -> response().
+user_active_sales(AccessToken) ->
+    user_active_sales(AccessToken, []).
+
+-spec user_active_sales(mlapi_access_token(), [option()]) -> response().
+user_active_sales(AccessToken, Options) ->
+    request(?USERS "/me" ?SALES "/active?access_token=" ++ AccessToken, ?SET_RECORD(mlapi_sale, Options)).
+
+
+-spec user_sale(mlapi_sale_id(), mlapi_access_token()) -> response().
+user_sale(SaleId, AccessToken) ->
+    user_sale(SaleId, AccessToken, []).
+
+-spec user_sale(mlapi_sale_id(), mlapi_access_token(), [option()]) -> response().
+user_sale(SaleId, AccessToken, Options) ->
+    Path = io_lib:format(?SALES "/~s?access_token=~s", [to_string(SaleId), url_encode(AccessToken)]),
+    request(Path, ?SET_RECORD(mlapi_sale, Options)).
 
 
 
@@ -700,6 +731,10 @@ ejson_field_to_record_name(mlapi_exceptions_by_card_issuer, card_issuer) ->
     mlapi_card_issuer;
 ejson_field_to_record_name(mlapi_exceptions_by_card_issuer, payer_costs) ->
     mlapi_payer_costs;
+ejson_field_to_record_name(mlapi_feedback, sent) ->
+    mlapi_feedback_issued;
+ejson_field_to_record_name(mlapi_feedback, received) ->
+    mlapi_feedback_issued;
 ejson_field_to_record_name(mlapi_filter, values) ->
     mlapi_filter_value;
 ejson_field_to_record_name(mlapi_geo_information, location) ->
@@ -714,22 +749,32 @@ ejson_field_to_record_name(mlapi_item, descriptions) ->
     mlapi_description;
 ejson_field_to_record_name(mlapi_item, geolocation) ->
     mlapi_location;
-ejson_field_to_record_name(mlapi_payment_method_ext, exceptions_by_card_issuer) ->
-    mlapi_exceptions_by_card_issuer;
 ejson_field_to_record_name(mlapi_item, pictures) ->
     mlapi_picture;
-ejson_field_to_record_name(mlapi_question, answer) ->
-    mlapi_answer;
-ejson_field_to_record_name(mlapi_question_result, questions) ->
-    mlapi_question;
 ejson_field_to_record_name(mlapi_item, seller_address) ->
-    mlapi_seller_address;
+    mlapi_address;
 ejson_field_to_record_name(mlapi_item, shipping) ->
     mlapi_shipping;
 ejson_field_to_record_name(mlapi_item, state) ->
     mlapi_state;
-ejson_field_to_record_name(mlapi_seller_reputation, transactions) ->
-    mlapi_seller_transactions;
+ejson_field_to_record_name(mlapi_order_shipping, receiver_address) ->
+    mlapi_address;
+ejson_field_to_record_name(mlapi_payment_method_ext, exceptions_by_card_issuer) ->
+    mlapi_exceptions_by_card_issuer;
+ejson_field_to_record_name(mlapi_question, answer) ->
+    mlapi_answer;
+ejson_field_to_record_name(mlapi_question_result, questions) ->
+    mlapi_question;
+ejson_field_to_record_name(mlapi_sale, buyer) ->
+    mlapi_buyer;
+ejson_field_to_record_name(mlapi_sale, order_items) ->
+    mlapi_order_item;
+ejson_field_to_record_name(mlapi_sale, payment) ->
+    mlapi_payment;
+ejson_field_to_record_name(mlapi_sale, feedback) ->
+    mlapi_feedback;
+ejson_field_to_record_name(mlapi_sale, shipping) ->
+    mlapi_order_shipping;
 ejson_field_to_record_name(mlapi_search_item, address) ->
     mlapi_search_address;
 ejson_field_to_record_name(mlapi_search_item, attributes) ->
@@ -738,12 +783,6 @@ ejson_field_to_record_name(mlapi_search_item, seller) ->
     mlapi_seller;
 ejson_field_to_record_name(mlapi_search_item, installments) ->
     mlapi_installment;
-ejson_field_to_record_name(mlapi_site_ext, categories) ->
-    mlapi_category;
-ejson_field_to_record_name(mlapi_site_ext, currencies) ->
-    mlapi_currency;
-ejson_field_to_record_name(mlapi_state_ext, cities) ->
-    mlapi_city;
 ejson_field_to_record_name(mlapi_search_result, filters) ->
     mlapi_filter;
 ejson_field_to_record_name(mlapi_search_result, available_filters) ->
@@ -758,6 +797,16 @@ ejson_field_to_record_name(mlapi_search_result, sort) ->
     mlapi_sort;
 ejson_field_to_record_name(mlapi_search_result, available_sorts) ->
     mlapi_sort;
+ejson_field_to_record_name(mlapi_seller_reputation, transactions) ->
+    mlapi_seller_transactions;
+ejson_field_to_record_name(mlapi_shipping, costs) ->
+    mlapi_shipping_costs;
+ejson_field_to_record_name(mlapi_site_ext, categories) ->
+    mlapi_category;
+ejson_field_to_record_name(mlapi_site_ext, currencies) ->
+    mlapi_currency;
+ejson_field_to_record_name(mlapi_state_ext, cities) ->
+    mlapi_city;
 ejson_field_to_record_name(mlapi_user, identification) ->
     mlapi_identification;
 ejson_field_to_record_name(mlapi_user, buyer_reputation) ->
@@ -784,6 +833,14 @@ ejson_field_to_record_name(_RecordName, _FieldName) ->
 
 %% @doc Check whether a field of a record should be converted to a datetime.
 -spec is_ejson_datetime_field(RecordName :: atom(), FieldName :: atom()) -> boolean().
+is_ejson_datetime_field(mlapi_feedback_issued, date_created) ->
+    true;
+is_ejson_datetime_field(mlapi_payment, date_created) ->
+    true;
+is_ejson_datetime_field(mlapi_sale, date_created) ->
+    true;
+is_ejson_datetime_field(mlapi_order_shipping, date_created) ->
+    true;
 is_ejson_datetime_field(mlapi_shipping_costs, time) ->
     true;
 is_ejson_datetime_field(mlapi_item, start_time) ->

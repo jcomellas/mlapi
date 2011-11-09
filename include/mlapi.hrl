@@ -26,6 +26,7 @@
 -type mlapi_category_id()             :: mlapi_id().
 -type mlapi_city_id()                 :: mlapi_id().
 -type mlapi_country_id()              :: mlapi_id().
+-type mlapi_credit_level_id()         :: mlapi_id().
 -type mlapi_currency_id()             :: mlapi_id().
 -type mlapi_description_id()          :: mlapi_id().
 -type mlapi_domain_id()               :: mlapi_id().
@@ -33,46 +34,55 @@
 -type mlapi_item_id()                 :: mlapi_id().
 -type mlapi_locale_id()               :: mlapi_id().
 -type mlapi_neighborhood_id()         :: mlapi_id().
+-type mlapi_payment_id()              :: mlapi_id().
 -type mlapi_payment_method_id()       :: mlapi_id().
 -type mlapi_payment_type_id()         :: mlapi_id().
+-type mlapi_picture_id()              :: mlapi_id().
+-type mlapi_question_id()             :: mlapi_id().
+-type mlapi_sale_id()                 :: mlapi_id().
+-type mlapi_shipping_id()             :: mlapi_id().
 -type mlapi_site_id()                 :: mlapi_id().
 -type mlapi_state_id()                :: mlapi_id().
 -type mlapi_timezone_id()             :: mlapi_id().
 -type mlapi_user_id()                 :: mlapi_id().
 -type mlapi_user_name()               :: mlapi_id().
--type mlapi_picture_id()              :: mlapi_id().
--type mlapi_question_id()             :: mlapi_id().
--type mlapi_credit_level_id()         :: mlapi_id().
 
--type mlapi_url()                     :: binary().
+-type mlapi_access_token()            :: binary() | string().
 -type mlapi_email_address()           :: binary().
 -type mlapi_ip_address()              :: binary() | string().
--type mlapi_access_token()            :: binary() | string().
--type mlapi_query()                   :: binary() | string().
--type mlapi_offset()                  :: non_neg_integer().
 -type mlapi_limit()                   :: non_neg_integer().
+-type mlapi_offset()                  :: non_neg_integer().
+-type mlapi_query()                   :: binary() | string().
+-type mlapi_url()                     :: binary().
 
+-type mlapi_answer_status_id()        :: binary().          %% <<"ACTIVE">>, <<"DISABLED">>
 -type mlapi_application_scope_id()    :: binary().          %% <<"mclics_advertising">>, <<"offline_access">>, <<"write">>, <<"read">>
--type mlapi_required()                :: binary().          %% <<"required">> | <<"optional">>
 -type mlapi_buying_mode_id()          :: binary().          %% <<"buy_it_now">> | <<"auction">>
+-type mlapi_concretion_status_id()    :: binary().          %% <<"completed">>
 -type mlapi_domain_attribute_type_id() :: binary().
--type mlapi_listing_type_id()         :: binary().          %% <<"gold_premium">> | <<"gold">> | <<"silver">> | <<"bronze">> | <<"free">>
--type mlapi_listing_exposure_id()     :: binary().          %% <<"highest">> | <<"high">> | <<"mid">> | <<"low">> | <<"lowest">>
+-type mlapi_feedback_status_id()      :: binary().          %% <<"waiting_buyer">>
 -type mlapi_item_condition_id()       :: binary().          %% <<"not_specified">> | <<"new">> | <<"used">>
--type mlapi_sale_fees_mode_id()       :: binary().          %% <<"not_free">>
--type mlapi_site_status_id()          :: binary().          %% <<"active">>, <<"pending">>, <<"deactive">>
 -type mlapi_item_status_id()          :: binary().          %% <<"not_yet_active">> | <<"paused">> | <<"active">> |
                                                             %% <<"closed">> | <<"deleted">> | <<"invisible">> |
                                                             %% <<"under_review">> | <<"suspended_by_user">>
+-type mlapi_listing_type_id()         :: binary().          %% <<"gold_premium">> | <<"gold">> | <<"silver">> | <<"bronze">> | <<"free">>
+-type mlapi_listing_exposure_id()     :: binary().          %% <<"highest">> | <<"high">> | <<"mid">> | <<"low">> | <<"lowest">>
 -type mlapi_mercadopago_account_type_id() :: binary().      %% <<"optional">>
--type mlapi_user_type_id()            :: binary().          %% <<"car_dealer">>, <<"real_estate_agency">>,
-                                                            %% <<"branch">>, <<"franchise">>, <<"normal">>
--type mlapi_seller_experience_id()    :: binary().          %% <<"newbie">>, <<"intermediate">>, <<"advanced">>
--type mlapi_seller_level_id()         :: binary().          %% <<"1_red">>, <<"2_orange">>, <<"3_yellow">>, <<"4_light_green">>, <<"5_green">>
--type mlapi_power_seller_status_id()  :: binary().          %% <<"silver">>, <<"gold">>, <<"platinum">>, <<"null">>
--type mlapi_period_id()               :: binary().          %% <<"historic">>, <<"12 months">>, <<"3 months">>
--type mlapi_answer_status_id()        :: binary().          %% <<"ACTIVE">>, <<"DISABLED">>
--type mlapi_question_status_id()      :: binary().          %% <<"ANSWERED">>, <<"UNANSWERED">>, <<"CLOSED_UNANSWERED">>, <<"UNDER_REVIEW">>
+-type mlapi_payment_status_id()       :: binary().          %% <<"to_be_agreed">>
+-type mlapi_period_id()               :: binary().          %% <<"historic">> | <<"12 months">> | <<"3 months">>
+-type mlapi_power_seller_status_id()  :: binary().          %% <<"silver">> | <<"gold">> | <<"platinum">> | <<"null">>
+-type mlapi_question_status_id()      :: binary().          %% <<"ANSWERED">> | <<"UNANSWERED">> | <<"CLOSED_UNANSWERED">> | <<"UNDER_REVIEW">>
+-type mlapi_rating_id()               :: binary().          %% <<"negative">> | <<"neutral">> | <<"positive">>
+-type mlapi_sale_status_id()          :: binary().          %% <<"active">>
+-type mlapi_sale_fees_mode_id()       :: binary().          %% <<"not_free">>
+-type mlapi_seller_experience_id()    :: binary().          %% <<"newbie">> | <<"intermediate">> | <<"advanced">>
+-type mlapi_seller_level_id()         :: binary().          %% <<"1_red">> | <<"2_orange">> | <<"3_yellow">> | <<"4_light_green">> | <<"5_green">>
+-type mlapi_shipment_type_id()        :: binary().          %% ???
+-type mlapi_shipment_status_id()      :: binary().          %% ???
+-type mlapi_site_status_id()          :: binary().          %% <<"active">> | <<"pending">> | <<"deactive">>
+-type mlapi_required()                :: binary().          %% <<"required">> | <<"optional">>
+-type mlapi_user_type_id()            :: binary().          %% <<"car_dealer">> | <<"real_estate_agency">>,
+                                                            %% <<"branch">> | <<"franchise">> | <<"normal">>
 
 -type mlapi_listing_price_filter()    :: {price, float()} | {listing_type_id, mlapi_listing_type_id()} |
                                          {quantity, non_neg_integer()} |
@@ -362,6 +372,7 @@
 -record(mlapi_phone, {
           area_code,
           number,
+          extension,
           verified                                          :: boolean()
          }).
 
@@ -517,7 +528,7 @@
           costs                                             :: #mlapi_shipping_costs{}
          }).
 
--record(mlapi_seller_address, {
+-record(mlapi_address, {
           id                                                :: mlapi_address_id(),
           comment                                           :: binary(),
           address_line                                      :: binary(),
@@ -586,7 +597,7 @@
           accepts_mercadopago                               :: boolean(),
           non_mercado_pago_payment_methods = []             :: [#mlapi_payment_method{}],
           shipping                                          :: #mlapi_shipping{},
-          seller_address                                    :: #mlapi_seller_address{},
+          seller_address                                    :: #mlapi_address{},
           seller_contact                                    :: binary(),
           location,
           geolocation                                       :: #mlapi_location{},
@@ -643,7 +654,7 @@
           accepts_mercadopago                               :: boolean(),
           installments                                      :: #mlapi_installment{},
           address                                           :: #mlapi_search_address{},
-          seller_address                                    :: #mlapi_seller_address{},
+          seller_address                                    :: #mlapi_address{},
           attributes = []                                   :: [#mlapi_attribute{}]
          }).
 
@@ -687,6 +698,77 @@
 -record(mlapi_trend, {
           keyword                                          :: binary(),
           url                                              :: mlapi_url()
+         }).
+
+%% mlapi_sale records
+-record(mlapi_billing_info, {
+          doc_type,
+          doc_number
+         }).
+
+-record(mlapi_buyer, {
+          id                                               :: mlapi_user_id(),
+          nickname                                         :: mlapi_user_name(),
+          first_name                                       :: binary(),
+          last_name                                        :: binary(),
+          email                                            :: mlapi_email_address(),
+          phone                                            :: #mlapi_phone{},
+          billing_info                                     :: #mlapi_billing_info{}
+         }).
+
+-record(mlapi_order_item_info, {
+          id                                               :: mlapi_item_id(),
+          title                                            :: binary()
+         }).
+
+-record(mlapi_order_item, {
+          item                                             :: #mlapi_order_item_info{},
+          quantity                                         :: non_neg_integer(),
+          unit_price                                       :: float(),
+          currency_id                                      :: mlapi_currency_id()
+         }).
+
+-record(mlapi_payment, {
+          id                                               :: mlapi_payment_id(),
+          date_created                                     :: claendar:datetime(),
+          transaction_amount                               :: float(),
+          currency_id                                      :: mlapi_currency_id(),
+          shipping_cost                                    :: float(),
+          status                                           :: mlapi_payment_status_id()
+         }).
+
+-record(mlapi_feedback_issued, {
+          date_created                                     :: calendar:datetime(),
+          concretion_status                                :: mlapi_concretion_status_id(),
+          rating                                           :: mlapi_rating_id()
+         }).
+
+-record(mlapi_feedback, {
+          status                                           :: mlapi_feedback_status_id(),
+          sent                                             :: #mlapi_feedback_issued{},
+          received                                         :: #mlapi_feedback_issued{}
+         }).
+
+-record(mlapi_order_shipping, {
+          id                                               :: mlapi_shipping_id(),
+          shipment_type                                    :: mlapi_shipment_type_id(),
+          status                                           :: mlapi_shipment_status_id(),
+          date_created                                     :: calendar:datetime(),
+          receiver_address                                 :: #mlapi_address{},
+          currency_id                                      :: mlapi_currency_id(),
+          cost                                             :: float()
+         }).
+
+-record(mlapi_sale, {
+          id                                               :: mlapi_sale_id(),
+          seller_id                                        :: mlapi_user_id(),
+          status                                           :: mlapi_sale_status_id(),
+          date_created                                     :: calendar:datetime(),
+          buyer                                            :: #mlapi_buyer{},
+          order_items                                      :: [#mlapi_order_item{}],
+          payment                                          :: #mlapi_payment{},
+          feedback                                         :: #mlapi_feedback{},
+          shipping                                         :: #mlapi_order_shipping{}
          }).
 
 -endif.
