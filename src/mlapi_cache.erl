@@ -18,6 +18,7 @@
         ]).
 %% Public APIs
 -export([applications/0, applications/1, application/1, application/2,
+         catalog_products/2, catalog_products/3, catalog_product/2, catalog_product/3,
          sites/0, sites/1, site/1, site/2,
          countries/0, countries/1, country/1, country/2,
          state/1, state/2, city/1, city/2,
@@ -216,6 +217,7 @@ tables() ->
      %% {mlapi_cached_list,            1, ?HOUR_IN_SECS},
      {mlapi_application,            1, 3 * ?HOUR_IN_SECS},
      {mlapi_card_issuer,            1, ?DAY_IN_SECS},
+     {mlapi_catalog_product,        1, ?WEEK_IN_SECS},
      {mlapi_category,               1, ?WEEK_IN_SECS},
      {mlapi_city,                   1, ?WEEK_IN_SECS},
      {mlapi_country,                1, ?MONTH_IN_SECS},
@@ -292,6 +294,25 @@ application(ApplicationId) ->
 application(ApplicationId, Options) ->
     get_data(mlapi_application, mlapi_application, to_binary(ApplicationId), Options,
              fun (NewOptions) -> mlapi:application(ApplicationId, NewOptions) end).
+
+
+-spec catalog_products(mlapi_site_id(), mlapi_catalog_product_filter()) -> mlapi:response().
+catalog_products(SiteId, Filter) ->
+    catalog_products(SiteId, Filter, []).
+
+-spec catalog_products(mlapi_site_id(), mlapi_catalog_product_filter(), [mlapi:option()]) -> mlapi:response().
+catalog_products(SiteId, Filter, Options) ->
+    get_data(mlapi_catalog_product, mlapi_catalog_product_search, {to_binary(SiteId), normalize_filter(Filter)}, Options,
+             fun (NewOptions) -> mlapi:catalog_products(SiteId, Filter, NewOptions) end).
+
+-spec catalog_product(mlapi_site_id(), mlapi_catalog_product_id()) -> mlapi:response().
+catalog_product(SiteId, CatalogProductId) ->
+    catalog_product(SiteId, CatalogProductId, []).
+
+-spec catalog_product(mlapi_site_id(), mlapi_catalog_product_id(), [mlapi:option()]) -> mlapi:response().
+catalog_product(SiteId, CatalogProductId, Options) ->
+    get_data(mlapi_catalog_product, mlapi_catalog_product, {to_binary(SiteId), to_binary(CatalogProductId)}, Options,
+             fun (NewOptions) -> mlapi:catalog_product(SiteId, CatalogProductId, NewOptions) end).
 
 
 -spec sites() -> mlapi:response().

@@ -31,6 +31,7 @@
 -type mlapi_currency_id()                 :: mlapi_id().
 -type mlapi_description_id()              :: mlapi_id().
 -type mlapi_domain_id()                   :: mlapi_id().
+-type mlapi_domain_attribute_group_id()   :: mlapi_id().
 -type mlapi_domain_attribute_id()         :: mlapi_id().
 -type mlapi_filter_id()                   :: mlapi_id().
 -type mlapi_item_id()                     :: mlapi_id().
@@ -66,6 +67,7 @@
                                                           %% <<"cardholder_identification_type">>
 -type mlapi_card_exclusion_pattern_id()   :: binary().    %% <<"^((402917)|(402918))">> | <<"^((589562)|(402917)|(402918)|(527571)|(527572))">>
 -type mlapi_card_pattern_id()             :: binary().    %% <<"^3">> | <<"^4">>
+-type mlapi_catalog_product_status_id()   :: binary().    %% <<"active">>
 -type mlapi_concretion_status_id()        :: binary().    %% <<"completed">>
 -type mlapi_domain_attribute_type_id()    :: binary().
 -type mlapi_feedback_status_id()          :: binary().    %% <<"waiting_buyer">>
@@ -93,6 +95,8 @@
 -type mlapi_user_type_id()                :: binary().    %% <<"car_dealer">> | <<"real_estate_agency">>,
                                                           %% <<"branch">> | <<"franchise">> | <<"normal">>
 
+-type mlapi_catalog_product_filter()      :: {domain, mlapi_domain_id()} |
+                                             {offset, mlapi_offset()} | {limit, mlapi_limit()}.
 -type mlapi_currency_conversion_filter()  :: {from, mlapi_currency_id()} | {to, mlapi_currency_id()} |
                                              {date, calendar:datetime()}.
 -type mlapi_listing_price_filter()        :: {price, float()} | {listing_type_id, mlapi_listing_type_id()} |
@@ -226,7 +230,7 @@
           id                                        :: mlapi_domain_attribute_id(),
           name                                      :: binary(),
           type                                      :: mlapi_domain_attribute_type_id(),
-          attribute_group_id                        :: mlapi_domain_attribute_id(),
+          attribute_group_id                        :: mlapi_domain_attribute_group_id(),
           attribute_group_name                      :: binary(),
           pk_field_order                            :: integer()
          }).
@@ -745,7 +749,64 @@
           url                                       :: mlapi_url()
          }).
 
-%% mlapi_sale records
+
+%% catalog_product records
+-record(mlapi_catalog_product_search_result, {
+          id                                        :: mlapi_catalog_product_id(),
+          title                                     :: binary(),
+          url                                       :: mlapi_url(),
+          thumb                                     :: mlapi_url()
+         }).
+
+-record(mlapi_catalog_product_search, {
+          paging                                    :: #mlapi_paging{},
+          results = []                              :: [#mlapi_catalog_product_search_result{}]
+         }).
+
+-record(mlapi_catalog_product_picture, {
+          picture_id                                :: mlapi_picture_id(),
+          url                                       :: mlapi_url()
+         }).
+
+-record(mlapi_catalog_product_specification, {
+          description                               :: binary(),
+          attribute_groups = []
+         }).
+
+-record(mlapi_stars_count, {
+          '5'                                       :: non_neg_integer(),
+          '4'                                       :: non_neg_integer(),
+          '3'                                       :: non_neg_integer(),
+          '2'                                       :: non_neg_integer(),
+          '1'                                       :: non_neg_integer()
+         }).
+
+-record(mlapi_user_review, {
+          stars                                     :: non_neg_integer(),
+          stars_count                               :: #mlapi_stars_count{},
+          opinion_count                             :: non_neg_integer(),
+          most_helpful_favorable_review,
+          most_helpful_critical_review
+         }).
+
+-record(mlapi_catalog_product, {
+          id                                        :: mlapi_catalog_product_id(),
+          title                                     :: binary(),
+          permalink                                 :: mlapi_url(),
+          thumbnail                                 :: mlapi_url(),
+          status                                    :: mlapi_catalog_product_status_id(),
+          categories = []                           :: [mlapi_category_id()],
+          domain_id                                 :: mlapi_domain_id(),
+          show_on_search                            :: boolean(),
+          skus = []                                 :: [binary()],
+          pictures = []                             :: [#mlapi_catalog_product_picture{}],
+          specification                             :: #mlapi_catalog_product_specification{},
+          searchable_attributes = []                :: [#mlapi_attribute{}],
+          user_reviews = []                         :: [#mlapi_user_review{}]
+         }).
+
+
+%% sale records
 -record(mlapi_billing_info, {
           doc_type,
           doc_number
@@ -816,6 +877,8 @@
           shipping                                  :: #mlapi_sale_shipping{}
          }).
 
+
+%% order records
 -record(mlapi_order_seller, {
           id                                        :: mlapi_user_id(),
           nickname                                  :: mlapi_user_name(),

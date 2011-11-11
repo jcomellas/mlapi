@@ -16,6 +16,7 @@
 -export([start/0, stop/0, request/1, request/2, get_env/0, get_env/1, get_env/2]).
 %% Public APIs
 -export([applications/0, applications/1, application/1, application/2,
+         catalog_products/2, catalog_products/3, catalog_product/2, catalog_product/3,
          sites/0, sites/1, site/1, site/2,
          countries/0, countries/1, country/1, country/2,
          state/1, state/2, city/1, city/2,
@@ -79,6 +80,7 @@
 -define(APPLICATIONS,            "/applications").
 -define(AVAILABLE_LISTING_TYPES, "/available_listing_types").
 -define(CARD_ISSUERS,            "/card_issuers").
+-define(CATALOG_PRODUCTS,        "/catalog_products").
 -define(CATEGORIES,              "/categories").
 -define(CITIES,                  "/cities").
 -define(COUNTRIES,               "/countries").
@@ -168,6 +170,40 @@ application(ApplicationId) ->
 -spec application(mlapi_application_id(), [option()]) -> response().
 application(ApplicationId, Options) ->
     request(?APPLICATIONS "/" ++ to_string(ApplicationId), ?SET_RECORD(mlapi_application, Options)).
+
+
+-spec catalog_products(mlapi_site_id(), mlapi_catalog_product_filter()) -> response().
+catalog_products(SiteId, Filter) ->
+    catalog_products(SiteId, Filter, []).
+
+-spec catalog_products(mlapi_site_id(), mlapi_catalog_product_filter(), [option()]) -> response().
+catalog_products(SiteId, Filter, Options) ->
+    request(?SITES "/" ++ to_string(SiteId) ++ ?CATALOG_PRODUCTS ?SEARCH ++ catalog_products_filter(Filter),
+            ?SET_RECORD(mlapi_catalog_product_search, Options)).
+
+catalog_products_filter([] = Filter) ->
+    Filter;
+catalog_products_filter(Filter) ->
+    catalog_products_filter(Filter, []).
+
+catalog_products_filter([{domain, DomainId} | Tail], Acc) ->
+    catalog_products_filter(Tail, ["domain=" ++ to_string(DomainId) | Acc]);
+catalog_products_filter([{offset, Offset} | Tail], Acc) ->
+    catalog_products_filter(Tail, ["offset=" ++ to_string(Offset) | Acc]);
+catalog_products_filter([{limit, Limit} | Tail], Acc) ->
+    catalog_products_filter(Tail, ["limit=" ++ to_string(Limit) | Acc]);
+catalog_products_filter([], Acc) ->
+    "?" ++ string:join(lists:reverse(Acc), "&").
+
+
+-spec catalog_product(mlapi_site_id(), mlapi_catalog_product_id()) -> response().
+catalog_product(SiteId, CatalogProductId) ->
+    catalog_product(SiteId, CatalogProductId, []).
+
+-spec catalog_product(mlapi_site_id(), mlapi_catalog_product_id(), [option()]) -> response().
+catalog_product(SiteId, CatalogProductId, Options) ->
+    request(?SITES "/" ++ to_string(SiteId) ++ ?CATALOG_PRODUCTS "/" ++ to_string(CatalogProductId),
+            ?SET_RECORD(mlapi_catalog_product, Options)).
 
 
 -spec sites() -> response().
@@ -766,6 +802,18 @@ ejson_field_to_record_name(mlapi_buyer_transactions, unrated) ->
     mlapi_buyer_transaction_count;
 ejson_field_to_record_name(mlapi_buyer_transactions, not_yet_rated) ->
     mlapi_buyer_transaction_count;
+ejson_field_to_record_name(mlapi_catalog_product, pictures) ->
+    mlapi_catalog_product_picture;
+ejson_field_to_record_name(mlapi_catalog_product, specification) ->
+    mlapi_catalog_product_specification;
+ejson_field_to_record_name(mlapi_catalog_product, searchable_attributes) ->
+    mlapi_attribute;
+ejson_field_to_record_name(mlapi_catalog_product, user_reviews) ->
+    mlapi_user_review;
+ejson_field_to_record_name(mlapi_catalog_product_search, paging) ->
+    mlapi_paging;
+ejson_field_to_record_name(mlapi_catalog_product_search, results) ->
+    mlapi_catalog_product_search_result;
 ejson_field_to_record_name(mlapi_category, children_categories) ->
     mlapi_child_category;
 ejson_field_to_record_name(mlapi_category, path_from_root) ->
@@ -900,6 +948,8 @@ ejson_field_to_record_name(mlapi_user_status, buy) ->
     mlapi_user_action_status;
 ejson_field_to_record_name(mlapi_user_status, sell) ->
     mlapi_user_action_status;
+ejson_field_to_record_name(mlapi_user_review, stars_count) ->
+    mlapi_stars_count;
 ejson_field_to_record_name(_RecordName, geo_information) ->
     mlapi_geo_information;
 ejson_field_to_record_name(_RecordName, _FieldName) ->
