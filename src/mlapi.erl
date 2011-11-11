@@ -106,11 +106,6 @@
 
 -define(SET_RECORD(RecordName, Options), (lists:keystore(record, 1, Options, {record, RecordName}))).
 
--record(state, {
-          access_token,
-          expiration_time
-         }).
-
 -record(json_helper, {
           child_to_term  :: fun(),
           append         :: fun(),
