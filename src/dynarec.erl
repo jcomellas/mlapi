@@ -1,8 +1,7 @@
 %%%-------------------------------------------------------------------
-%%% @author Esteban Dimitroff Hodi <edimitroff@novamens.com>
 %%% @author Juan Jose Comellas <juanjo@comellas.org>
 %%% @author Mahesh Paolini-Subramanya <mahesh@aptela.com>
-%%% @copyright (C) 2011 Juan Jose Comellas
+%%% @copyright (C) 2011 Juan Jose Comellas, Mahesh Paolini-Subramanya
 %%%
 %%% @doc Parse transform that automaticaly generates and exports accessors for
 %%%      all records declared within a module.
@@ -40,7 +39,8 @@
 %%% retrieved from: http://www.opensource.org/licenses/bsd-license.php
 %%-------------------------------------------------------------------
 -module(dynarec).
--author('Esteban Dimitroff Hodi <edimitroff@novamens.com>').
+-author('Juan Jose Comellas <juanjo@comellas.org>').
+-author('Mahesh Paolini-Subramanya <mahesh@aptela.com>').
 
 -export([parse_transform/2]).
 
