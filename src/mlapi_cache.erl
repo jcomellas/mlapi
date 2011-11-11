@@ -631,16 +631,6 @@ my_active_sales(AccessToken, Filter, Options) ->
              fun (NewOptions) -> mlapi:my_active_sales(AccessToken, Filter, NewOptions) end).
 
 
--spec my_sale(mlapi_sale_id(), mlapi_access_token()) -> mlapi:response().
-my_sale(SaleId, AccessToken) ->
-    my_sale(SaleId, AccessToken, []).
-
--spec my_sale(mlapi_sale_id(), mlapi_access_token(), [mlapi:option()]) -> mlapi:response().
-my_sale(SaleId, AccessToken, Options) ->
-    get_data(mlapi_sale, mlapi_sale, {to_binary(SaleId), to_binary(AccessToken)}, Options,
-             fun (NewOptions) -> mlapi:my_sale(SaleId, AccessToken, NewOptions) end).
-
-
 -spec my_order(mlapi_order_id(), mlapi_access_token()) -> mlapi:response().
 my_order(OrderId, AccessToken) ->
     my_order(OrderId, AccessToken, []).
@@ -649,6 +639,16 @@ my_order(OrderId, AccessToken) ->
 my_order(OrderId, AccessToken, Options) ->
     get_data(mlapi_order, mlapi_order, {to_binary(OrderId), to_binary(AccessToken)}, Options,
              fun (NewOptions) -> mlapi:my_order(OrderId, AccessToken, NewOptions) end).
+
+
+-spec my_sale(mlapi_sale_id(), mlapi_access_token()) -> mlapi:response().
+my_sale(SaleId, AccessToken) ->
+    my_sale(SaleId, AccessToken, []).
+
+-spec my_sale(mlapi_sale_id(), mlapi_access_token(), [mlapi:option()]) -> mlapi:response().
+my_sale(SaleId, AccessToken, Options) ->
+    get_data(mlapi_sale, mlapi_sale, {to_binary(SaleId), to_binary(AccessToken)}, Options,
+             fun (NewOptions) -> mlapi:my_sale(SaleId, AccessToken, NewOptions) end).
 
 
 -spec my_user(mlapi_access_token()) -> mlapi:response().

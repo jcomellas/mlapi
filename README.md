@@ -9,8 +9,8 @@ that can be performed in the site. The API returns its results encoded in
 accessible and a private interface that can only be accessed by a MercadoLibre
 user using [OAuth](http://oauth.net/) authentication in an application.
 
-This implementation only addresses the public side of the API so far, but it
-will grow to support the private interface too. There are two main modules:
+This implementation addresses the public and private sides of the API. There are
+two main modules:
 1) ``mlapi``: which provides uncached access to the API; and 2) ``mlapi_cache``:
 which caches the results returned by the API. Bear in mind that the current
 implementation still does not clean up stale cache entries once they've expired
@@ -20,7 +20,7 @@ Requirements
 ============
 You will need a fairly recent version of [Erlang](http://www.erlang.org/) and
 [rebar](https://github.com/basho/rebar) installed in your path. So far it has
-only been tested with Erlang R14B03 on Ubuntu Linux 11.04 (Natty) but will
+only been tested with Erlang/OTP R14B03 on Ubuntu Linux 11.04 (Natty) but will
 probably work with previous releases of R14 on other platforms too.
 
 Installation
@@ -52,11 +52,11 @@ Now we're ready to rock. Keep in mind the following type specifications:
 
     -type error()             :: {error, Reason :: atom() | {atom(), any()}}.
     -type ejson_key()         :: binary().
-    -type ejson_value()       :: binary() | boolean() | integer() | float() | 'null'.
+    -type ejson_value()       :: binary() | boolean() | integer() | float() | null.
     -type ejson()             :: {[{ejson_key(), ejson_value() | ejson()}]}.
     -type proplist()          :: [proplists:property()].
-    -type format()            :: 'binary' | 'ejson' | 'proplist' | 'orddict' | 'record'.
-    -type option()            :: {format, format()} | {record, RecordName :: atom()} | 'refresh'.
+    -type format()            :: raw | ejson | proplist | orddict | record.
+    -type option()            :: {format, format()} | {record, RecordName :: atom()} | refresh.
     -type response()          :: binary() | ejson() | proplist() | orddict:orddict() | tuple() | error().
 
 All of the available functions that retrieve information from [MLAPI](http://www.mercadolibre.io/)
@@ -114,6 +114,7 @@ For the time being, you can retrieve the following information provided by [MLAP
 
 - Search by keywords, by category, by seller ID and by seller nickname
 - Sales
+- Orders
 - Items
 - Users
 - Categories
@@ -136,8 +137,7 @@ There is a variant of the ``mlapi`` module called ``mlapi_cache`` that caches
 the results it receives in Mnesia. The time-to-live of each type of result can
 be specified in the ``mlapi_metatable`` Mnesia table (see ``src/mlapi_cache.erl``
 for its definition). The interface is the same as the one provided by the
-``mlapi`` module with the caveat that the ``mlapi`` module admits both binaries
-and strings for the identifiers and ``mlapi_cache`` only allows binaries.
+``mlapi`` module.
 
 Accessing the Documents
 =======================

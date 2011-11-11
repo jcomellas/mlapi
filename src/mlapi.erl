@@ -63,8 +63,8 @@
 -type ejson_value()       :: binary() | boolean() | integer() | float() | 'null'.
 -type ejson()             :: {[{ejson_key(), ejson_value() | ejson()}]}.
 -type proplist()          :: [proplists:property()].
--type format()            :: 'binary' | 'ejson' | 'proplist' | 'orddict' | 'record'.
--type option()            :: {format, format()} | {record, RecordName :: atom()} | 'refresh'.
+-type format()            :: raw | ejson | proplist | orddict | record.
+-type option()            :: {format, format()} | {record, RecordName :: atom()} | refresh.
 -type response()          :: binary() | ejson() | proplist() | orddict:orddict() | tuple() | error().
 
 
@@ -576,6 +576,15 @@ sales_filter([], Acc) ->
     "?" ++ string:join(lists:reverse(Acc), "&").
 
 
+-spec my_order(mlapi_order_id(), mlapi_access_token()) -> response().
+my_order(OrderId, AccessToken) ->
+    my_order(OrderId, AccessToken, []).
+
+-spec my_order(mlapi_order_id(), mlapi_access_token(), [option()]) -> response().
+my_order(OrderId, AccessToken, Options) ->
+    request(?ORDERS "/" ++ to_string(OrderId) ++ "?access_token=" ++ AccessToken, ?SET_RECORD(mlapi_sale, Options)).
+
+
 -spec my_sale(mlapi_sale_id(), mlapi_access_token()) -> response().
 my_sale(SaleId, AccessToken) ->
     my_sale(SaleId, AccessToken, []).
@@ -584,15 +593,6 @@ my_sale(SaleId, AccessToken) ->
 my_sale(SaleId, AccessToken, Options) ->
     Path = io_lib:format(?SALES "/~s?access_token=~s", [to_string(SaleId), url_encode(AccessToken)]),
     request(Path, ?SET_RECORD(mlapi_sale, Options)).
-
-
--spec my_order(mlapi_order_id(), mlapi_access_token()) -> response().
-my_order(OrderId, AccessToken) ->
-    my_order(OrderId, AccessToken, []).
-
--spec my_order(mlapi_order_id(), mlapi_access_token(), [option()]) -> response().
-my_order(OrderId, AccessToken, Options) ->
-    request(?ORDERS "/" ++ to_string(OrderId) ++ "?access_token=" ++ AccessToken, ?SET_RECORD(mlapi_sale, Options)).
 
 
 -spec my_user(mlapi_access_token()) -> response().
@@ -636,7 +636,7 @@ request(Path, Options) ->
             case lists:keyfind(?HEADER_CONTENT_TYPE, 1, Headers) of
                 {_ContentType, ?MIME_TYPE_JSON ++ _CharSet} ->
                     case proplists:get_value(format, Options, get_env(default_format, ejson)) of
-                        binary ->
+                        raw ->
                             Body;
                         Format ->
                             try
@@ -657,7 +657,7 @@ request(Path, Options) ->
     end.
 
 
--spec ejson_to_term(ejson(), RecordName :: atom(), format()) -> ejson() | orddict:orddict() | proplist() | tuple().
+-spec ejson_to_term(ejson(), RecordName :: atom(), format()) -> ejson() | orddict:orddict() | proplist() | tuple() | binary().
 ejson_to_term(Doc, _RecordName, ejson) ->
     Doc;
 ejson_to_term(Doc, RecordName, orddict) ->
@@ -665,7 +665,9 @@ ejson_to_term(Doc, RecordName, orddict) ->
 ejson_to_term(Doc, RecordName, proplist) ->
     ejson_to_proplist(Doc, RecordName);
 ejson_to_term(Doc, RecordName, record) ->
-    ejson_to_record(Doc, RecordName).
+    ejson_to_record(Doc, RecordName);
+ejson_to_term(Doc, _RecordName, raw) ->
+    ejson:encode(Doc).
 
 
 %% @doc Convert a parsed JSON document or a list of documents into one or more known record.
