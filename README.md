@@ -113,9 +113,11 @@ Available Functionality
 For the time being, you can retrieve the following information provided by [MLAPI](http://www.mercadolibre.io/):
 
 - Search by keywords, by category, by seller ID and by seller nickname
+- Sales
 - Items
 - Users
 - Categories
+- Domains
 - Pictures
 - Global and category trends
 - Geolocation information

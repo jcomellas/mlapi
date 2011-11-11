@@ -22,7 +22,7 @@
          countries/0, countries/1, country/1, country/2,
          state/1, state/2, city/1, city/2,
          currencies/0, currencies/1, currency/1, currency/2,
-         currency_conversion/2, currency_conversion/3, currency_conversion/4,
+         currency_conversion/1, currency_conversion/2,
          listing_exposures/1, listing_exposures/2, listing_exposure/2, listing_exposure/3,
          listing_prices/2, listing_prices/3,
          listing_types/1, listing_types/2,
@@ -41,9 +41,10 @@
          search/2, search/3
         ]).
 %% Private APIs
--export([my_archived_sales/1, my_archived_sales/2,
-         my_active_sales/1, my_active_sales/2,
+-export([my_archived_sales/2, my_archived_sales/3,
+         my_active_sales/2, my_active_sales/3,
          my_sale/2, my_sale/3,
+         my_order/2, my_order/3,
          my_user/1, my_user/2,
          user_listing_types/2, user_listing_types/3,
          user_items/2, user_items/3
@@ -227,6 +228,7 @@ tables() ->
      {mlapi_listing_exposure,       1, ?WEEK_IN_SECS},
      {mlapi_listing_price,          1, ?DAY_IN_SECS},
      {mlapi_listing_type,           1, ?WEEK_IN_SECS},
+     {mlapi_order,                  1, 10 * ?MIN_IN_SECS},
      {mlapi_payment_type,           1, ?DAY_IN_SECS},
      {mlapi_payment_method,         1, ?DAY_IN_SECS},
      {mlapi_picture,                1, ?WEEK_IN_SECS},
@@ -365,26 +367,24 @@ currency(CurrencyId, Options) ->
     get_data(mlapi_currency, mlapi_currency, to_binary(CurrencyId), Options,
              fun (NewOptions) -> mlapi:currency(CurrencyId, NewOptions) end).
 
--spec currency_conversion(FromCurrencyId :: mlapi_currency_id(), ToCurrencyId :: mlapi_currency_id()) -> mlapi:response().
-currency_conversion(FromCurrencyId, ToCurrencyId) ->
-    currency_conversion(FromCurrencyId, ToCurrencyId, []).
 
--spec currency_conversion(FromCurrencyId :: mlapi_currency_id(), ToCurrencyId :: mlapi_currency_id(),
-                              [mlapi:option()] | calendar:datetime()) -> mlapi:response().
-currency_conversion(FromCurrencyId, ToCurrencyId, Options) when is_list(Options) ->
-    get_data(mlapi_currency_conversion, mlapi_currency_conversion, {to_binary(FromCurrencyId), to_binary(ToCurrencyId)}, Options,
-             fun (NewOptions) -> mlapi:currency_conversion(FromCurrencyId, ToCurrencyId, NewOptions) end);
-currency_conversion(FromCurrencyId, ToCurrencyId, {_Date, _Time} = Datetime) ->
-    currency_conversion(FromCurrencyId, ToCurrencyId, Datetime, []).
+-spec currency_conversion([mlapi_currency_conversion_filter()]) -> mlapi:response().
+currency_conversion(Filter) ->
+    currency_conversion(Filter, []).
 
--spec currency_conversion(FromCurrencyId :: mlapi_currency_id(),
-                          ToCurrencyId :: mlapi_currency_id(), calendar:datetime(), [mlapi:option()]) -> mlapi:response().
-currency_conversion(FromCurrencyId, ToCurrencyId, {Date, {Hour, Min, _Sec}}, Options) ->
-    %% We assume that currency conversions are valid for 15 minutes.
-    Rem = Min rem 15,
-    Datetime = {Date, {Hour, Min - Rem, 0}},
-    get_data(mlapi_currency_conversion, mlapi_currency_conversion, {to_binary(FromCurrencyId), to_binary(ToCurrencyId), Datetime}, Options,
-             fun (NewOptions) -> mlapi:currency_conversion(FromCurrencyId, ToCurrencyId, Datetime, NewOptions) end).
+-spec currency_conversion([mlapi_currency_conversion_filter()], [mlapi:option()]) -> mlapi:response().
+currency_conversion(Filter, Options) ->
+    NewFilter = case lists:keyfind(date, 1, Filter) of
+                    {date, {Date, {Hour, Min, _Sec}}} ->
+                        %% We assume that currency conversions are valid for 15 minutes.
+                        Rem = Min rem 15,
+                        lists:keystore(date, 1, Filter, {date, {Date, {Hour, Min - Rem, 0}}});
+                    false ->
+                        Filter
+                end,
+    get_data(mlapi_currency_conversion, mlapi_currency_conversion, normalize_filter(NewFilter), Options,
+             fun (NewOptions) -> mlapi:currency_conversion(Filter, NewOptions) end).
+
 
 -spec listing_exposures(mlapi_site_id()) -> mlapi:response().
 listing_exposures(SiteId) ->
@@ -609,24 +609,26 @@ search(SiteId, Filter, Options) ->
              fun (NewOptions) -> mlapi:search(SiteId, Filter, NewOptions) end).
 
 
--spec my_archived_sales(mlapi_access_token()) -> mlapi:response().
-my_archived_sales(AccessToken) ->
-    my_archived_sales(AccessToken, []).
+-spec my_archived_sales(mlapi_access_token(), mlapi_sale_filter()) -> mlapi:response().
+my_archived_sales(AccessToken, Filter) ->
+    my_archived_sales(AccessToken, Filter, []).
 
--spec my_archived_sales(mlapi_access_token(), [mlapi:option()]) -> mlapi:response().
-my_archived_sales(AccessToken, Options) ->
-    get_data(mlapi_sale, mlapi_sale, {my_archived_sales, AccessToken}, Options,
-             fun (NewOptions) -> mlapi:my_archived_sales(AccessToken, NewOptions) end).
+-spec my_archived_sales(mlapi_access_token(), mlapi_sale_filter(), [mlapi:option()]) -> mlapi:response().
+my_archived_sales(AccessToken, Filter, Options) ->
+    NewFilter = lists:keystore(access_token, 1, Filter, {access_token, AccessToken}),
+    get_data(mlapi_sale, mlapi_sale, {my_archived_sales, normalize_filter(NewFilter)}, Options,
+             fun (NewOptions) -> mlapi:my_archived_sales(AccessToken, Filter, NewOptions) end).
 
 
--spec my_active_sales(mlapi_access_token()) -> mlapi:response().
-my_active_sales(AccessToken) ->
-    my_active_sales(AccessToken, []).
+-spec my_active_sales(mlapi_access_token(), mlapi_sale_filter()) -> mlapi:response().
+my_active_sales(AccessToken, Filter) ->
+    my_active_sales(AccessToken, Filter, []).
 
--spec my_active_sales(mlapi_access_token(), [mlapi:option()]) -> mlapi:response().
-my_active_sales(AccessToken, Options) ->
-    get_data(mlapi_sale, mlapi_sale, {my_active_sales, AccessToken}, Options,
-             fun (NewOptions) -> mlapi:my_active_sales(AccessToken, NewOptions) end).
+-spec my_active_sales(mlapi_access_token(), mlapi_sale_filter(), [mlapi:option()]) -> mlapi:response().
+my_active_sales(AccessToken, Filter, Options) ->
+    NewFilter = lists:keystore(access_token, 1, Filter, {access_token, AccessToken}),
+    get_data(mlapi_sale, mlapi_sale, {my_active_sales, normalize_filter(NewFilter)}, Options,
+             fun (NewOptions) -> mlapi:my_active_sales(AccessToken, Filter, NewOptions) end).
 
 
 -spec my_sale(mlapi_sale_id(), mlapi_access_token()) -> mlapi:response().
@@ -637,6 +639,16 @@ my_sale(SaleId, AccessToken) ->
 my_sale(SaleId, AccessToken, Options) ->
     get_data(mlapi_sale, mlapi_sale, {to_binary(SaleId), to_binary(AccessToken)}, Options,
              fun (NewOptions) -> mlapi:my_sale(SaleId, AccessToken, NewOptions) end).
+
+
+-spec my_order(mlapi_order_id(), mlapi_access_token()) -> mlapi:response().
+my_order(OrderId, AccessToken) ->
+    my_order(OrderId, AccessToken, []).
+
+-spec my_order(mlapi_order_id(), mlapi_access_token(), [mlapi:option()]) -> mlapi:response().
+my_order(OrderId, AccessToken, Options) ->
+    get_data(mlapi_order, mlapi_order, {to_binary(OrderId), to_binary(AccessToken)}, Options,
+             fun (NewOptions) -> mlapi:my_order(OrderId, AccessToken, NewOptions) end).
 
 
 -spec my_user(mlapi_access_token()) -> mlapi:response().
@@ -779,8 +791,10 @@ current_time_in_gregorian_seconds() ->
     calendar:datetime_to_gregorian_seconds(calendar:universal_time()).
 
 
--spec to_binary(string() | binary() | integer() | float() | atom()) -> binary().
+-spec to_binary(string() | binary() | integer() | float() | atom() | tuple()) -> binary().
 to_binary(Integer) when is_integer(Integer) ->
     bstr:from_integer(Integer);
+to_binary(Tuple) when is_tuple(Tuple) ->
+    Tuple;
 to_binary(Data) ->
     bstr:bstr(Data).

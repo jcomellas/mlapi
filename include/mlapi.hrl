@@ -1,7 +1,7 @@
 %%%-------------------------------------------------------------------
 %%% @author Juan Jose Comellas <juanjo@comellas.org>
 %%% @copyright (C) 2011 Juan Jose Comellas
-%%% @doc MercadoLibre API records.
+%%% @doc MercadoLibre API type definitions and records.
 %%% @end
 %%%
 %%% This source file is subject to the New BSD License. You should have received
@@ -34,8 +34,10 @@
 -type mlapi_domain_attribute_id()         :: mlapi_id().
 -type mlapi_filter_id()                   :: mlapi_id().
 -type mlapi_item_id()                     :: mlapi_id().
+-type mlapi_item_variation_id()           :: mlapi_id().
 -type mlapi_locale_id()                   :: mlapi_id().
 -type mlapi_neighborhood_id()             :: mlapi_id().
+-type mlapi_order_id()                    :: mlapi_id().
 -type mlapi_payment_id()                  :: mlapi_id().
 -type mlapi_payment_method_id()           :: mlapi_id().
 -type mlapi_payment_type_id()             :: mlapi_id().
@@ -91,6 +93,8 @@
 -type mlapi_user_type_id()                :: binary().    %% <<"car_dealer">> | <<"real_estate_agency">>,
                                                           %% <<"branch">> | <<"franchise">> | <<"normal">>
 
+-type mlapi_currency_conversion_filter()  :: {from, mlapi_currency_id()} | {to, mlapi_currency_id()} |
+                                             {date, calendar:datetime()}.
 -type mlapi_listing_price_filter()        :: {price, float()} | {listing_type_id, mlapi_listing_type_id()} |
                                              {quantity, non_neg_integer()} |
                                              {category_id, mlapi_category_id()} | {currency_id, mlapi_currency_id()}.
@@ -98,10 +102,12 @@
                                              {status, mlapi_question_status_id()} |
                                              {from, mlapi_user_id()} | {seller, mlapi_user_id()} |
                                              {access_token, mlapi_access_token()}.
--type mlapi_trend_filter()                :: {category, mlapi_category_id()} | {limit, mlapi_limit()}.
+-type mlapi_sale_filter()                 :: {access_token, mlapi_access_token()} |
+                                             {offset, mlapi_offset()} | {limit, mlapi_limit()}.
 -type mlapi_search_filter()               :: {nickname, mlapi_user_name()} | {seller_id, mlapi_user_id()} |
                                              {category, mlapi_category_id()} | {q, mlapi_query()} |
                                              {offset, mlapi_offset()} | {limit, mlapi_limit()}.
+-type mlapi_trend_filter()                :: {category, mlapi_category_id()} | {limit, mlapi_limit()}.
 
 
 -record(mlapi_application, {
@@ -592,7 +598,7 @@
          }).
 
 -record(mlapi_item_variation, {
-          id,
+          id                                        :: mlapi_item_variation_id(),
           attribute_combinations = []               :: [#mlapi_attribute_combination{}],
           price = 0.0                               :: float(),
           available_quantity                        :: integer(),
@@ -755,13 +761,13 @@
           billing_info                              :: #mlapi_billing_info{}
          }).
 
--record(mlapi_order_item_info, {
+-record(mlapi_sale_item_info, {
           id                                        :: mlapi_item_id(),
           title                                     :: binary()
          }).
 
--record(mlapi_order_item, {
-          item                                      :: #mlapi_order_item_info{},
+-record(mlapi_sale_item, {
+          item                                      :: #mlapi_sale_item_info{},
           quantity                                  :: non_neg_integer(),
           unit_price                                :: float(),
           currency_id                               :: mlapi_currency_id()
@@ -788,7 +794,7 @@
           received                                  :: #mlapi_feedback_issued{}
          }).
 
--record(mlapi_order_shipping, {
+-record(mlapi_sale_shipping, {
           id                                        :: mlapi_shipping_id(),
           shipment_type                             :: mlapi_shipment_type_id(),
           status                                    :: mlapi_shipment_status_id(),
@@ -804,10 +810,38 @@
           status                                    :: mlapi_sale_status_id(),
           date_created                              :: calendar:datetime(),
           buyer                                     :: #mlapi_buyer{},
-          order_items                               :: [#mlapi_order_item{}],
+          order_items                               :: [#mlapi_sale_item{}],
           payment                                   :: #mlapi_payment{},
           feedback                                  :: #mlapi_feedback{},
-          shipping                                  :: #mlapi_order_shipping{}
+          shipping                                  :: #mlapi_sale_shipping{}
          }).
+
+-record(mlapi_order_seller, {
+          id                                        :: mlapi_user_id(),
+          nickname                                  :: mlapi_user_name(),
+          first_name                                :: binary(),
+          last_name                                 :: binary(),
+          email                                     :: mlapi_email_address(),
+          phone                                     :: #mlapi_phone{}
+         }).
+
+-record(mlapi_order_item, {
+          item_id                                   :: mlapi_item_id(),
+          variation_id                              :: mlapi_item_variation_id(),
+          quantity                                  :: non_neg_integer(),
+          unit_price                                :: float(),
+          currency_id                               :: mlapi_currency_id()
+         }).
+
+-record(mlapi_order, {
+          id                                        :: mlapi_order_id(),
+          date_created                              :: calendar:datetime(),
+          date_closed                               :: calendar:datetime(),
+          status,
+          buyer                                     :: #mlapi_buyer{},
+          seller                                    :: #mlapi_order_seller{},
+          order_items                               :: [#mlapi_order_item{}]
+         }).
+
 
 -endif.
