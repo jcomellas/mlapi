@@ -84,7 +84,7 @@
 -define(COUNTRIES,               "/countries").
 -define(CURRENCIES,              "/currencies").
 -define(CREDIT_LEVELS,           "/credit_levels").
--define(CURRENCY_CONVERSIONS,    "/currency_conversions/search").
+-define(CURRENCY_CONVERSIONS,    "/currency_conversions").
 -define(DOMAINS,                 "/domains").
 -define(GEOLOCATION,             "/geolocation").
 -define(ITEMS,                   "/items").
@@ -245,7 +245,7 @@ currency_conversion(Filter) ->
 
 -spec currency_conversion([mlapi_currency_conversion_filter()], [option()]) -> response().
 currency_conversion(Filter, Options) ->
-    request(?CURRENCY_CONVERSIONS ++ currency_conversion_filter(Filter),
+    request(?CURRENCY_CONVERSIONS ?SEARCH ++ currency_conversion_filter(Filter),
             ?SET_RECORD(mlapi_currency_conversion, Options)).
 
 currency_conversion_filter([] = Filter) ->
