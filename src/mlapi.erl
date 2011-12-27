@@ -13,7 +13,7 @@
 
 %%-export([query/2, query_category/2, query_seller_id/2, query_seller_nick]).
 
--export([start/0, stop/0, request/1, request/2, get_env/0, get_env/1, get_env/2]).
+-export([start/0, stop/0, request/1, request/2, get_env/0, get_env/1, get_env/2, to_string/1, to_binary/1]).
 %% Public APIs
 -export([applications/0, applications/1, application/1, application/2,
          catalog_products/2, catalog_products/3, catalog_product/2, catalog_product/3,
@@ -43,6 +43,8 @@
 -export([my_archived_sales/2, my_archived_sales/3,
          my_active_sales/2, my_active_sales/3,
          my_sale/2, my_sale/3,
+         my_orders/1, my_orders/2,
+         my_archived_orders/1, my_archived_orders/2,
          my_order/2, my_order/3,
          my_user/1, my_user/2,
          user_listing_types/2, user_listing_types/3,
@@ -612,6 +614,53 @@ sales_filter([], Acc) ->
     "?" ++ string:join(lists:reverse(Acc), "&").
 
 
+-spec my_orders([mlapi_order_arg()]) -> response().
+my_orders(Args) ->
+    my_orders(Args, []).
+
+-spec my_orders([mlapi_order_arg()], [option()]) -> response().
+my_orders(Args, Options) ->
+    request(?ORDERS ?SEARCH ++ orders_args(Args), ?SET_RECORD(mlapi_order_search, Options)).
+
+
+-spec my_archived_orders([mlapi_order_arg()]) -> response().
+my_archived_orders(Args) ->
+    my_archived_orders(Args, []).
+
+-spec my_archived_orders([mlapi_order_arg()], [option()]) -> response().
+my_archived_orders(Args, Options) ->
+    request(?ORDERS ?SEARCH "/archived" ++ orders_args(Args), ?SET_RECORD(mlapi_order_search, Options)).
+
+
+orders_args([] = Args) ->
+    Args;
+orders_args(Args) ->
+    orders_args(Args, []).
+
+orders_args([{access_token, AccessToken} | Tail], Acc) ->
+    orders_args(Tail, ["access_token=" ++ to_string(AccessToken) | Acc]);
+%% The feedback status can be one of: "pending", "waiting_buyer"
+orders_args([{feedback_status, FeedbackStatus} | Tail], Acc) ->
+    orders_args(Tail, ["feedback.status=" ++ to_string(FeedbackStatus) | Acc]);
+orders_args([{limit, Limit} | Tail], Acc) ->
+    orders_args(Tail, ["limit=" ++ to_string(Limit) | Acc]);
+orders_args([{offset, Offset} | Tail], Acc) ->
+    orders_args(Tail, ["offset=" ++ to_string(Offset) | Acc]);
+%% The payment status can be one of: "to_be_agreed", "pending", "in_process", "rejected", "cancelled", "approved", "in_mediation", "refunded"
+orders_args([{payment_status, PaymentStatus} | Tail], Acc) ->
+    orders_args(Tail, ["payment.status=" ++ to_string(PaymentStatus) | Acc]);
+orders_args([{seller, Seller} | Tail], Acc) ->
+    orders_args(Tail, ["seller=" ++ to_string(Seller) | Acc]);
+%% The shipping status can be one of: "to_be_agreed", "pending", "shipped", "delivered", "not_delivered", "handling", "cancelled"
+orders_args([{shipping_status, ShippingStatus} | Tail], Acc) ->
+    orders_args(Tail, ["shipping.status=" ++ to_string(ShippingStatus) | Acc]);
+%% The sort order can be one of: "date_asc", "date_desc"
+orders_args([{sort, Sort} | Tail], Acc) ->
+    orders_args(Tail, ["sort=" ++ to_string(Sort) | Acc]);
+orders_args([], Acc) ->
+    "?" ++ string:join(lists:reverse(Acc), "&").
+
+
 -spec my_order(mlapi_order_id(), mlapi_access_token()) -> response().
 my_order(OrderId, AccessToken) ->
     my_order(OrderId, AccessToken, []).
@@ -866,12 +915,34 @@ ejson_field_to_record_name(mlapi_item, varying_attributes) ->
     mlapi_varying_attribute;
 ejson_field_to_record_name(mlapi_order, buyer) ->
     mlapi_buyer;
+ejson_field_to_record_name(mlapi_order, feedback) ->
+    mlapi_feedback;
 ejson_field_to_record_name(mlapi_order, order_items) ->
     mlapi_order_item;
+ejson_field_to_record_name(mlapi_order, payments) ->
+    mlapi_payment;
 ejson_field_to_record_name(mlapi_order, seller) ->
     mlapi_order_seller;
+ejson_field_to_record_name(mlapi_order, shipping) ->
+    mlapi_order_shipping;
+ejson_field_to_record_name(mlapi_order_item, item) ->
+    mlapi_order_item_info;
+ejson_field_to_record_name(mlapi_order_search, available_filters) ->
+    mlapi_filter;
+ejson_field_to_record_name(mlapi_order_search, available_sorts) ->
+    mlapi_sort;
+ejson_field_to_record_name(mlapi_order_search, filters) ->
+    mlapi_filter;
+ejson_field_to_record_name(mlapi_order_search, paging) ->
+    mlapi_paging;
+ejson_field_to_record_name(mlapi_order_search, results) ->
+    mlapi_order;
+ejson_field_to_record_name(mlapi_order_search, sort) ->
+    mlapi_sort;
 ejson_field_to_record_name(mlapi_order_seller, phone) ->
     mlapi_phone;
+ejson_field_to_record_name(mlapi_order_shipping, receiver_address) ->
+    mlapi_address;
 ejson_field_to_record_name(mlapi_picture, variations) ->
     mlapi_picture_variation;
 ejson_field_to_record_name(mlapi_payment_method_ext, card_configuration) ->
@@ -979,6 +1050,8 @@ is_ejson_datetime_field(mlapi_item, stop_time) ->
 is_ejson_datetime_field(mlapi_order, date_closed) ->
     true;
 is_ejson_datetime_field(mlapi_order, date_created) ->
+    true;
+is_ejson_datetime_field(mlapi_order_shipping, date_created) ->
     true;
 is_ejson_datetime_field(mlapi_search_item, stop_time) ->
     true;
@@ -1108,7 +1181,28 @@ to_string(Integer) when is_integer(Integer) ->
     integer_to_list(Integer);
 to_string(Float) when is_float(Float) ->
     float_to_list(Float);
+to_string(Atom) when Atom =:= undefined; Atom =:= null ->
+    "";
 to_string(Atom) when is_atom(Atom) ->
     atom_to_list(Atom);
+to_string({{Year, Month, Day}, {Hour, Min, Sec}}) ->
+    lists:flatten(io_lib:format("~.04w-~.02w-~.02wT~.02w:~.02w:~.02wZ", [Year, Month, Day, Hour, Min, Sec]));
 to_string(String) ->
     String.
+
+
+-spec to_binary(string() | binary() | integer() | float() | atom() | tuple()) -> binary().
+to_binary(Integer) when is_integer(Integer) ->
+    bstr:from_integer(Integer);
+to_binary({{Year, Month, Day}, {Hour, Min, Sec}}) ->
+    YYYY = bstr:lpad(bstr:from_integer(Year), 4, $0),
+    MM = bstr:lpad(bstr:from_integer(Month), 2, $0),
+    DD = bstr:lpad(bstr:from_integer(Day), 2, $0),
+    Hh = bstr:lpad(bstr:from_integer(Hour), 2, $0),
+    Mm = bstr:lpad(bstr:from_integer(Min), 2, $0),
+    Ss = bstr:lpad(bstr:from_integer(Sec), 2, $0),
+    <<YYYY/binary, $-, MM/binary, $-, DD/binary, $T, Hh/binary, $:, Mm/binary, $:, Ss/binary, $Z>>;
+to_binary(Atom) when Atom =:= undefined; Atom =:= null ->
+    <<>>;
+to_binary(Data) ->
+    bstr:bstr(Data).

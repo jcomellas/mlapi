@@ -70,7 +70,7 @@
 -type mlapi_catalog_product_status_id()   :: binary().    %% <<"active">>
 -type mlapi_concretion_status_id()        :: binary().    %% <<"completed">>
 -type mlapi_domain_attribute_type_id()    :: binary().
--type mlapi_feedback_status_id()          :: binary().    %% <<"waiting_buyer">>
+-type mlapi_feedback_status_id()          :: binary().    %% "pending", "waiting_buyer"
 -type mlapi_item_condition_id()           :: binary().    %% <<"not_specified">> | <<"new">> | <<"used">>
 -type mlapi_item_status_id()              :: binary().    %% <<"not_yet_active">> | <<"paused">> | <<"active">> |
                                                           %% <<"closed">> | <<"deleted">> | <<"invisible">> |
@@ -79,17 +79,22 @@
 -type mlapi_listing_exposure_id()         :: binary().    %% <<"highest">> | <<"high">> | <<"mid">> | <<"low">> | <<"lowest">>
 -type mlapi_luhn_algorithm_id()           :: binary().    %% <<"standard">> | <<"none">>
 -type mlapi_mercadopago_account_type_id() :: binary().    %% <<"optional">>
--type mlapi_payment_status_id()           :: binary().    %% <<"to_be_agreed">>
+-type mlapi_order_status_id()             :: binary().    %% "closed", "open"
+-type mlapi_payment_status_id()           :: binary().    %% "to_be_agreed", "pending", "in_process", "rejected", "cancelled",
+                                                          %% "approved", "in_mediation", "refunded"
 -type mlapi_period_id()                   :: binary().    %% <<"historic">> | <<"12 months">> | <<"3 months">>
 -type mlapi_power_seller_status_id()      :: binary().    %% <<"silver">> | <<"gold">> | <<"platinum">> | <<"null">>
 -type mlapi_question_status_id()          :: binary().    %% <<"ANSWERED">> | <<"UNANSWERED">> | <<"CLOSED_UNANSWERED">> | <<"UNDER_REVIEW">>
 -type mlapi_rating_id()                   :: binary().    %% <<"negative">> | <<"neutral">> | <<"positive">>
 -type mlapi_sale_status_id()              :: binary().    %% <<"active">>
 -type mlapi_sale_fees_mode_id()           :: binary().    %% <<"not_free">>
+-type mlapi_search_display_id()           :: binary().    %% <<"partial">>
 -type mlapi_seller_experience_id()        :: binary().    %% <<"newbie">> | <<"intermediate">> | <<"advanced">>
 -type mlapi_seller_level_id()             :: binary().    %% <<"1_red">> | <<"2_orange">> | <<"3_yellow">> | <<"4_light_green">> | <<"5_green">>
 -type mlapi_shipment_type_id()            :: binary().    %% ???
 -type mlapi_shipment_status_id()          :: binary().    %% ???
+-type mlapi_shipping_status_id()          :: binary().    %% "to_be_agreed", "pending", "shipped", "delivered", "not_delivered",
+                                                          %% "handling", "cancelled"
 -type mlapi_site_status_id()              :: binary().    %% <<"active">> | <<"pending">> | <<"deactive">>
 -type mlapi_required()                    :: binary().    %% <<"required">> | <<"optional">>
 -type mlapi_user_type_id()                :: binary().    %% <<"car_dealer">> | <<"real_estate_agency">>,
@@ -112,6 +117,14 @@
                                              {category, mlapi_category_id()} | {q, mlapi_query()} |
                                              {offset, mlapi_offset()} | {limit, mlapi_limit()}.
 -type mlapi_trend_filter()                :: {category, mlapi_category_id()} | {limit, mlapi_limit()}.
+
+-type mlapi_order_arg()                   :: {access_token, mlapi_access_token()} |
+                                             {feedback_status, mlapi_feedback_status_id()} |
+                                             {limit, mlapi_limit()} | {offset, mlapi_offset()} |
+                                             {payment_status, mlapi_payment_status_id()} |
+                                             {seller, mlapi_user_id()} |
+                                             {shipping_status, mlapi_shipping_status_id()}.
+
 
 
 -record(mlapi_application, {
@@ -888,12 +901,29 @@
           phone                                     :: #mlapi_phone{}
          }).
 
+-record(mlapi_order_item_info, {
+          id,
+          title
+         }).
+
 -record(mlapi_order_item, {
-          item_id                                   :: mlapi_item_id(),
-          variation_id                              :: mlapi_item_variation_id(),
+          %% item_id                                   :: mlapi_item_id(),
+          item                                      :: #mlapi_order_item_info{},
           quantity                                  :: non_neg_integer(),
           unit_price                                :: float(),
-          currency_id                               :: mlapi_currency_id()
+          currency_id                               :: mlapi_currency_id(),
+          variation_id                              :: mlapi_item_variation_id(),
+          variation_attributes = []
+         }).
+
+-record(mlapi_order_shipping, {
+          id                                        :: mlapi_shipping_id(),
+          shipment_type                             :: mlapi_shipment_type_id(),
+          status                                    :: mlapi_shipment_status_id(),
+          date_created                              :: calendar:datetime(),
+          receiver_address                          :: #mlapi_address{},
+          currency_id                               :: mlapi_currency_id(),
+          cost                                      :: float()
          }).
 
 -record(mlapi_order, {
@@ -901,10 +931,27 @@
           date_created                              :: calendar:datetime(),
           date_closed                               :: calendar:datetime(),
           status,
+          status_detail,
           buyer                                     :: #mlapi_buyer{},
           seller                                    :: #mlapi_order_seller{},
-          order_items                               :: [#mlapi_order_item{}]
+          order_items                               :: [#mlapi_order_item{}],
+          payments                                  :: [#mlapi_payment{}],
+          feedback                                  :: #mlapi_feedback{},
+          shipping                                  :: #mlapi_order_shipping{}
          }).
+
+-record(mlapi_order_search, {
+          'query'                                   :: mlapi_query(),
+          display                                   :: mlapi_search_display_id(),
+          paging                                    :: #mlapi_paging{},
+          results = []                              :: [#mlapi_order{}],
+          sort                                      :: #mlapi_sort{},
+          available_sorts                           :: [#mlapi_sort{}],
+          filters                                   :: #mlapi_filter{},
+          available_filters                         :: [#mlapi_filter{}],
+          complete                                  :: mlapi_url()
+         }).
+
 
 
 -endif.
