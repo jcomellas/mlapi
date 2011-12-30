@@ -11,43 +11,122 @@
 -module(mlapi_cli).
 -author('Juan Jose Comellas <juanjo@comellas.org>').
 
--export([exec/2, exec/3, result_to_csv/2, benchmark/2]).
+-export([exec/1, exec/2, exec/3, usage/1]).
+-export([my_orders/2]).
+-export([test/0, test/3, benchmark/2]).
 
 -include("include/mlapi.hrl").
+
+%% Limit imposed my MLAPI when returning paged results.
+-define(DEFAULT_OFFSET, 0).
+-define(DEFAULT_LIMIT, 50).
+-define(DEFAULT_FORMAT, csv).
+
+-type page_position()                           :: first | next | last | undefined.
+
+
+exec(CmdLine) ->
+    OptSpecList = option_spec_list(),
+    case getopt:parse(OptSpecList, CmdLine) of
+        {ok, {Options, NonOptArgs}} ->
+            case lists:member(help, Options) of
+                true ->
+                    usage(OptSpecList, "mlapi_cli");
+                false ->
+                    io:format("Options:~n  ~p~n~nNon-option arguments:~n  ~p~n", [Options, NonOptArgs]),
+                    exec(NonOptArgs, Options)
+            end;
+        {error, {Reason, Data}} ->
+            io:format("Error: ~s ~p~n~n", [Reason, Data]),
+            usage(OptSpecList, "mlapi_cli")
+    end.
 
 
 exec([Command | Args], Options) ->
     exec(list_to_existing_atom(Command), Args, Options).
 
 
-exec(my_orders = Command, _RawArgs, Options) ->
-    Args = filter_options(Options, [access_token, feedback_status, limit, offset, payment_status, seller, shipping_status, sort]),
-    case mlapi_cache:my_orders(Args, [{format, ejson}]) of
+exec(Command, Args, Options) ->
+    erlang:apply(?MODULE, Command, [Args, Options]).
+
+
+usage(ProgramName) ->
+    usage(option_spec_list(), ProgramName).
+
+usage(OptSpecList, ProgramName) ->
+    getopt:usage(OptSpecList, ProgramName).
+
+
+
+option_spec_list() ->
+    [
+     %% {Name,         ShortOpt,  LongOpt,           ArgSpec,         HelpMsg}
+     {output_file,     $o,        "output-file",     string,          "File where the data will be saved to"},
+     {format,          $f,        "format",          {atom, csv},     "Format of the results"},
+     {access_token,    $t,        "access-token",    binary,          "MLAPI user access token"},
+     {offset,          undefined, "offset",          integer,         "Starting offset for a query that returns the result in pages"},
+     {limit,           undefined, "limit",           integer,         "Limit for single pages in a paged result"},
+     {sort,            $s,        "sort",            binary,          "Sort order for paged results"},
+     {include_headers, $h,        "include-headers", {boolean, true}, "Include headers in paged results"},
+     {help,            $?,        "help",            undefined,       "Show the program options"}
+    ].
+
+
+-spec fetch_paged_response(FetchPage :: fun(), FormatLine :: fun(), Options :: list(), Acc0 :: term()) -> iolist().
+fetch_paged_response(FetchPage, FormatLine, Options, Acc0) when is_function(FetchPage), is_function(FormatLine) ->
+    Offset = proplists:get_value(offset, Options, ?DEFAULT_OFFSET),
+    Limit = proplists:get_value(limit, Options, ?DEFAULT_LIMIT),
+    {ok, Pager} = mlapi_pager:start_link([{fetch_page, FetchPage}, {offset, Offset}, {limit, Limit}]),
+    fetch_pages(Pager, FormatLine, Acc0).
+
+
+-spec fetch_pages(Pager :: pid(), FormatLine :: fun(), Acc0 :: term()) -> iolist().
+fetch_pages(Pager, FormatLine, Acc0) ->
+    case mlapi_pager:next(Pager) of
         {error, _Reason} = Error ->
             Error;
-        Result ->
-            result_to_csv(Command, Result)
+        %% Position can be one of: first; next; last; undefined.
+        {Position, Page} ->
+            case kvc:path(<<"results">>, Page) of
+                [] ->
+                    {error, {results_not_found, Page}};
+                Results ->
+                    Acc = format_lines(Position, FormatLine, Results, Acc0),
+                    case Position of
+                        last ->
+                            Acc;
+                        _ ->
+                            fetch_pages(Pager, FormatLine, Acc)
+                    end
+            end
     end.
 
 
-filter_options(Options, ValidNames) ->
-    [Option || {Name, _Value} = Option <- Options, lists:member(Name, ValidNames)].
+-spec format_lines(page_position(), FormatLine :: fun(), Lines :: list, Acc0 :: term()) -> iolist().
+format_lines(Position, FormatLine, [Line | Tail], Acc) ->
+    format_lines(Position, FormatLine, Tail, [FormatLine(Position, Line) | Acc]);
+format_lines(_Position, _FormatLine, [], Acc) ->
+    lists:reverse(Acc).
 
 
-result_to_csv(my_orders, Result) ->
+
+-spec my_orders(list(), list()) -> iolist().
+my_orders(_RawArgs, Options) ->
+    Format = proplists:get_value(format, Options, ?DEFAULT_FORMAT),
+    Args = filter_options(Options, [access_token, feedback_status, payment_status, seller, shipping_status, sort]),
+    FetchPage = fun (Offset, Limit) -> mlapi_cache:my_orders(Args, [{offset, Offset}, {limit, Limit}, {format, ejson}]) end,
+    FormatLine = fun (_Position, Order) -> format_order(Format, Order) end,
     Headers = [
-               <<"ID">>, <<"Estado">>, <<"Fecha Oferta">>,
+               <<"ID">>, <<"Fecha Oferta">>,
                <<"Apodo Comprador">>, <<"Email Comprador">>,
-               <<"Fecha Calificacion">>, <<"Estado Oferta">>,
+               <<"Fecha Calificacion">>, <<"Estado Calificacion">>,
                <<"ID Item">>, <<"Titulo">>, <<"Cantidad">>, <<"Precio Unitario">>, <<"Moneda">>
               ],
-    Orders = kvc:path(<<"results">>, Result),
-    [line_to_csv(Headers) | orders_to_csv(Orders, [])].
+    fetch_paged_response(FetchPage, FormatLine, Options, [format_headers(Format, Headers)]).
 
 
-
-orders_to_csv([Order | Tail], Acc) ->
-    OrderFieldNames = [<<"id">>, <<"status">>, <<"date_created">>,
+format_order(Format, Order) ->
+    OrderFieldNames = [<<"id">>, <<"date_created">>,
                        <<"buyer.nickname">>, <<"buyer.email">>,
                        <<"feedback.sent.date_created">>, <<"feedback.sent.concretion_status">>],
     Line1 = lists:foldl(fun (Path, Acc1) -> [kvc:path(Path, Order) | Acc1] end, [], OrderFieldNames),
@@ -58,20 +137,35 @@ orders_to_csv([Order | Tail], Acc) ->
                [] ->
                    Line1
            end,
-    orders_to_csv(Tail, [line_to_csv(lists:reverse(Line)) | Acc]);
-orders_to_csv([], Acc) ->
-    lists:reverse(Acc).
+    format_line(Format, Line).
+
+
+
+format_headers(csv, Headers) ->
+    line_to_csv(Headers).
+
+
+format_line(csv, Line) ->
+    line_to_csv(Line).
 
 
 line_to_csv(Line) ->
     line_to_csv(Line, []).
 
+line_to_csv([Field | Tail], Acc) when is_number(Field); is_boolean(Field) ->
+    %% Numbers and booleans don't carry double quotes around them.
+    line_to_csv(Tail, [$,, to_binary(Field) | Acc]);
 line_to_csv([Field | Tail], Acc) ->
     line_to_csv(Tail, [$,, $", to_binary(Field), $" | Acc]);
 line_to_csv([], [] = Acc) ->
     Acc;
 line_to_csv([], Acc) ->
     lists:reverse([$\n | tl(Acc)]).
+
+
+-spec filter_options([tuple()], [atom()]) -> [tuple()].
+filter_options(Options, ValidNames) ->
+    [Option || {Name, _Value} = Option <- Options, lists:member(Name, ValidNames)].
 
 
 %% We are only interested in dates (not in times) when exporting to CSV
@@ -87,6 +181,29 @@ to_binary({{_Year, _Month, _Day}, {_Hour, _Min, _Sec}} = Datetime) ->
 to_binary(Data) ->
     mlapi:to_binary(Data).
 
+
+test() ->
+    Token = <<"APP_USR-2623-123018-a6869a200067124c996d8d9f11c8f31c-25679280">>,
+    test(Token, "my_orders.csv", 0).
+
+
+test(Token, Filename, Offset) ->
+    %% Retrieve the user's ID, get its active sales and export them to a CSV file
+    case mlapi_cache:my_user(Token) of
+        {error, _Reason} = Error ->
+            Error;
+        User ->
+            SellerId = kvc:path(id, User),
+            Args = [{access_token, Token}, {seller, SellerId}, {offset, Offset}],
+            case mlapi_cli:exec(my_orders, [], Args) of
+                {error, _Reason} = Error ->
+                    Error;
+                Lines ->
+                    {ok, File} = file:open(Filename, [write, binary]),
+                    lists:foreach(fun (Line) -> file:write(File, Line) end, Lines),
+                    file:close(File)
+            end
+    end.
 
 
 benchmark(Fun, N) ->
@@ -104,3 +221,58 @@ benchmark(Fun, N) ->
 
 for(N, N, Fun) -> Fun();
 for(I, N, Fun) -> Fun(), for(I + 1, N, Fun).
+
+
+
+
+
+
+
+
+%% exec(my_orders = Command, _RawArgs, Options) ->
+%%     Args = filter_options(Options, [access_token, feedback_status, limit, offset, payment_status, seller, shipping_status, sort]),
+%%     case mlapi_cache:my_orders(Args, [{format, ejson}]) of
+%%         {error, _Reason} = Error ->
+%%             Error;
+%%         Result ->
+%%             result_to_csv(Command, Result)
+%%     end.
+
+%% result_to_csv(my_orders, first, Result, Acc) ->
+%%     Headers = [
+%%                <<"ID">>, <<"Fecha Oferta">>,
+%%                <<"Apodo Comprador">>, <<"Email Comprador">>,
+%%                <<"Fecha Calificacion">>, <<"Estado Calificacion">>,
+%%                <<"ID Item">>, <<"Titulo">>, <<"Cantidad">>, <<"Precio Unitario">>, <<"Moneda">>
+%%               ],
+%%     result_to_csv(my_orders, next, Result, [Headers | Acc]);
+%% result_to_csv(my_orders, next, Result, Acc) ->
+%%     Orders = kvc:path(<<"results">>, Result),
+%%     [line_to_csv(Headers) | orders_to_csv(Orders, [])].
+
+
+%% line_spec(my_orders) ->
+%%     [{<<"id">>,                                 <<"ID">>,                    10, left}
+%%      {<<"date_created">>,                       <<"Fecha Oferta">>,          10, left},
+%%      {<<"buyer.nickname">>,                     <<"Apodo Comprador">>,       20, left},
+%%      {<<"buyer.email">>,                        <<"Email Comprador">>,       30, left},
+%%      {<<"feedback.sent.date_created">>,         <<"Fecha Calificacion">>,    30, left},
+%%      {<<"feedback.sent.concretion_status">>,    <<"Estado Calificacion">>,   14, left},
+%%      {<<"item.id">>,                            <<"ID Item">>,               12, left},
+%%      {<<"item.title">>, <<"quantity">>, <<"unit_price">>, <<"currency_id">>}].
+
+%% orders_to_csv([Order | Tail], Acc) ->
+%%     OrderFieldNames = [<<"id">>, <<"date_created">>,
+%%                        <<"buyer.nickname">>, <<"buyer.email">>,
+%%                        <<"feedback.sent.date_created">>, <<"feedback.sent.concretion_status">>],
+%%     Line1 = lists:foldl(fun (Path, Acc1) -> [kvc:path(Path, Order) | Acc1] end, [], OrderFieldNames),
+%%     ItemFieldNames = [<<"item.id">>, <<"item.title">>, <<"quantity">>, <<"unit_price">>, <<"currency_id">>],
+%%     Line = case kvc:path(<<"order_items">>, Order) of
+%%                [Item] ->
+%%                    lists:foldl(fun (Path, Acc1) -> [kvc:path(Path, Item) | Acc1] end, Line1, ItemFieldNames);
+%%                [] ->
+%%                    Line1
+%%            end,
+%%     orders_to_csv(Tail, [line_to_csv(lists:reverse(Line)) | Acc]);
+%% orders_to_csv([], Acc) ->
+%%     lists:reverse(Acc).

@@ -1,0 +1,22 @@
+#!/usr/bin/env escript
+%% -*- erlang -*-
+%%! -sname mlapi_cli -pz ebin deps/bstr/ebin deps/ejson/ebin deps/getopt/ebin deps/ibrowse/ebin deps/kvc/ebin deps/mochiweb/ebin
+
+%%%-------------------------------------------------------------------
+%%% @author Juan Jose Comellas <juanjo@comellas.org>
+%%% @copyright (C) 2009 Juan Jose Comellas
+%%% @doc Command line tool for MLAPI
+%%% @end
+%%%
+%%% This source file is subject to the New BSD License. You should have received
+%%% a copy of the New BSD license with this software. If not, it can be
+%%% retrieved from: http://www.opensource.org/licenses/bsd-license.php
+%%%-------------------------------------------------------------------
+-author('Juan Jose Comellas <juanjo@comellas.org>').
+
+
+-spec main(Args :: [string()]) -> ok.
+main([]) ->
+    mlapi_cli:usage(escript:script_name());
+main(Args) ->
+    mlapi_cli:exec(Args).
