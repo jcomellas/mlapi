@@ -427,6 +427,11 @@
           exception_by_category                     :: [#mlapi_credit_exception_by_category{}]
          }).
 
+-record(mlapi_company, {
+          corporate_name                            :: binary(),
+          brand_name                                :: binary()
+         }).
+
 -record(mlapi_user, {
           id,
           nickname,
@@ -446,7 +451,8 @@
           seller_reputation                         :: #mlapi_seller_reputation{},
           buyer_reputation                          :: #mlapi_buyer_reputation{},
           status                                    :: #mlapi_user_status{},
-          credit                                    :: #mlapi_user_credit{}
+          credit                                    :: #mlapi_user_credit{},
+          company                                   :: #mlapi_company{}
          }).
 
 -record(mlapi_picture_variation, {

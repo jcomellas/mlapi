@@ -1011,6 +1011,8 @@ ejson_field_to_record_name(mlapi_user, seller_reputation) ->
     mlapi_seller_reputation;
 ejson_field_to_record_name(mlapi_user, status) ->
     mlapi_user_status;
+ejson_field_to_record_name(mlapi_user, company) ->
+    mlapi_company;
 ejson_field_to_record_name(mlapi_user, credit) ->
     mlapi_user_credit;
 ejson_field_to_record_name(mlapi_user_status, list) ->
