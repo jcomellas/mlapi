@@ -13,7 +13,7 @@
 
 -export([exec/1, exec/2, exec/3, usage/1]).
 -export([my_orders/2]).
--export([test/0, test/3, benchmark/2]).
+-export([test/0, test/3, benchmark/2, format_headers/2]).
 
 -include("include/mlapi.hrl").
 
@@ -72,12 +72,12 @@ option_spec_list() ->
     ].
 
 
--spec fetch_paged_response(FetchPage :: fun(), FormatLine :: fun(), Options :: list(), Acc0 :: term()) -> iolist().
-fetch_paged_response(FetchPage, FormatLine, Options, Acc0) when is_function(FetchPage), is_function(FormatLine) ->
+-spec fetch_paged_response(FetchPage :: fun(), FormatLine :: fun(), Options :: list(), Acc :: term()) -> iolist().
+fetch_paged_response(FetchPage, FormatLine, Options, Acc) when is_function(FetchPage), is_function(FormatLine) ->
     Offset = proplists:get_value(offset, Options, ?DEFAULT_OFFSET),
     Limit = proplists:get_value(limit, Options, ?DEFAULT_LIMIT),
     {ok, Pager} = mlapi_pager:start_link([{fetch_page, FetchPage}, {offset, Offset}, {limit, Limit}]),
-    fetch_pages(Pager, FormatLine, Acc0).
+    fetch_pages(Pager, FormatLine, Acc).
 
 
 -spec fetch_pages(Pager :: pid(), FormatLine :: fun(), Acc0 :: term()) -> iolist().
@@ -94,7 +94,7 @@ fetch_pages(Pager, FormatLine, Acc0) ->
                     Acc = format_lines(Position, FormatLine, Results, Acc0),
                     case Position of
                         last ->
-                            Acc;
+                            lists:reverse(Acc);
                         _ ->
                             fetch_pages(Pager, FormatLine, Acc)
                     end
@@ -106,7 +106,7 @@ fetch_pages(Pager, FormatLine, Acc0) ->
 format_lines(Position, FormatLine, [Line | Tail], Acc) ->
     format_lines(Position, FormatLine, Tail, [FormatLine(Position, Line) | Acc]);
 format_lines(_Position, _FormatLine, [], Acc) ->
-    lists:reverse(Acc).
+    Acc.
 
 
 
@@ -114,11 +114,11 @@ format_lines(_Position, _FormatLine, [], Acc) ->
 my_orders(_RawArgs, Options) ->
     Format = proplists:get_value(format, Options, ?DEFAULT_FORMAT),
     Args = filter_options(Options, [access_token, feedback_status, payment_status, seller, shipping_status, sort]),
-    FetchPage = fun (Offset, Limit) -> mlapi_cache:my_orders(Args, [{offset, Offset}, {limit, Limit}, {format, ejson}]) end,
+    FetchPage = fun (Offset, Limit) -> mlapi_cache:my_orders([{offset, Offset}, {limit, Limit} | Args], [{format, ejson}]) end,
     FormatLine = fun (_Position, Order) -> format_order(Format, Order) end,
     Headers = [
                <<"ID">>, <<"Fecha Oferta">>,
-               <<"Apodo Comprador">>, <<"Email Comprador">>,
+               <<"Apodo Comprador">>, <<"Nombre Comprador">>, <<"Email Comprador">>, <<"Telefono Comprador">>,
                <<"Fecha Calificacion">>, <<"Estado Calificacion">>,
                <<"ID Item">>, <<"Titulo">>, <<"Cantidad">>, <<"Precio Unitario">>, <<"Moneda">>
               ],
@@ -126,18 +126,35 @@ my_orders(_RawArgs, Options) ->
 
 
 format_order(Format, Order) ->
-    OrderFieldNames = [<<"id">>, <<"date_created">>,
-                       <<"buyer.nickname">>, <<"buyer.email">>,
-                       <<"feedback.sent.date_created">>, <<"feedback.sent.concretion_status">>],
-    Line1 = lists:foldl(fun (Path, Acc1) -> [kvc:path(Path, Order) | Acc1] end, [], OrderFieldNames),
+    Buyer = kvc:path(<<"buyer">>, Order),
+    FirstName = kvc:path(<<"first_name">>, Buyer),
+    LastName = kvc:path(<<"last_name">>, Buyer),
+    Phone = case kvc:path(<<"phone.area_code">>, Buyer) of
+                AreaCode when is_atom(AreaCode); AreaCode =:= <<>>; AreaCode =:= <<" ">> ->
+                    bstr:bstr(kvc:path(<<"phone.number">>, Buyer));
+                AreaCode ->
+                    Number = bstr:bstr(kvc:path(<<"phone.number">>, Buyer)),
+                    <<$(, AreaCode/binary, ") ", Number/binary>>
+            end,
+    Feedback = kvc:path(<<"feedback.sent">>, Order),
+    ReversedLine1 = [
+                     kvc:path(<<"concretion_status">>, Feedback),
+                     kvc:path(<<"date_created">>, Feedback),
+                     Phone,
+                     kvc:path(<<"email">>, Buyer),
+                     <<FirstName/binary, " ", LastName/binary>>,
+                     kvc:path(<<"nickname">>, Buyer),
+                     kvc:path(<<"date_created">>, Order),
+                     kvc:path(<<"id">>, Order)
+                    ],
     ItemFieldNames = [<<"item.id">>, <<"item.title">>, <<"quantity">>, <<"unit_price">>, <<"currency_id">>],
     Line = case kvc:path(<<"order_items">>, Order) of
                [Item] ->
-                   lists:foldl(fun (Path, Acc1) -> [kvc:path(Path, Item) | Acc1] end, Line1, ItemFieldNames);
+                   lists:foldl(fun (Path, Acc1) -> [kvc:path(Path, Item) | Acc1] end, ReversedLine1, ItemFieldNames);
                [] ->
-                   Line1
+                   ReversedLine1
            end,
-    format_line(Format, Line).
+    format_reversed_line(Format, Line).
 
 
 
@@ -149,6 +166,10 @@ format_line(csv, Line) ->
     line_to_csv(Line).
 
 
+format_reversed_line(csv, Line) ->
+    reversed_line_to_csv(Line).
+
+
 line_to_csv(Line) ->
     line_to_csv(Line, []).
 
@@ -157,10 +178,20 @@ line_to_csv([Field | Tail], Acc) when is_number(Field); is_boolean(Field) ->
     line_to_csv(Tail, [$,, to_binary(Field) | Acc]);
 line_to_csv([Field | Tail], Acc) ->
     line_to_csv(Tail, [$,, $", to_binary(Field), $" | Acc]);
-line_to_csv([], [] = Acc) ->
-    Acc;
 line_to_csv([], Acc) ->
     lists:reverse([$\n | tl(Acc)]).
+
+
+reversed_line_to_csv(Line) ->
+    reversed_line_to_csv(Line, [$\n]).
+
+reversed_line_to_csv([Field | Tail], Acc) when is_number(Field); is_boolean(Field) ->
+    %% Numbers and booleans don't carry double quotes around them.
+    reversed_line_to_csv(Tail, [$,, to_binary(Field) | Acc]);
+reversed_line_to_csv([Field | Tail], Acc) ->
+    reversed_line_to_csv(Tail, [$,, $", to_binary(Field), $" | Acc]);
+reversed_line_to_csv([], Acc) ->
+    tl(Acc).
 
 
 -spec filter_options([tuple()], [atom()]) -> [tuple()].
@@ -183,7 +214,7 @@ to_binary(Data) ->
 
 
 test() ->
-    Token = <<"APP_USR-2623-123018-a6869a200067124c996d8d9f11c8f31c-25679280">>,
+    Token = <<"APP_USR-2623-010618-a6869a200067124c996d8d9f11c8f31c-25679280">>,
     test(Token, "my_orders.csv", 0).
 
 
@@ -193,7 +224,7 @@ test(Token, Filename, Offset) ->
         {error, _Reason} = Error ->
             Error;
         User ->
-            SellerId = kvc:path(id, User),
+            SellerId = kvc:path(<<"id">>, User),
             Args = [{access_token, Token}, {seller, SellerId}, {offset, Offset}],
             case mlapi_cli:exec(my_orders, [], Args) of
                 {error, _Reason} = Error ->
