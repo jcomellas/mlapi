@@ -30,7 +30,7 @@
 -type server_name()                             :: local_name() | {local_name(), node()} | {global, global_name()}.
 -type server_ref()                              :: server_name() | pid().
 
--type arg()                                     :: {fetch_page, fun()}.
+-type arg()                                     :: {fetch_page, fun()} | {offset, non_neg_integer()} | {limit, non_neg_integer()}.
 
 -record(state, {
           offset                                :: non_neg_integer(),
@@ -102,16 +102,19 @@ handle_call(next, From, State) ->
                     gen_server:reply(From, {error, {paging_not_found, Page}}),
                     {stop, normal, State};
                 Paging ->
+                    %% The offset returned by MLAPI is not the one we fed into it
+                    %% when making the request, so we need to use the one we keep in
+                    %% the process' state to know if we're on the first page or not.
                     Total = kvc:path(<<"total">>, Paging),
-                    Offset = kvc:path(<<"offset">>, Paging),
                     Limit = kvc:path(<<"limit">>, Paging),
-                    Position = page_position(Total, Offset, Limit),
+                    Position = mlapi_async_pager:page_position(Total, State#state.offset, Limit),
                     %% Return the result to the owner as soon as possible
                     gen_server:reply(From, {Position, Page}),
-                    NewOffset = Offset + Total,
                     if
                         Position =:= next orelse Position =:= first ->
+                            NewOffset = State#state.offset + Total,
                             %% There are still more pages, prefetch the next one
+                            io:format("Fetching next page: offset=~w; limit=~w~n", [NewOffset, State#state.limit]),
                             NextPage = (State#state.fetch_page)(NewOffset, State#state.limit),
                             {noreply, State#state{offset = NewOffset, next_page = NextPage}};
                         Position =:= last orelse Position =:= undefined ->
@@ -140,6 +143,7 @@ handle_cast(_Msg, State) ->
 -spec handle_info(timeout, #state{}) -> {noreply, #state{}}.
 handle_info(timeout, State) ->
     %% Prefetch the first page.
+    io:format("Fetching next page: offset=~w; limit=~w~n", [State#state.offset, State#state.limit]),
     Page = (State#state.fetch_page)(State#state.offset, State#state.limit),
     {noreply, State#state{next_page = Page}};
 handle_info(_Info, State) ->
@@ -166,23 +170,3 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
-page_position(Total, Offset, Limit) ->
-    case Offset of
-        0 ->
-            first;
-        _ ->
-            case is_number(Total) andalso is_number(Limit) of
-                true ->
-                    if
-                        %% If we receive less pages than what we originally requested
-                        %% then we've reached the last page.
-                        Total >= Limit ->
-                            next;
-                        true ->
-                            last
-                    end;
-                false ->
-                    undefined
-            end
-    end.
