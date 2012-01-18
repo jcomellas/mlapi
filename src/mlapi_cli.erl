@@ -162,8 +162,8 @@ format_headers(csv, Headers) ->
     line_to_csv(Headers).
 
 
-format_line(csv, Line) ->
-    line_to_csv(Line).
+%% format_line(csv, Line) ->
+%%     line_to_csv(Line).
 
 
 format_reversed_line(csv, Line) ->
