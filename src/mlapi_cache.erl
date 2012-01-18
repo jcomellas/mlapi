@@ -811,7 +811,7 @@ is_cache_valid(Table, LastUpdate, CurrentTime) ->
 %% @doc Normalizes a question, trend or search filter by converting all the
 %%      values in the key/value pairs to binaries and sorting the property list.
 -spec normalize_filter(mlapi_question_filter() | mlapi_trend_filter() | mlapi_search_filter()) -> [{atom(), binary()}].
-normalize_filter(Filter) ->
+normalize_filter(Filter) when is_list(Filter)->
     normalize_filter(Filter, []).
 
 normalize_filter([{Key, Value} | Tail], Acc) ->
