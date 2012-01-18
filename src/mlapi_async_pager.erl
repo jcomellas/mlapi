@@ -14,7 +14,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1, start_link/2, next/1, stop/1, page_position/3]).
+-export([start_link/1, start_link/2, next/1, stop/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
@@ -34,6 +34,7 @@
                                                    {offset, non_neg_integer()} | {limit, non_neg_integer()}.
 
 -record(state, {
+          initial_offset                        :: non_neg_integer(),
           offset                                :: non_neg_integer(),
           limit                                 :: non_neg_integer(),
           callback                              :: fun(),
@@ -77,8 +78,10 @@ stop(ServerRef) ->
 %% @doc Initializes the server
 -spec init([arg()]) -> {ok, #state{}, timeout()}.
 init(Args) ->
+    InitialOffset = proplists:get_value(offset, Args, ?DEFAULT_OFFSET),
     State = #state{
-      offset = proplists:get_value(offset, Args, ?DEFAULT_OFFSET),
+      initial_offset = InitialOffset,
+      offset = InitialOffset,
       limit = proplists:get_value(limit, Args, ?DEFAULT_LIMIT),
       callback = proplists:get_value(callback, Args),
       fetch_page = proplists:get_value(fetch_page, Args)
@@ -117,15 +120,18 @@ handle_cast(next, State) ->
                     %% when making the request, so we need to use the one we keep in
                     %% the process' state to know if we're on the first page or not.
                     Total = kvc:path(<<"total">>, Paging),
+                    Offset = kvc:path(<<"offset">>, Paging),
                     Limit = kvc:path(<<"limit">>, Paging),
-                    Position = page_position(Total, State#state.offset, Limit),
+                    PageNumber = (Offset - State#state.initial_offset) div Limit + 1,
+                    PageCount = page_count((Total - State#state.initial_offset), Limit),
+                    io:format("Current paging node (~w/~w): ~p~n", [PageNumber, PageCount, Paging]),
                     %% Return the result to the owner as soon as possible
-                    (State#state.callback)({Position, Page}),
+                    (State#state.callback)({{PageNumber, PageCount}, Page}),
                     if
-                        Position =:= next orelse Position =:= first ->
-                            NewOffset = State#state.offset + Total,
-                            {noreply, State#state{offset = NewOffset}};
-                        Position =:= last orelse Position =:= undefined ->
+                        PageNumber < PageCount ->
+                            NextOffset = Offset + Limit,
+                            {noreply, State#state{offset = NextOffset}};
+                        true ->
                             %% We've either reached the last page or the paging information is invalid;
                             %% stop the process.
                             {stop, normal, State}
@@ -168,22 +174,12 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
-page_position(Total, Offset, Limit) ->
-    case Offset of
-        0 ->
-            first;
-        _ ->
-            case is_number(Total) andalso is_number(Limit) of
-                true ->
-                    if
-                        %% If we receive less pages than what we originally requested
-                        %% then we've reached the last page.
-                        Total >= Limit ->
-                            next;
-                        true ->
-                            last
-                    end;
-                false ->
-                    undefined
-            end
+-spec page_count(Total :: non_neg_integer(), Limit :: non_neg_integer()) -> non_neg_integer().
+page_count(Total, Limit) ->
+    PageCount1 = Total div Limit,
+    if
+        Total rem Limit > 0 ->
+            PageCount1 + 1;
+        true ->
+            PageCount1
     end.

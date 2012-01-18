@@ -33,6 +33,7 @@
 -type arg()                                     :: {fetch_page, fun()} | {offset, non_neg_integer()} | {limit, non_neg_integer()}.
 
 -record(state, {
+          initial_offset                        :: non_neg_integer(),
           offset                                :: non_neg_integer(),
           limit                                 :: non_neg_integer(),
           next_page                             :: mlapi:ejson(),
@@ -58,7 +59,7 @@ start_link(ServerName, Args) when is_list(Args) ->
 %% @doc Retrieve the next page of results.
 -spec next(server_ref()) -> mlapi:ejson() | mlapi:error().
 next(ServerRef) ->
-    gen_server:call(ServerRef, next).
+    gen_server:call(ServerRef, next, infinity).
 
 
 %% @doc Stop the pager process.
@@ -76,8 +77,10 @@ stop(ServerRef) ->
 %% @doc Initializes the server
 -spec init([arg()]) -> {ok, #state{}, timeout()}.
 init(Args) ->
+    InitialOffset = proplists:get_value(offset, Args, ?DEFAULT_OFFSET),
     State = #state{
-      offset = proplists:get_value(offset, Args, ?DEFAULT_OFFSET),
+      initial_offset = InitialOffset,
+      offset = InitialOffset,
       limit = proplists:get_value(limit, Args, ?DEFAULT_LIMIT),
       fetch_page = proplists:get_value(fetch_page, Args)
      },
@@ -102,22 +105,22 @@ handle_call(next, From, State) ->
                     gen_server:reply(From, {error, {paging_not_found, Page}}),
                     {stop, normal, State};
                 Paging ->
-                    %% The offset returned by MLAPI is not the one we fed into it
-                    %% when making the request, so we need to use the one we keep in
-                    %% the process' state to know if we're on the first page or not.
                     Total = kvc:path(<<"total">>, Paging),
+                    Offset = kvc:path(<<"offset">>, Paging),
                     Limit = kvc:path(<<"limit">>, Paging),
-                    Position = mlapi_async_pager:page_position(Total, State#state.offset, Limit),
+                    PageNumber = (Offset - State#state.initial_offset) div Limit + 1,
+                    PageCount = page_count((Total - State#state.initial_offset), Limit),
+                    io:format("Current paging node (~w/~w): ~p~n", [PageNumber, PageCount, Paging]),
                     %% Return the result to the owner as soon as possible
-                    gen_server:reply(From, {Position, Page}),
+                    gen_server:reply(From, {{PageNumber, PageCount}, Page}),
                     if
-                        Position =:= next orelse Position =:= first ->
-                            NewOffset = State#state.offset + Total,
+                        PageNumber < PageCount ->
+                            NextOffset = Offset + Limit,
                             %% There are still more pages, prefetch the next one
-                            io:format("Fetching next page: offset=~w; limit=~w~n", [NewOffset, State#state.limit]),
-                            NextPage = (State#state.fetch_page)(NewOffset, State#state.limit),
-                            {noreply, State#state{offset = NewOffset, next_page = NextPage}};
-                        Position =:= last orelse Position =:= undefined ->
+                            io:format("Fetching next page: offset=~w; limit=~w~n", [NextOffset, State#state.limit]),
+                            NextPage = (State#state.fetch_page)(NextOffset, State#state.limit),
+                            {noreply, State#state{offset = NextOffset, next_page = NextPage}};
+                        true ->
                             %% We've either reached the last page or the paging information is invalid;
                             %% stop the process.
                             {stop, normal, State}
@@ -143,8 +146,8 @@ handle_cast(_Msg, State) ->
 -spec handle_info(timeout, #state{}) -> {noreply, #state{}}.
 handle_info(timeout, State) ->
     %% Prefetch the first page.
-    io:format("Fetching next page: offset=~w; limit=~w~n", [State#state.offset, State#state.limit]),
-    Page = (State#state.fetch_page)(State#state.offset, State#state.limit),
+    io:format("Fetching next page: offset=~w; limit=~w~n", [State#state.initial_offset, State#state.limit]),
+    Page = (State#state.fetch_page)(State#state.initial_offset, State#state.limit),
     {noreply, State#state{next_page = Page}};
 handle_info(_Info, State) ->
     {noreply, State}.
@@ -170,3 +173,13 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+-spec page_count(Total :: non_neg_integer(), Limit :: non_neg_integer()) -> non_neg_integer().
+page_count(Total, Limit) ->
+    PageCount1 = Total div Limit,
+    if
+        Total rem Limit > 0 ->
+            PageCount1 + 1;
+        true ->
+            PageCount1
+    end.
