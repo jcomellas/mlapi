@@ -82,6 +82,9 @@ init(Args) ->
     State = #state{
       initial_offset = InitialOffset,
       offset = InitialOffset,
+      %% FIXME the limit passed by the caller is the global limit (i.e. the total
+      %%       number of documents to be retrieved from MLAPI), not the one to be
+      %%       used for each individual request.
       limit = proplists:get_value(limit, Args, ?DEFAULT_LIMIT),
       callback = proplists:get_value(callback, Args),
       fetch_page = proplists:get_value(fetch_page, Args)
@@ -101,7 +104,7 @@ handle_call(Request, _From, State) ->
 %% @doc Handle cast messages.
 -spec handle_cast(next | stop, #state{}) -> {stop, normal, #state{}} | {noreply, #state{}}.
 handle_cast(next, State) ->
-    io:format("Fetching next page: offset=~w; limit=~w~n", [State#state.offset, State#state.limit]),
+    io:format("Fetching page: offset=~w; limit=~w~n", [State#state.offset, State#state.limit]),
     case (State#state.fetch_page)(State#state.offset, State#state.limit) of
         {error, _Reason} = Error ->
             %% If the last request to the server returned an error, propagate the error
