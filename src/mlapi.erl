@@ -125,13 +125,26 @@ start() ->
     application:start(public_key),
     application:start(ssl),
     application:start(ibrowse),
+    application:start(bstr),
+    application:start(ejson),
+    application:start(kvc),
+    application:start(getopt),
     %% application:start(eper),
     application:start(mlapi).
 
 
 %% @doc Stop the application.
 stop() ->
-    application:stop(mlapi).
+    application:stop(mlapi),
+    %% application:stop(eper),
+    application:stop(getopt),
+    application:stop(kvc),
+    application:stop(ejson),
+    application:stop(bstr),
+    application:stop(ibrowse),
+    application:stop(ssl),
+    application:stop(public_key),
+    application:stop(crypto).
 
 
 %% @doc Retrieve all key/value pairs in the env for the specified app.
