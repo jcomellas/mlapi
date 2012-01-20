@@ -55,8 +55,9 @@
 -type mlapi_access_token()                :: binary() | string().
 -type mlapi_email_address()               :: binary().
 -type mlapi_ip_address()                  :: binary() | string().
--type mlapi_limit()                       :: non_neg_integer().
+-type mlapi_total()                       :: non_neg_integer().
 -type mlapi_offset()                      :: non_neg_integer().
+-type mlapi_limit()                       :: non_neg_integer().
 -type mlapi_query()                       :: binary() | string().
 -type mlapi_url()                         :: binary().
 
