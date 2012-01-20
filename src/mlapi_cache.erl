@@ -1,7 +1,8 @@
 %%%-------------------------------------------------------------------
 %%% @author Juan Jose Comellas <juanjo@comellas.org>
 %%% @copyright (C) 2011 Juan Jose Comellas
-%%% @doc Dynamic cache of MercadoLibre API responses stored in Mnesia.
+%%% @doc Dynamic cache of MercadoLibre API responses stored in Mnesia that
+%%%      mirrors the functions exported in the mlapi module.
 %%% @end
 %%%
 %%% This source file is subject to the New BSD License. You should have received
