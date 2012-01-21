@@ -32,8 +32,32 @@
 search(Filename, [SiteId], Options) ->
     Args = filter_options(Options, [nickname, seller_id, category, q]),
     FetchPage = fun (Offset, Limit) -> mlapi_cache:search(SiteId, [{offset, Offset}, {limit, Limit} | Args], [{format, ejson}]) end,
-    FormatDoc = proplists:get_value(format_fun, Options, fun encode_ejson/2),
+    FormatDoc = case proplists:get_value(format, Options) of
+                    csv  -> fun encode_search_as_csv/2;
+                    json -> fun encode_ejson/2
+                end,
     fetch_paged_response(Filename, FetchPage, FormatDoc, [{paging_scheme, search} | Options]).
+
+
+-spec encode_search_as_csv(mlapi_pager:position(), mlapi:ejson()) -> ok.
+encode_search_as_csv(Position, Doc) when Position =:= first; Position =:= {first, last} ->
+    Headers = [
+               <<"ID">>, <<"Cantidad Vendida">>, <<"Precio">>, <<"Moneda">>,
+               <<"Tipo Publicacion">>, <<"Titulo">>, <<"Subtitulo">>, <<"Vencimiento">>, <<"Permalink">>
+              ],
+    [line_to_csv(Headers), encode_search_as_csv(Doc)];
+encode_search_as_csv(_Position, Doc) ->
+    encode_search_as_csv(Doc).
+
+
+-spec encode_search_as_csv(mlapi:ejson()) -> iolist().
+encode_search_as_csv(Doc) ->
+    line_to_csv(
+      [
+       kvc:path(<<"id">>, Doc), kvc:path(<<"sold_quantity">>, Doc), kvc:path(<<"price">>, Doc), kvc:path(<<"currency_id">>, Doc),
+       kvc:path(<<"listing_type_id">>, Doc), kvc:path(<<"title">>, Doc), kvc:path(<<"subtitle">>, Doc),
+       kvc:path(<<"stop_time">>, Doc), kvc:path(<<"permalink">>, Doc)
+      ]).
 
 
 -spec my_orders(file:filename(), [], [option()]) -> ok | {error, Reason :: term()}.
