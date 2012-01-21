@@ -19,7 +19,7 @@
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
--export_type([position/0]).
+-export_type([position/0, paging_scheme/0]).
 
 -include("include/mlapi.hrl").
 
@@ -35,10 +35,11 @@
 -type arg()                                     :: {fetch_page, fun()} | {offset, non_neg_integer()} | {limit, non_neg_integer()}.
 
 -type position()                                :: {first, last} | first | middle | last.
+-type paging_scheme()                           :: search | orders.
 
 
 -record(state, {
-          paging_scheme                         :: search | orders,
+          paging_scheme                         :: paging_scheme(),
           initial_offset                        :: non_neg_integer(),
           offset                                :: non_neg_integer(),
           limit                                 :: non_neg_integer(),
