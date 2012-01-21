@@ -189,13 +189,13 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 
 -spec page_position(#state{}, mlapi_offset(), mlapi_total(), mlapi_limit()) -> position().
-page_position(#state{paging_scheme = search} = State, Offset, Total, _Limit) ->
+page_position(#state{paging_scheme = search} = State, Offset, Total, Limit) ->
     %% When querying search results the 'total' field returns the total amount of
     %% entries that will be returned if we were to fetch all the pages. This
     %% means that we'll reach the last page once the 'offset' field is bigger than
     %% the 'total' field.
     IsFirst = (Offset =:= State#state.initial_offset),
-    IsLast = (Offset > Total),
+    IsLast = (Offset + Limit > Total),
     page_position(IsFirst, IsLast);
 page_position(#state{paging_scheme = orders} = State, Offset, Total, Limit) ->
     %% When querying orders the 'total' fields indicates how many of the requested
