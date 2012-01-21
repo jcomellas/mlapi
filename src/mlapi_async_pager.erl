@@ -34,6 +34,7 @@
                                                    {offset, non_neg_integer()} | {limit, non_neg_integer()}.
 
 -record(state, {
+          paging_scheme                         :: mlapi_pager:paging_scheme(),
           initial_offset                        :: non_neg_integer(),
           offset                                :: non_neg_integer(),
           limit                                 :: non_neg_integer(),
@@ -80,6 +81,7 @@ stop(ServerRef) ->
 init(Args) ->
     InitialOffset = proplists:get_value(offset, Args, ?DEFAULT_OFFSET),
     State = #state{
+      paging_scheme = proplists:get_value(paging_scheme, Args),
       initial_offset = InitialOffset,
       offset = InitialOffset,
       %% FIXME the limit passed by the caller is the global limit (i.e. the total
@@ -119,19 +121,15 @@ handle_cast(next, State) ->
                     (State#state.callback)({error, {paging_not_found, Page}}),
                     {stop, normal, State};
                 Paging ->
-                    %% The offset returned by MLAPI might not the one we fed into it
-                    %% when making the request, so we need to use the one we keep in
-                    %% the process' state to know if we're on the first page or not.
                     Total = kvc:path(<<"total">>, Paging),
                     Offset = kvc:path(<<"offset">>, Paging),
                     Limit = kvc:path(<<"limit">>, Paging),
-                    PageNumber = (Offset - State#state.initial_offset) div Limit + 1,
-                    PageCount = page_count((Total - State#state.initial_offset), Limit),
-                    io:format("Current paging node (~w/~w): ~p~n", [PageNumber, PageCount, Paging]),
+                    Position = mlapi_pager:page_position(State, Offset, Total, Limit),
+                    io:format("Current paging node (~p): ~p~n", [Position, Paging]),
                     %% Return the result to the owner as soon as possible
-                    (State#state.callback)({{PageNumber, PageCount}, Page}),
+                    (State#state.callback)(Position, Page),
                     if
-                        PageNumber < PageCount ->
+                        Position =:= first orelse Position =:= middle ->
                             NextOffset = Offset + Limit,
                             {noreply, State#state{offset = NextOffset}};
                         true ->
@@ -176,13 +174,3 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
--spec page_count(Total :: non_neg_integer(), Limit :: non_neg_integer()) -> non_neg_integer().
-page_count(Total, Limit) ->
-    PageCount1 = Total div Limit,
-    if
-        Total rem Limit > 0 ->
-            PageCount1 + 1;
-        true ->
-            PageCount1
-    end.
