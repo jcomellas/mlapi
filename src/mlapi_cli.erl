@@ -214,7 +214,7 @@ to_binary(Data) ->
 
 
 test() ->
-    Token = <<"APP_USR-2623-010618-a6869a200067124c996d8d9f11c8f31c-25679280">>,
+    Token = <<"APP_USR-2623-012023-a6869a200067124c996d8d9f11c8f31c-25679280">>,
     test(Token, "my_orders.csv", 0).
 
 
@@ -235,6 +235,57 @@ test(Token, Filename, Offset) ->
                     file:close(File)
             end
     end.
+
+
+
+export_orders() ->
+Sellers = [
+           "-MRSALE-",
+           "4KRC",
+           "ARKAAD",
+           "ARMYTECH",
+           "BAIRES INSUMOS",
+           "BLUE SKY_COMPUTACION",
+           "COMPUDATASOFT",
+           "COMPU-DELIVERY",
+           "COMPUMAR",
+           "DATA COMPUTACION",
+           "E-COM DIGITAL",
+           "GRUPOS INTEGRADOS",
+           "LAM CONSULTORES",
+           "MARYALOI",
+           "MIPCSTORE",
+           "MR-SHOPS",
+           "MULTIHARD",
+           "NATIONWIDESRL",
+           "NECXUS_BAIRES",
+           "NUEVAS-TECNOLOGIAS",
+           "PCS-KING",
+           "PLAZAPC",
+           "REFLEX-COMPUTACION",
+           "SNSHOP",
+           "THTECNOHARD2011",
+           "TIOMUSA",
+           "URBAN-SHOPS",
+           "VENTASPLANETSTORE",
+           "VIKINBORG",
+           "VIOLETA-DIGITAL",
+           "XELLERS"
+          ],
+
+    {{Year, Month, Day}, {Hour, Min, Sec}} = calendar:local_time(),
+    lists:foreach(fun (Nickname) ->
+                          Filename = lists:flatten(io_lib:format("~s_~4.4.0w-~2.2.0w-~2.2.0w_~2.2.0w~2.2.0w.json",
+                                                                 [Nickname, Year, Month, Day, Hour, Min])),
+                          io:format("Exporting orders for ~s~n", [Nickname]),
+                          mlapi_export:search(Filename, [<<"MLA">>], [{nickname, Nickname}, {format, json}])
+                  end, Sellers),
+    lists:foreach(fun (Nickname) ->
+                          Filename = lists:flatten(io_lib:format("~s_~4.4.0w-~2.2.0w-~2.2.0w_~2.2.0w~2.2.0w.csv",
+                                                                 [Nickname, Year, Month, Day, Hour, Min])),
+                          io:format("Exporting orders for ~s~n", [Nickname]),
+                          mlapi_export:search(Filename, [<<"MLA">>], [{nickname, Nickname}, {format, csv}])
+                  end, Sellers).
 
 
 benchmark(Fun, N) ->
