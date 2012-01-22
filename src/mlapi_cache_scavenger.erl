@@ -130,14 +130,9 @@ handle_call(_Request, _From, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_cast({scavenge, Table}, State) ->
-    case expired_keys(Table) of
-        [_ | _] = Keys ->
-            lists:foreach(fun (Key) ->
-                                  mnesia:dirty_delete(Table, Key)
-                          end, Keys);
-        [] ->
-            void
-    end,
+    lists:foreach(fun (Key) ->
+                          mnesia:dirty_delete(Table, Key)
+                  end, expired_keys(Table)),
     {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
@@ -157,28 +152,19 @@ handle_info(_Info, State) ->
     {noreply, State}.
 
 
-%%--------------------------------------------------------------------
 %% @private
-%% @doc
-%% This function is called by a gen_server when it is about to
-%% terminate. It should be the opposite of Module:init/1 and do any
-%% necessary cleaning up. When it returns, the gen_server terminates
-%% with Reason. The return value is ignored.
-%%
-%% @spec terminate(Reason, State) -> void()
-%% @end
-%%--------------------------------------------------------------------
+%% @doc This function is called by a gen_server when it is about to
+%%      terminate. It should be the opposite of Module:init/1 and do any
+%%      necessary cleaning up. When it returns, the gen_server terminates
+%%      with Reason. The return value is ignored.
+-spec terminate(Reason :: term(), #state{}) -> ok.
 terminate(_Reason, _State) ->
     ok.
 
-%%--------------------------------------------------------------------
+
 %% @private
-%% @doc
-%% Convert process state when code is changed
-%%
-%% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}
-%% @end
-%%--------------------------------------------------------------------
+%% @doc Convert process state when code is changed
+-spec code_change(OldVsn :: non_neg_integer(), #state{}, Extra :: term()) -> {ok, #state{}}
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
