@@ -1,6 +1,6 @@
 %%%-------------------------------------------------------------------
 %%% @author Juan Jose Comellas <juanjo@comellas.org>
-%%% @copyright (C) 2011 Juan Jose Comellas
+%%% @copyright (C) 2011-2012 Juan Jose Comellas
 %%% @doc MercadoLibre API application.
 %%% @end
 %%%
@@ -12,7 +12,7 @@
 -author('Juan Jose Comellas <juanjo@comellas.org>').
 
 -export([exec/1, exec/2, exec/3, usage/1]).
--export([my_orders/2]).
+-export([my_orders/2, export_orders/0]).
 -export([test/0, test/3, benchmark/2, format_headers/2]).
 
 -include("include/mlapi.hrl").
@@ -239,41 +239,41 @@ test(Token, Filename, Offset) ->
 
 
 export_orders() ->
-Sellers = [
-           "-MRSALE-",
-           "4KRC",
-           "ARKAAD",
-           "ARMYTECH",
-           "BAIRES INSUMOS",
-           "BLUE SKY_COMPUTACION",
-           "COMPUDATASOFT",
-           "COMPU-DELIVERY",
-           "COMPUMAR",
-           "DATA COMPUTACION",
-           "E-COM DIGITAL",
-           "GRUPOS INTEGRADOS",
-           "LAM CONSULTORES",
-           "MARYALOI",
-           "MIPCSTORE",
-           "MR-SHOPS",
-           "MULTIHARD",
-           "NATIONWIDESRL",
-           "NECXUS_BAIRES",
-           "NUEVAS-TECNOLOGIAS",
-           "PCS-KING",
-           "PLAZAPC",
-           "REFLEX-COMPUTACION",
-           "SNSHOP",
-           "THTECNOHARD2011",
-           "TIOMUSA",
-           "URBAN-SHOPS",
-           "VENTASPLANETSTORE",
-           "VIKINBORG",
-           "VIOLETA-DIGITAL",
-           "XELLERS"
-          ],
+    Sellers = [
+               "-MRSALE-",
+               "4KRC",
+               "ARKAAD",
+               "ARMYTECH",
+               "BAIRES INSUMOS",
+               "BLUE SKY_COMPUTACION",
+               "COMPUDATASOFT",
+               "COMPU-DELIVERY",
+               "COMPUMAR",
+               "DATA COMPUTACION",
+               "E-COM DIGITAL",
+               "GRUPOS INTEGRADOS",
+               "LAM CONSULTORES",
+               "MARYALOI",
+               "MIPCSTORE",
+               "MR-SHOPS",
+               "MULTIHARD",
+               "NATIONWIDESRL",
+               "NECXUS_BAIRES",
+               "NUEVAS-TECNOLOGIAS",
+               "PCS-KING",
+               "PLAZAPC",
+               "REFLEX-COMPUTACION",
+               "SNSHOP",
+               "THTECNOHARD2011",
+               "TIOMUSA",
+               "URBAN-SHOPS",
+               "VENTASPLANETSTORE",
+               "VIKINBORG",
+               "VIOLETA-DIGITAL",
+               "XELLERS"
+              ],
 
-    {{Year, Month, Day}, {Hour, Min, Sec}} = calendar:local_time(),
+    {{Year, Month, Day}, {Hour, Min, _Sec}} = calendar:local_time(),
     lists:foreach(fun (Nickname) ->
                           Filename = lists:flatten(io_lib:format("~s_~4.4.0w-~2.2.0w-~2.2.0w_~2.2.0w~2.2.0w.json",
                                                                  [Nickname, Year, Month, Day, Hour, Min])),
