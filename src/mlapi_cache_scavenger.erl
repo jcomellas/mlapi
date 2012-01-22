@@ -1,7 +1,7 @@
 %%%-------------------------------------------------------------------
 %%% @author Juan Jose Comellas <juanjo@comellas.org>
 %%% @copyright (C) 2011-2012 Juan Jose Comellas
-%%% @doc Scavenger process that periodically remove stale entries from the
+%%% @doc Scavenger process that periodically removes stale entries from the
 %%%      cache of MercadoLibre API responses stored in Mnesia.
 %%% @end
 %%%
