@@ -58,17 +58,10 @@ reset_timer(Table) ->
 %%% gen_server callbacks
 %%%===================================================================
 
-%%--------------------------------------------------------------------
 %% @private
-%% @doc
-%% Initializes the server
-%%
-%% @spec init(Args) -> {ok, State} |
-%%                     {ok, State, Timeout} |
-%%                     ignore |
-%%                     {stop, Reason}
-%% @end
-%%--------------------------------------------------------------------
+%% @doc Initializes the server registering timers to scavenge the cache Mnesia
+%%      tables according to each table's expiration time.
+-spec init([]) -> {ok, #state{}}.
 init([]) ->
     %% Retrieve the list of cache tables and create a timer for each of them
     %% using the table's time-to-live as the timer interval.
@@ -81,20 +74,9 @@ init([]) ->
     {ok, #state{timers = lists:reverse(Timers)}}.
 
 
-%%--------------------------------------------------------------------
 %% @private
-%% @doc
-%% Handling call messages
-%%
-%% @spec handle_call(Request, From, State) ->
-%%                                   {reply, Reply, State} |
-%%                                   {reply, Reply, State, Timeout} |
-%%                                   {noreply, State} |
-%%                                   {noreply, State, Timeout} |
-%%                                   {stop, Reason, Reply, State} |
-%%                                   {stop, Reason, State}
-%% @end
-%%--------------------------------------------------------------------
+%% @doc Handle call messages.
+-spec handle_call(Request :: term(), From :: term(), #state{}) -> {reply, Reply :: term(), #state{}}.
 handle_call({reset_timer, Table}, _From, #state{timers = Timers} = State) ->
     case lists:keyfind(Table, 1, State#state.timers) of
         {Table, TimerRef} ->
@@ -119,16 +101,9 @@ handle_call(_Request, _From, State) ->
     {reply, Reply, State}.
 
 
-%%--------------------------------------------------------------------
 %% @private
-%% @doc
-%% Handling cast messages
-%%
-%% @spec handle_cast(Msg, State) -> {noreply, State} |
-%%                                  {noreply, State, Timeout} |
-%%                                  {stop, Reason, State}
-%% @end
-%%--------------------------------------------------------------------
+%% @doc Handle cast messages.
+-spec handle_cast(Msg :: term(), #state{}) -> {noreply, #state{}}.
 handle_cast({scavenge, Table}, State) ->
     lists:foreach(fun (Key) ->
                           mnesia:dirty_delete(Table, Key)
@@ -138,16 +113,9 @@ handle_cast(_Msg, State) ->
     {noreply, State}.
 
 
-%%--------------------------------------------------------------------
 %% @private
-%% @doc
-%% Handling all non call/cast messages
-%%
-%% @spec handle_info(Info, State) -> {noreply, State} |
-%%                                   {noreply, State, Timeout} |
-%%                                   {stop, Reason, State}
-%% @end
-%%--------------------------------------------------------------------
+%% @doc Handle all non call/cast messages.
+-spec handle_info(Info :: term(), #state{}) -> {noreply, #state{}}.
 handle_info(_Info, State) ->
     {noreply, State}.
 
@@ -164,7 +132,7 @@ terminate(_Reason, _State) ->
 
 %% @private
 %% @doc Convert process state when code is changed
--spec code_change(OldVsn :: non_neg_integer(), #state{}, Extra :: term()) -> {ok, #state{}}
+-spec code_change(OldVsn :: non_neg_integer(), #state{}, Extra :: term()) -> {ok, #state{}}.
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
