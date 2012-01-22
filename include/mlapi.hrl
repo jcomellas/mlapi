@@ -1,6 +1,6 @@
 %%%-------------------------------------------------------------------
 %%% @author Juan Jose Comellas <juanjo@comellas.org>
-%%% @copyright (C) 2011 Juan Jose Comellas
+%%% @copyright (C) 2011-2012 Juan Jose Comellas
 %%% @doc MercadoLibre API type definitions and records.
 %%% @end
 %%%
@@ -12,7 +12,6 @@
 -define(MLAPI_HRL, "mlapi.hrl").
 
 -type mlapi_record_name()                 :: atom().
--type mlapi_table()                       :: atom().
 -type mlapi_field()                       :: atom().
 
 -type mlapi_id()                          :: binary() | string().
