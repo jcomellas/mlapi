@@ -1,6 +1,6 @@
 %%%-------------------------------------------------------------------
 %%% @author Juan Jose Comellas <juanjo@comellas.org>
-%%% @copyright (C) 2011 Juan Jose Comellas
+%%% @copyright (C) 2011-2012 Juan Jose Comellas
 %%% @doc MercadoLibre API module to handle paging through API results.
 %%% @end
 %%%
