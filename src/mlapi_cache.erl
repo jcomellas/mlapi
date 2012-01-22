@@ -1,6 +1,6 @@
 %%%-------------------------------------------------------------------
 %%% @author Juan Jose Comellas <juanjo@comellas.org>
-%%% @copyright (C) 2011 Juan Jose Comellas
+%%% @copyright (C) 2011-2012 Juan Jose Comellas
 %%% @doc Dynamic cache of MercadoLibre API responses stored in Mnesia that
 %%%      mirrors the functions exported in the mlapi module.
 %%% @end
@@ -15,7 +15,7 @@
          create_tables/1, create_metatable/1, create_table/2,
          upgrade_metatable/0, upgrade_table/1, tables/0,
          table_info/1, table_version/1, table_ttl/1,
-         last_update_to_datetime/1
+         last_update_to_datetime/1, current_time_in_gregorian_seconds/0
         ]).
 %% Public APIs
 -export([applications/0, applications/1, application/1, application/2,
@@ -56,6 +56,7 @@
 %% post_question/2, delete_question/2, post_answer/2, hide_questions/2,
 
 -include("include/mlapi.hrl").
+-include("include/mlapi_cache.hrl").
 
 -define(META_VERSION, 1).
 -define(MIN_IN_SECS,        60).
@@ -66,27 +67,6 @@
 -define(YEAR_IN_SECS, 31536000).
 %% Cache entries are kept for 1 hour by default (this can be overridden per table, see mlapi_metatable).
 -define(DEFAULT_CACHE_TTL, ?HOUR_IN_SECS).
-
--type table_key()       :: any().
--type table_version()   :: non_neg_integer().
--type timestamp()       :: non_neg_integer().
--type last_update()     :: timestamp().
--type time_to_live()    :: non_neg_integer().
-
-
--record(mlapi_metatable, {
-          table                                             :: mlapi_table(),
-          version                                           :: table_version(),
-          time_to_live                                      :: time_to_live(),    %% in seconds
-          last_update                                       :: calendar:datetime(),
-          reason                                            :: any()
-         }).
-
--record(mlapi_cache, {
-          key                                               :: any(),
-          last_update                                       :: last_update(),
-          data                                              :: any()
-         }).
 
 
 -spec init() -> ok | {aborted, Reason :: any()}.
@@ -115,12 +95,12 @@ init_metatable(Nodes) ->
             create_metatable(Nodes)
     end.
 
--spec init_table(mlapi_table(), [node()]) -> ok | {aborted, Reason :: any()}.
+-spec init_table(table(), [node()]) -> ok | {aborted, Reason :: any()}.
 init_table(Table, Nodes) ->
     {Version, TimeToLive} = table_info(Table),
     init_table(Table, Version, TimeToLive, Nodes).
 
--spec init_table(mlapi_table(), table_version(), time_to_live(), [node()]) -> ok | {aborted, Reason :: any()}.
+-spec init_table(table(), table_version(), time_to_live(), [node()]) -> ok | {aborted, Reason :: any()}.
 init_table(Table, Version, TimeToLive, Nodes) ->
     Fields = record_info(fields, mlapi_cache),
     OldVersion = case mnesia:dirty_read(mlapi_metatable, Table) of
@@ -163,12 +143,12 @@ create_metatable(Nodes) ->
             Error
     end.
 
--spec create_table(mlapi_table(), [node()]) -> ok | {aborted, Reason :: any()}.
+-spec create_table(table(), [node()]) -> ok | {aborted, Reason :: any()}.
 create_table(Table, Nodes) ->
     {Version, TimeToLive} = table_info(Table),
     create_table(Table, Version, TimeToLive, Nodes).
 
--spec create_table(mlapi_table(), table_version(), time_to_live(), [node()]) -> ok | {aborted, Reason :: any()}.
+-spec create_table(table(), table_version(), time_to_live(), [node()]) -> ok | {aborted, Reason :: any()}.
 create_table(Table, Version, TimeToLive, Nodes) ->
     case mnesia:create_table(Table, [{access_mode, read_write},
                                      {record_name, mlapi_cache},
@@ -195,25 +175,25 @@ upgrade_metatable() ->
     upgrade_table(mlapi_metatable, record_info(fields, mlapi_metatable)).
 
 
--spec upgrade_table(mlapi_table()) -> {atomic, ok} | {aborted, Reason :: any()}.
+-spec upgrade_table(table()) -> {atomic, ok} | {aborted, Reason :: any()}.
 upgrade_table(Table) ->
     upgrade_table(Table, record_info(fields, mlapi_cache)).
 
 
--spec upgrade_table(mlapi_table(), [mlapi_field()]) -> {atomic, ok} | {aborted, Reason :: any()}.
+-spec upgrade_table(table(), [mlapi_field()]) -> {atomic, ok} | {aborted, Reason :: any()}.
 upgrade_table(Table, Fields) ->
     %% Replace 'ignore' with a function that performs the schema upgrade once the schema changes.
     mnesia:transform_table(Table, ignore, Fields, Table).
 
 
--spec upgrade_table(mlapi_table(), OldVersion :: non_neg_integer(), NewVersion :: non_neg_integer(), [mlapi_field()]) ->
+-spec upgrade_table(table(), OldVersion :: non_neg_integer(), NewVersion :: non_neg_integer(), [mlapi_field()]) ->
                            {atomic, ok} | {aborted, Reason :: any()}.
 upgrade_table(Table, _OldVersion, _NewVersion, Fields) ->
     %% Replace 'ignore' with a function that performs the schema upgrade once the schema changes.
     mnesia:transform_table(Table, ignore, Fields, Table).
 
 
--spec tables() -> [mlapi_table()].
+-spec tables() -> [table()].
 tables() ->
     [
      %% Table                 Version  Time-to-live
@@ -248,7 +228,7 @@ tables() ->
     ].
 
 
--spec table_info(mlapi_table()) -> {table_version(), time_to_live()} | undefined.
+-spec table_info(table()) -> {table_version(), time_to_live()} | undefined.
 table_info(Table) ->
     case lists:keyfind(Table, 1, tables()) of
         {Table, Version, TimeToLive} ->
@@ -257,7 +237,7 @@ table_info(Table) ->
             undefined
     end.
 
--spec table_version(mlapi_table()) -> table_version().
+-spec table_version(table()) -> table_version().
 table_version(Table) ->
     case lists:keyfind(Table, 1, tables()) of
         {Table, Version, _TimeToLive} ->
@@ -267,7 +247,7 @@ table_version(Table) ->
     end.
 
 
--spec table_ttl(mlapi_table()) -> time_to_live().
+-spec table_ttl(table()) -> time_to_live().
 table_ttl(Table) ->
     case lists:keyfind(Table, 1, tables()) of
         {Table, _Version, TimeToLive} ->
@@ -727,7 +707,7 @@ user_items(UserId, AccessToken, Options) ->
 
 
 
--spec get_data(mlapi_table(), mlapi_record_name(), table_key(), [mlapi:option()], RefreshFun :: fun()) -> mlapi:response().
+-spec get_data(table(), mlapi_record_name(), table_key(), [mlapi:option()], RefreshFun :: fun()) -> mlapi:response().
 get_data(Table, RecordName, Key, Options, RefreshFun) ->
     CurrentTime = current_time_in_gregorian_seconds(),
     %% As we cache responses as parsed JSON documents (ejson) we need to remove
@@ -756,7 +736,7 @@ get_data(Table, RecordName, Key, Options, RefreshFun) ->
     end.
 
 
--spec get_fresh_data(mlapi_table(), table_key(), [mlapi:option()], RefreshFun :: fun(),
+-spec get_fresh_data(table(), table_key(), [mlapi:option()], RefreshFun :: fun(),
                      CurrentTime :: non_neg_integer()) -> mlapi:response().
 get_fresh_data(Table, Key, Options, RefreshFun, CurrentTime) ->
     case RefreshFun(Options) of
@@ -781,7 +761,7 @@ get_fresh_data(Table, Key, Options, RefreshFun, CurrentTime) ->
     end.
 
 
--spec cache_entry(mlapi_table(), table_key()) -> {last_update() | 'undefined', Data :: any() | 'undefined'}.
+-spec cache_entry(table(), table_key()) -> {last_update() | 'undefined', Data :: any() | 'undefined'}.
 cache_entry(Table, Key) ->
     case mnesia:dirty_read(Table, Key) of
         [#mlapi_cache{last_update = LastUpdate, data = Data}] ->
@@ -791,7 +771,7 @@ cache_entry(Table, Key) ->
     end.
 
 
--spec cache_ttl(mlapi_table()) -> time_to_live().
+-spec cache_ttl(table()) -> time_to_live().
 cache_ttl(Table) ->
     case mnesia:dirty_read(mlapi_metatable, Table) of
         [#mlapi_metatable{time_to_live = TimeToLive}] ->
@@ -801,7 +781,7 @@ cache_ttl(Table) ->
     end.
 
 
--spec is_cache_valid(mlapi_table(), last_update() | 'undefined', timestamp()) -> boolean().
+-spec is_cache_valid(table(), last_update() | 'undefined', timestamp()) -> boolean().
 is_cache_valid(_Table, undefined, _CurrentTime) ->
     %% The entry was never updated.
     false;
