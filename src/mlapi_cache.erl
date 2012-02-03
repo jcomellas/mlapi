@@ -715,10 +715,10 @@ get_data(Table, RecordName, Key, Options, RefreshFun) ->
     %% the response.
     {Format, PartialOptions} = split_format_option(Options),
     NewOptions = [{format, ejson} | PartialOptions],
-    Data = case lists:member(refresh, NewOptions) of
-               true ->
+    Data = case lists:keyfind(refresh, 1, NewOptions) of
+               {refresh, true} ->
                    get_fresh_data(Table, Key, NewOptions, RefreshFun, CurrentTime);
-               false ->
+               _ ->
                    {LastUpdate, CachedData} = cache_entry(Table, Key),
                    %% We store the datetime as seconds in the Gregorian calendar (since Jan 1, 0001 at 00:00:00).
                    case is_cache_valid(Table, LastUpdate, CurrentTime) of

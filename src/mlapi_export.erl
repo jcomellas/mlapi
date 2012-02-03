@@ -30,8 +30,10 @@
 
 -spec search(file:filename(), [mlapi_site_id()], [option()]) -> ok | {error, Reason :: term()}.
 search(Filename, [SiteId], Options) ->
-    Args = filter_options(Options, [nickname, seller_id, category, q]),
-    FetchPage = fun (Offset, Limit) -> mlapi_cache:search(SiteId, [{offset, Offset}, {limit, Limit} | Args], [{format, ejson}]) end,
+    CacheArgs = filter_options(Options, [nickname, seller_id, category, q]),
+    CacheOpts = filter_options(Options, [refresh]),
+    FetchPage = fun (Offset, Limit) -> mlapi_cache:search(SiteId, [{offset, Offset}, {limit, Limit} | CacheArgs],
+                                                          [{format, ejson} | CacheOpts]) end,
     FormatDoc = case proplists:get_value(format, Options) of
                     csv  -> fun encode_search_as_csv/2;
                     json -> fun encode_ejson/2
@@ -52,18 +54,20 @@ encode_search_as_csv(_Position, Doc) ->
 
 -spec encode_search_as_csv(mlapi:ejson()) -> iolist().
 encode_search_as_csv(Doc) ->
-    line_to_csv(
+    ItemFieldNames =
       [
-       kvc:path(<<"id">>, Doc), kvc:path(<<"sold_quantity">>, Doc), kvc:path(<<"price">>, Doc), kvc:path(<<"currency_id">>, Doc),
-       kvc:path(<<"listing_type_id">>, Doc), kvc:path(<<"title">>, Doc), kvc:path(<<"subtitle">>, Doc),
-       kvc:path(<<"stop_time">>, Doc), kvc:path(<<"permalink">>, Doc)
-      ]).
+       <<"currency_id">>, <<"sold_quantity">>, <<"price">>, <<"currency_id">>, <<"listing_type_id">>,
+       <<"title">>, <<"subtitle">>, <<"stop_time">>, <<"permalink">>
+      ],
+    line_to_csv([kvc:path(Name, Doc) || Name <- ItemFieldNames]).
 
 
 -spec my_orders(file:filename(), [], [option()]) -> ok | {error, Reason :: term()}.
 my_orders(Filename, [], Options) ->
-    Args = filter_options(Options, [access_token, feedback_status, payment_status, seller, shipping_status, sort]),
-    FetchPage = fun (Offset, Limit) -> mlapi_cache:my_orders([{offset, Offset}, {limit, Limit} | Args], [{format, ejson}]) end,
+    CacheArgs = filter_options(Options, [access_token, feedback_status, payment_status, seller, shipping_status, sort]),
+    CacheOpts = filter_options(Options, [refresh]),
+    FetchPage = fun (Offset, Limit) -> mlapi_cache:my_orders([{offset, Offset}, {limit, Limit} | CacheArgs],
+                                                             [{format, ejson} | CacheOpts]) end,
     FormatDoc = case proplists:get_value(format, Options) of
                     csv  -> fun encode_order_as_csv/2;
                     json -> fun encode_ejson/2
@@ -162,8 +166,8 @@ fetch_pages(File, Pager, FormatDoc) ->
 
 
 %% @doc Write a page of results from MLAPI to disk, formatting them before before
-%%      writing them. When called, the formatting function is told whether the
-%%      document is the first one (first), one in the middle (middle) or the last
+%%      writing them. When called, the formatting function FormatDoc is told whether
+%%      the document is the first one (first), one in the middle (middle) or the last
 %%      one (last). If there is only one document the formatting function is told
 %%      that it is the first and last one at the same time ({first, last}).
 -spec write_page(file:io_device(), mlapi_pager:position(), FormatDoc :: fun(), [mlapi:ejson()]) -> ok | {error, Reason :: term()}.
