@@ -853,7 +853,7 @@ ejson_list_to_term(RecordName, JsonHelperFun, DateFormat, [{Name, Value} | Tail]
             ChildRecordName ->
                 if
                     is_tuple(Value) orelse is_list(Value) ->
-                        (JsonHelperFun#json_helper.child_to_term)(Value, ChildRecordName);
+                        (JsonHelperFun#json_helper.child_to_term)(Value, ChildRecordName, DateFormat);
                     true ->
                         Value
                 end
