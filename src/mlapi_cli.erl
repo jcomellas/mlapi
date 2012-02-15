@@ -248,6 +248,7 @@ export_orders() ->
                "BLUE SKY_COMPUTACION",
                "COMPUDATASOFT",
                "COMPU-DELIVERY",
+               "COMPU.MODDING",
                "COMPUMAR",
                "DATA COMPUTACION",
                "E-COM DIGITAL",
