@@ -52,13 +52,13 @@
         ]).
 %% post_question/2, delete_question/2, post_answer/2, hide_questions/2,
 
--export([ejson_to_record/2, ejson_to_proplist/2, ejson_to_orddict/2, ejson_to_term/3,
+-export([ejson_to_record/3, ejson_to_proplist/3, ejson_to_orddict/3, ejson_to_term/4,
          ejson_field_to_record_name/2,
          is_ejson_datetime_field/2, iso_datetime_to_tuple/1]).
 -export([site_to_country/1, country_to_site/1]).
 
 -include("include/mlapi.hrl").
--compile({parse_transform, dynarec}).
+-compile([{parse_transform, dynarec}]).
 
 -type url_path()          :: string().
 -type error()             :: {error, Reason :: atom() | {atom(), any()}}.
@@ -67,7 +67,9 @@
 -type ejson()             :: {[{ejson_key(), ejson_value() | ejson()}]}.
 -type proplist()          :: [proplists:property()].
 -type format()            :: raw | ejson | proplist | orddict | record.
--type option()            :: {format, format()} | {record, RecordName :: atom()} | refresh.
+-type date_format()       :: iso8601 | tuple | unix_epoch.
+-type option()            :: {format, format()} | {record, RecordName :: atom()} |
+                             {date_format, date_format()} | {refresh, boolean()}.
 -type response()          :: binary() | ejson() | proplist() | orddict:orddict() | tuple() | error().
 
 
@@ -78,6 +80,10 @@
 -define(HOST, "api.mercadolibre.com").
 -define(HEADER_CONTENT_TYPE, "Content-Type").
 -define(MIME_TYPE_JSON, "application/json").
+-define(DATE_FORMAT, iso8601).
+%% Days between Jan 1, 0001 (beginning of the Gregorian calendar) and Jan 1, 1970 (Unix epoch) in seconds.
+%% 62167219200 = calendar:datetime_to_gregorian_seconds({{1970,1,1},{0,0,0}}).
+-define(SECONDS_TO_UNIX_EPOCH, 62167219200).
 
 -define(APPLICATIONS,            "/applications").
 -define(AVAILABLE_LISTING_TYPES, "/available_listing_types").
@@ -733,12 +739,13 @@ request(Path, Options) ->
         {ok, "200", Headers, Body} ->
             case lists:keyfind(?HEADER_CONTENT_TYPE, 1, Headers) of
                 {_ContentType, ?MIME_TYPE_JSON ++ _CharSet} ->
-                    case proplists:get_value(format, Options, get_env(default_format, ejson)) of
+                    case proplists:get_value(format, Options, get_env(format, ejson)) of
                         raw ->
                             Body;
                         Format ->
+                            DateFormat = proplists:get_value(date_format, get_env(date_format, ?DATE_FORMAT)),
                             try
-                                ejson_to_term(ejson:decode(Body), proplists:get_value(record, Options), Format)
+                                ejson_to_term(ejson:decode(Body), proplists:get_value(record, Options), Format, DateFormat)
                             catch
                                 throw:Reason ->
                                     {error, Reason}
@@ -755,24 +762,25 @@ request(Path, Options) ->
     end.
 
 
--spec ejson_to_term(ejson(), RecordName :: atom(), format()) -> ejson() | orddict:orddict() | proplist() | tuple() | binary().
-ejson_to_term(Doc, _RecordName, ejson) ->
+-spec ejson_to_term(ejson(), RecordName :: atom(), format(), date_format()) ->
+                           ejson() | orddict:orddict() | proplist() | tuple() | binary().
+ejson_to_term(Doc, _RecordName, ejson, _DateFormat) ->
     Doc;
-ejson_to_term(Doc, RecordName, orddict) ->
-    ejson_to_orddict(Doc, RecordName);
-ejson_to_term(Doc, RecordName, proplist) ->
-    ejson_to_proplist(Doc, RecordName);
-ejson_to_term(Doc, RecordName, record) ->
-    ejson_to_record(Doc, RecordName);
-ejson_to_term(Doc, _RecordName, raw) ->
+ejson_to_term(Doc, RecordName, orddict, DateFormat) ->
+    ejson_to_orddict(Doc, RecordName, DateFormat);
+ejson_to_term(Doc, RecordName, proplist, DateFormat) ->
+    ejson_to_proplist(Doc, RecordName, DateFormat);
+ejson_to_term(Doc, RecordName, record, DateFormat) ->
+    ejson_to_record(Doc, RecordName, DateFormat);
+ejson_to_term(Doc, _RecordName, raw, _DateFormat) ->
     ejson:encode(Doc).
 
 
 %% @doc Convert a parsed JSON document or a list of documents into one or more known record.
--spec ejson_to_record(tuple() | [tuple()], Record :: atom() | tuple()) -> tuple() | [tuple()].
-ejson_to_record({Elements}, RecordOrName) when is_list(Elements) ->
+-spec ejson_to_record(tuple() | [tuple()], Record :: atom() | tuple(), date_format()) -> tuple() | [tuple()].
+ejson_to_record({Elements}, RecordOrName, DateFormat) when is_list(Elements) ->
     JsonHelperFun = #json_helper{
-      child_to_term = fun ejson_to_record/2,
+      child_to_term = fun ejson_to_record/3,
       append = fun (Name, Value, Record) -> set_value(Name, Value, Record) end,
       finish = fun (Record) -> Record end
      },
@@ -782,48 +790,49 @@ ejson_to_record({Elements}, RecordOrName) when is_list(Elements) ->
                                is_atom(RecordOrName) ->
                                    {RecordOrName, new_record(RecordOrName)}
                            end,
-    ejson_list_to_term(RecordName, JsonHelperFun, Elements, Record);
-ejson_to_record(Elements, RecordName) when is_list(Elements) ->
+    ejson_list_to_term(RecordName, JsonHelperFun, Elements, Record, DateFormat);
+ejson_to_record(Elements, RecordName, DateFormat) when is_list(Elements) ->
     lists:reverse(
       lists:foldl(fun (Element, Acc) ->
-                          [ejson_to_record(Element, new_record(RecordName)) | Acc]
+                          [ejson_to_record(Element, new_record(RecordName), DateFormat) | Acc]
                   end, [], Elements)).
 
 
 %% @doc Convert a parsed JSON document or a list of documents into one or more property lists.
--spec ejson_to_proplist(tuple() | [tuple()], RecordName :: atom()) -> proplist() | [proplist()].
-ejson_to_proplist({Elements}, RecordName) when is_list(Elements) ->
+-spec ejson_to_proplist(tuple() | [tuple()], RecordName :: atom(), date_format()) -> proplist() | [proplist()].
+ejson_to_proplist({Elements}, RecordName, DateFormat) when is_list(Elements) ->
     JsonHelperFun = #json_helper{
-      child_to_term = fun ejson_to_proplist/2,
+      child_to_term = fun ejson_to_proplist/3,
       append = fun (Name, Value, Acc) -> [{Name, Value} | Acc] end,
       finish = fun lists:reverse/1
      },
-    ejson_list_to_term(RecordName, JsonHelperFun, Elements, []);
-ejson_to_proplist(Elements, RecordName) when is_list(Elements) ->
+    ejson_list_to_term(RecordName, JsonHelperFun, DateFormat, Elements, []);
+ejson_to_proplist(Elements, RecordName, DateFormat) when is_list(Elements) ->
     lists:reverse(
       lists:foldl(fun (Element, Acc) ->
-                          [ejson_to_proplist(Element, RecordName) | Acc]
+                          [ejson_to_proplist(Element, RecordName, DateFormat) | Acc]
                   end, [], Elements)).
 
 
 %% @doc Convert a parsed JSON document or a list of documents into one or more ordered dictionaries.
--spec ejson_to_orddict(tuple() | [tuple()], RecordName :: atom()) -> orddict:orddict() | [orddict:orddict()].
-ejson_to_orddict({Elements}, RecordName) when is_list(Elements) ->
+-spec ejson_to_orddict(tuple() | [tuple()], RecordName :: atom(), date_format()) -> orddict:orddict() | [orddict:orddict()].
+ejson_to_orddict({Elements}, RecordName, DateFormat) when is_list(Elements) ->
     JsonHelperFun = #json_helper{
-      child_to_term = fun ejson_to_orddict/2,
+      child_to_term = fun ejson_to_orddict/3,
       append = fun orddict:append/3,
       finish = fun (Dict) -> Dict end
      },
-    ejson_list_to_term(RecordName, JsonHelperFun, Elements, orddict:new());
-ejson_to_orddict(Elements, RecordName) when is_list(Elements) ->
+    ejson_list_to_term(RecordName, JsonHelperFun, DateFormat, Elements, orddict:new());
+ejson_to_orddict(Elements, RecordName, DateFormat) when is_list(Elements) ->
     lists:reverse(
       lists:foldl(fun (Element, Acc) ->
-                          [ejson_to_orddict(Element, RecordName) | Acc]
+                          [ejson_to_orddict(Element, RecordName, DateFormat) | Acc]
                   end, [], Elements)).
 
--spec ejson_list_to_term(RecordName :: atom(), #json_helper{}, [{binary(), any()}], tuple() | orddict:orddict() | proplist()) ->
+-spec ejson_list_to_term(RecordName :: atom(), #json_helper{}, date_format(),
+                         [{binary(), any()}], tuple() | orddict:orddict() | proplist()) ->
                                 tuple() | orddict:orddict() | proplist().
-ejson_list_to_term(RecordName, JsonHelperFun, [{Name, Value} | Tail], Acc) ->
+ejson_list_to_term(RecordName, JsonHelperFun, DateFormat, [{Name, Value} | Tail], Acc) ->
     FieldName = binary_to_existing_atom(Name, utf8),
     %% Convert the value to a record if possible
     NewValue =
@@ -831,7 +840,14 @@ ejson_list_to_term(RecordName, JsonHelperFun, [{Name, Value} | Tail], Acc) ->
             undefined ->
                 case is_ejson_datetime_field(RecordName, FieldName) of
                     true ->
-                        iso_datetime_to_tuple(Value);
+                        case DateFormat of
+                            iso8601 ->
+                                Value;
+                            tuple ->
+                                iso_datetime_to_tuple(Value);
+                            unix_epoch ->
+                                calendar:datetime_to_gregorian_seconds(iso_datetime_to_tuple(Value)) - ?SECONDS_TO_UNIX_EPOCH
+                        end;
                     false ->
                         Value
                 end;
@@ -843,8 +859,8 @@ ejson_list_to_term(RecordName, JsonHelperFun, [{Name, Value} | Tail], Acc) ->
                         Value
                 end
         end,
-    ejson_list_to_term(RecordName, JsonHelperFun, Tail, (JsonHelperFun#json_helper.append)(FieldName, NewValue, Acc));
-ejson_list_to_term(_RecordName, JsonHelperFun, [], Acc) ->
+    ejson_list_to_term(RecordName, JsonHelperFun, DateFormat, Tail, (JsonHelperFun#json_helper.append)(FieldName, NewValue, Acc));
+ejson_list_to_term(_RecordName, JsonHelperFun, _DateFormat, [], Acc) ->
     (JsonHelperFun#json_helper.finish)(Acc).
 
 
