@@ -111,14 +111,14 @@ handle_cast(next, State) ->
         {error, _Reason} = Error ->
             %% If the last request to the server returned an error, propagate the error
             %% to the owner and stop the current process.
-            (State#state.callback)(Error),
+            (State#state.callback)(error, Error),
             {stop, normal, State};
         Page ->
             case kvc:path(<<"paging">>, Page) of
                 [] ->
                     %% If there is no 'paging' section in the returned JSON document
                     %% propagate an error to the caller and shutdown the process.
-                    (State#state.callback)({error, {paging_not_found, Page}}),
+                    (State#state.callback)(error, {error, {paging_not_found, Page}}),
                     {stop, normal, State};
                 Paging ->
                     Total = kvc:path(<<"total">>, Paging),
