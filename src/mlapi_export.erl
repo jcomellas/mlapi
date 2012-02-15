@@ -27,7 +27,6 @@
 -type option()                                  :: option_name() | {option_name(), option_value()}.
 
 
-
 -spec search(file:filename(), [mlapi_site_id()], [option()]) -> ok | {error, Reason :: term()}.
 search(Filename, [SiteId], Options) ->
     CacheArgs = filter_options(Options, [nickname, seller_id, category, q]),
@@ -135,11 +134,11 @@ encode_ejson(last, Doc) ->
 -spec fetch_paged_response(file:filename(), FetchPage :: fun(), FormatDoc :: fun(), [option()]) -> ok | {error, Reason :: term()}.
 fetch_paged_response(Filename, FetchPage, FormatDoc, Options) when is_function(FetchPage), is_function(FormatDoc) ->
     PagingScheme = proplists:get_value(paging_scheme, Options),
-    Offset = proplists:get_value(offset, Options, ?DEFAULT_OFFSET),
-    Limit = proplists:get_value(limit, Options, ?DEFAULT_LIMIT),
-    {ok, File} = file:open(Filename, [write, binary]),
-    {ok, Pager} = mlapi_pager:start_link([{paging_scheme, PagingScheme}, {fetch_page, FetchPage}, {offset, Offset}, {limit, Limit}]),
-    Result = fetch_pages(File, Pager, FormatDoc),
+    Offset       = proplists:get_value(offset, Options, ?DEFAULT_OFFSET),
+    Limit        = proplists:get_value(limit, Options, ?DEFAULT_LIMIT),
+    {ok, File}   = file:open(Filename, [write, binary]),
+    {ok, Pager}  = mlapi_pager:start_link([{paging_scheme, PagingScheme}, {fetch_page, FetchPage}, {offset, Offset}, {limit, Limit}]),
+    Result       = fetch_pages(File, Pager, FormatDoc),
     file:close(File),
     Result.
 
