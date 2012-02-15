@@ -80,7 +80,6 @@
 -define(HOST, "api.mercadolibre.com").
 -define(HEADER_CONTENT_TYPE, "Content-Type").
 -define(MIME_TYPE_JSON, "application/json").
--define(DATE_FORMAT, iso8601).
 %% Days between Jan 1, 0001 (beginning of the Gregorian calendar) and Jan 1, 1970 (Unix epoch) in seconds.
 %% 62167219200 = calendar:datetime_to_gregorian_seconds({{1970,1,1},{0,0,0}}).
 -define(SECONDS_TO_UNIX_EPOCH, 62167219200).
@@ -743,7 +742,7 @@ request(Path, Options) ->
                         raw ->
                             Body;
                         Format ->
-                            DateFormat = proplists:get_value(date_format, get_env(date_format, ?DATE_FORMAT)),
+                            DateFormat = proplists:get_value(date_format, Options, get_env(date_format, iso8601)),
                             try
                                 ejson_to_term(ejson:decode(Body), proplists:get_value(record, Options), Format, DateFormat)
                             catch

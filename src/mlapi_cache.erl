@@ -732,7 +732,8 @@ get_data(Table, RecordName, Key, Options, RefreshFun) ->
         {error, _Reason} ->
             Data;
         _ ->
-            mlapi:ejson_to_term(Data, RecordName, Format)
+            DateFormat = proplists:get_value(date_format, NewOptions, mlapi:get_env(date_format, iso8601)),
+            mlapi:ejson_to_term(Data, RecordName, Format, DateFormat)
     end.
 
 
