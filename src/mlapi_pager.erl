@@ -86,14 +86,14 @@ stop(ServerRef) ->
 init(Args) ->
     InitialOffset = proplists:get_value(offset, Args, ?DEFAULT_OFFSET),
     State = #state{
-      paging_scheme = proplists:get_value(paging_scheme, Args),
+      paging_scheme  = proplists:get_value(paging_scheme, Args),
       initial_offset = InitialOffset,
-      offset = InitialOffset,
+      offset         = InitialOffset,
       %% FIXME the limit passed by the caller is the global limit (i.e. the total
       %%       number of documents to be retrieved from MLAPI), not the one to be
       %%       used for each individual request.
-      limit = proplists:get_value(limit, Args, ?DEFAULT_LIMIT),
-      fetch_page = proplists:get_value(fetch_page, Args)
+      limit          = proplists:get_value(limit, Args, ?DEFAULT_LIMIT),
+      fetch_page     = proplists:get_value(fetch_page, Args)
      },
     {ok, State, 0}.
 
@@ -116,18 +116,18 @@ handle_call(next, From, State) ->
                     gen_server:reply(From, {error, {paging_not_found, Page}}),
                     {stop, normal, State};
                 Paging ->
-                    Total = kvc:path(<<"total">>, Paging),
-                    Offset = kvc:path(<<"offset">>, Paging),
-                    Limit = kvc:path(<<"limit">>, Paging),
+                    Total    = kvc:path(<<"total">>, Paging),
+                    Offset   = kvc:path(<<"offset">>, Paging),
+                    Limit    = kvc:path(<<"limit">>, Paging),
                     Position = page_position(State, Offset, Total, Limit),
-                    io:format("Current paging node (~p): ~p~n", [Position, Paging]),
+                    %% io:format("Current paging node (~p): ~p~n", [Position, Paging]),
                     %% Return the result to the owner as soon as possible
                     gen_server:reply(From, {Position, Page}),
                     if
                         Position =:= first orelse Position =:= middle ->
                             NextOffset = Offset + Limit,
                             %% There are still more pages, prefetch the next one
-                            io:format("Fetching next page: offset=~w; limit=~w~n", [NextOffset, State#state.limit]),
+                            %% io:format("Fetching next page: offset=~w; limit=~w~n", [NextOffset, State#state.limit]),
                             NextPage = (State#state.fetch_page)(NextOffset, State#state.limit),
                             {noreply, State#state{offset = NextOffset, next_page = NextPage}};
                         true ->
@@ -159,7 +159,7 @@ handle_cast(_Msg, State) ->
 -spec handle_info(timeout, #state{}) -> {noreply, #state{}}.
 handle_info(timeout, State) ->
     %% Prefetch the first page.
-    io:format("Fetching next page: offset=~w; limit=~w~n", [State#state.initial_offset, State#state.limit]),
+    %% io:format("Fetching next page: offset=~w; limit=~w~n", [State#state.initial_offset, State#state.limit]),
     Offset = State#state.initial_offset,
     Page = (State#state.fetch_page)(Offset, State#state.limit),
     {noreply, State#state{offset = Offset, next_page = Page}};
@@ -200,8 +200,8 @@ page_position(#state{paging_scheme = search} = State, Offset, Total, Limit) ->
 page_position(#state{paging_scheme = orders} = State, Offset, Total, Limit) ->
     %% When querying orders the 'total' fields indicates how many of the requested
     %% entries MLAPI was able to return. For example, if we requested 50 entries
-    %% (limit - 50) and we get 50 that means that there are still data to fetch;
-    %% but if we get 46 that means that we've reached the last page.
+    %% (limit = 50) and we get 50 in the 'total' field that means that there are
+    %% still data to fetch; if we get 46 that means that we've reached the last page.
     IsFirst = (Offset =:= State#state.initial_offset),
     IsLast = (Total < Limit),
     page_position(IsFirst, IsLast).
