@@ -48,7 +48,7 @@
 -type mlapi_site_id()                     :: mlapi_id().
 -type mlapi_state_id()                    :: mlapi_id().
 -type mlapi_timezone_id()                 :: mlapi_id().
--type mlapi_user_id()                     :: mlapi_id().
+-type mlapi_user_id()                     :: mlapi_id() | integer().
 -type mlapi_user_name()                   :: mlapi_id().
 
 -type mlapi_access_token()                :: binary() | string().
