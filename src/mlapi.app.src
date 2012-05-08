@@ -1,9 +1,22 @@
 {application, mlapi,
  [
   {description, "MercadoLibre API Client Library"},
-  {vsn, "0.1.0"},
+  {vsn, "0.2.0"},
   {registered, []},
-  {applications, [kernel, stdlib, sasl, mnesia, crypto, public_key, ssl, ibrowse, bstr, ejson, kvc, getopt]},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  sasl,
+                  mnesia,
+                  crypto,
+                  public_key,
+                  ssl,
+                  ibrowse,
+                  bstr,
+                  ejson,
+                  kvc,
+                  getopt
+                 ]},
   {mod, {mlapi_app, []}},
   {env, []}
  ]}.
