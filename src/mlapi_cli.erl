@@ -253,17 +253,21 @@ export_orders() ->
                "DATA COMPUTACION",
                "E-COM DIGITAL",
                "GRUPOS INTEGRADOS",
+               "INCOPARDIGITAL",
                "LAM CONSULTORES",
                "MARYALOI",
+               "MEXXCOMPUTACION",
                "MIPCSTORE",
                "MR-SHOPS",
                "MULTIHARD",
                "NATIONWIDESRL",
                "NECXUS_BAIRES",
+               "NEO_COMPUTACION",
                "NUEVAS-TECNOLOGIAS",
                "PCS-KING",
                "PLAZAPC",
                "REFLEX-COMPUTACION",
+               "ROYAL2002",
                "SNSHOP",
                "THTECNOHARD2011",
                "TIOMUSA",
@@ -273,19 +277,15 @@ export_orders() ->
                "VIOLETA-DIGITAL",
                "XELLERS"
               ],
-
     {{Year, Month, Day}, {Hour, Min, _Sec}} = calendar:local_time(),
+    TargetDir = lists:flatten(io_lib:format("data/~4.4.0w-~2.2.0w/~2.2.0w/", [Year, Month, Day])),
+    ok = filelib:ensure_dir(TargetDir),
     lists:foreach(fun (Nickname) ->
-                          Filename = lists:flatten(io_lib:format("~s_~4.4.0w-~2.2.0w-~2.2.0w_~2.2.0w~2.2.0w.json",
-                                                                 [Nickname, Year, Month, Day, Hour, Min])),
-                          io:format("Exporting orders for ~s~n", [Nickname]),
-                          mlapi_export:search(Filename, [<<"MLA">>], [{nickname, Nickname}, {format, json}])
-                  end, Sellers),
-    lists:foreach(fun (Nickname) ->
-                          Filename = lists:flatten(io_lib:format("~s_~4.4.0w-~2.2.0w-~2.2.0w_~2.2.0w~2.2.0w.csv",
-                                                                 [Nickname, Year, Month, Day, Hour, Min])),
-                          io:format("Exporting orders for ~s~n", [Nickname]),
-                          mlapi_export:search(Filename, [<<"MLA">>], [{nickname, Nickname}, {format, csv}])
+                          Filename = TargetDir ++ lists:flatten(io_lib:format("~s_~4.4.0w-~2.2.0w-~2.2.0w_~2.2.0w~2.2.0w.",
+                                                                              [Nickname, Year, Month, Day, Hour, Min])),
+                          io:format("Exporting orders for ~s to ~s~n", [Nickname, TargetDir]),
+                          mlapi_export:search(Filename ++ "json", [<<"MLA">>], [{nickname, Nickname}, {format, json}, {refresh, true}]),
+                          mlapi_export:search(Filename ++ "csv", [<<"MLA">>], [{nickname, Nickname}, {format, csv}])
                   end, Sellers).
 
 
@@ -298,8 +298,9 @@ benchmark(Fun, N) ->
     {_, Time2} = statistics(wall_clock),
     Sec1 = Time1 / 1000.0,
     Sec2 = Time2 / 1000.0,
-    io:format("Erlang elapsed time ~p seconds (runtime) ~p seconds (wall clock)~n",
-              [Sec1, Sec2]).
+    Avg2 = Sec2 / N,
+    io:format("Erlang elapsed time ~w secs (runtime), ~w secs (wall clock), ~w secs (average)~n",
+              [Sec1, Sec2, Avg2]).
 
 
 for(N, N, Fun) -> Fun();
