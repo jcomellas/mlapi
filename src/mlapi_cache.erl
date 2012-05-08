@@ -710,30 +710,31 @@ user_items(UserId, AccessToken, Options) ->
 -spec get_data(table(), mlapi_record_name(), table_key(), [mlapi:option()], RefreshFun :: fun()) -> mlapi:response().
 get_data(Table, RecordName, Key, Options, RefreshFun) ->
     CurrentTime = current_time_in_gregorian_seconds(),
-    %% As we cache responses as parsed JSON documents (ejson) we need to remove
+    %% As we cache responses as raw JSON documents (binary) we need to remove
     %% the format from the list of Options and apply it manually before returning
     %% the response.
     {Format, PartialOptions} = split_format_option(Options),
-    NewOptions = [{format, ejson} | PartialOptions],
-    Data = case lists:keyfind(refresh, 1, NewOptions) of
+    NewOptions = [{format, raw} | PartialOptions],
+    Json = case lists:keyfind(refresh, 1, NewOptions) of
                {refresh, true} ->
                    get_fresh_data(Table, Key, NewOptions, RefreshFun, CurrentTime);
                _ ->
-                   {LastUpdate, CachedData} = cache_entry(Table, Key),
+                   {LastUpdate, CachedJson} = cache_entry(Table, Key),
                    %% We store the datetime as seconds in the Gregorian calendar (since Jan 1, 0001 at 00:00:00).
                    case is_cache_valid(Table, LastUpdate, CurrentTime) of
                        true ->
-                           CachedData;
+                           CachedJson;
                        false ->
                            get_fresh_data(Table, Key, NewOptions, RefreshFun, CurrentTime)
                    end
            end,
-    case Data of
-        {error, _Reason} ->
-            Data;
-        _ ->
+    case Json of
+        Json when is_binary(Json) andalso Format =/= raw ->
             DateFormat = proplists:get_value(date_format, NewOptions, mlapi:get_env(date_format, iso8601)),
-            mlapi:ejson_to_term(Data, RecordName, Format, DateFormat)
+            mlapi:ejson_to_term(ejson:decode(Json), RecordName, Format, DateFormat);
+        _ ->
+            %% Return either the raw JSON binary or the error returned by MLAPI
+            Json
     end.
 
 
