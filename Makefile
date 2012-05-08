@@ -11,8 +11,9 @@ all: compile
 compile:
 	@rebar compile
 
-deps:
+depends:
 	@rebar get-deps
+	@rebar update-deps
 
 doc:
 	@rebar skip_deps=true doc
@@ -26,14 +27,8 @@ depclean:
 distclean:
 	@rebar delete-deps
 
-build-plt: compile
-	@rebar build-plt
-
-check-plt: compile
-	@rebar check-plt
-
 dialyze: compile
-	@rebar dialyze
+	@dialyzer -r .
 
 test:
 	@rebar skip_deps=true eunit
@@ -43,4 +38,3 @@ console:
 
 test-console: test
 	$(ERL) -sname $(APPLICATION)_test $(TEST_EPATH) -config app
-
