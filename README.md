@@ -82,9 +82,10 @@ where ``Format`` can be one of:
  <tbody>
   <tr><td>ejson</td><td>returns the JSON document as decoded by the ejson Erlang library (see https://github.com/benoitc/ejson)</td></tr>
   <tr><td>proplist</td><td>returns the parsed JSON document as a property list (see http://www.erlang.org/doc/man/proplists.html)</td></tr>
-  <tr><td>orddict</td><td>returns the parsed JSON document as an orddict (see http://www.erlang.org/doc/man/orddict.html)</td></tr>
   <tr><td>record</td><td>returns the parsed JSON document as the corresponding record as defined in the mlapi.hrl header file</td></tr>
-  <tr><td>binary</td><td>returns the unparsed binary with the JSON document</td></tr>
+  <tr><td>orddict</td><td>returns the parsed JSON document as an orddict (see http://www.erlang.org/doc/man/orddict.html)</td></tr>
+  <tr><td>dict</td><td>returns the parsed JSON document as an dict (see http://www.erlang.org/doc/man/dict.html)</td></tr>
+  <tr><td>raw</td><td>returns the unparsed binary with the JSON document</td></tr>
  </tbody>
 </table>
 

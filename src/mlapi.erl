@@ -67,7 +67,7 @@
 -type ejson_value()       :: binary() | boolean() | integer() | float() | 'null'.
 -type ejson()             :: {[{ejson_key(), ejson_value() | ejson()}]}.
 -type proplist()          :: [proplists:property()].
--type format()            :: raw | ejson | proplist | orddict | record.
+-type format()            :: ejson | proplist | record | dict | orddict | raw.
 -type date_format()       :: iso8601 | tuple | unix_epoch.
 -type option()            :: {format, format()} | {record, RecordName :: atom()} |
                              {date_format, date_format()} | {refresh, boolean()}.
@@ -813,12 +813,14 @@ do_delete(Path, _Options) ->
                            ejson() | orddict:orddict() | proplist() | tuple() | binary().
 ejson_to_term(Doc, _RecordName, ejson, _DateFormat) ->
     Doc;
-ejson_to_term(Doc, RecordName, orddict, DateFormat) ->
-    ejson_to_orddict(Doc, RecordName, DateFormat);
 ejson_to_term(Doc, RecordName, proplist, DateFormat) ->
     ejson_to_proplist(Doc, RecordName, DateFormat);
 ejson_to_term(Doc, RecordName, record, DateFormat) ->
     ejson_to_record(Doc, RecordName, DateFormat);
+ejson_to_term(Doc, RecordName, dict, DateFormat) ->
+    ejson_to_dict(Doc, RecordName, DateFormat);
+ejson_to_term(Doc, RecordName, orddict, DateFormat) ->
+    ejson_to_orddict(Doc, RecordName, DateFormat);
 ejson_to_term(Doc, _RecordName, raw, _DateFormat) ->
     ejson:encode(Doc).
 
@@ -837,7 +839,7 @@ ejson_to_record({Elements}, RecordOrName, DateFormat) when is_list(Elements) ->
                                is_atom(RecordOrName) ->
                                    {RecordOrName, new_record(RecordOrName)}
                            end,
-    ejson_list_to_term(RecordName, JsonHelperFun, Elements, Record, DateFormat);
+    ejson_list_to_term(RecordName, JsonHelperFun, DateFormat, Elements, Record);
 ejson_to_record(Elements, RecordName, DateFormat) when is_list(Elements) ->
     lists:reverse(
       lists:foldl(fun (Element, Acc) ->
@@ -860,6 +862,21 @@ ejson_to_proplist(Elements, RecordName, DateFormat) when is_list(Elements) ->
                           [ejson_to_proplist(Element, RecordName, DateFormat) | Acc]
                   end, [], Elements)).
 
+
+%% @doc Convert a parsed JSON document or a list of documents into one or more dictionaries.
+-spec ejson_to_dict(tuple() | [tuple()], RecordName :: atom(), date_format()) -> dict() | [dict()].
+ejson_to_dict({Elements}, RecordName, DateFormat) when is_list(Elements) ->
+    JsonHelperFun = #json_helper{
+      child_to_term = fun ejson_to_dict/3,
+      append = fun dict:append/3,
+      finish = fun (Dict) -> Dict end
+     },
+    ejson_list_to_term(RecordName, JsonHelperFun, DateFormat, Elements, dict:new());
+ejson_to_dict(Elements, RecordName, DateFormat) when is_list(Elements) ->
+    lists:reverse(
+      lists:foldl(fun (Element, Acc) ->
+                          [ejson_to_dict(Element, RecordName, DateFormat) | Acc]
+                  end, [], Elements)).
 
 %% @doc Convert a parsed JSON document or a list of documents into one or more ordered dictionaries.
 -spec ejson_to_orddict(tuple() | [tuple()], RecordName :: atom(), date_format()) -> orddict:orddict() | [orddict:orddict()].
