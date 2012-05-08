@@ -58,7 +58,7 @@
 -type mlapi_offset()                      :: non_neg_integer().
 -type mlapi_limit()                       :: non_neg_integer().
 -type mlapi_query()                       :: binary() | string().
--type mlapi_url()                         :: binary().
+-type mlapi_url()                         :: binary() | string().
 
 -type mlapi_answer_status_id()            :: binary().    %% <<"ACTIVE">>, <<"DISABLED">>
 -type mlapi_application_scope_id()        :: binary().    %% <<"mclics_advertising">>, <<"offline_access">>, <<"write">>, <<"read">>
@@ -473,7 +473,7 @@
          }).
 
 -record(mlapi_question, {
-          id                                        :: mlapi_picture_id(),
+          id                                        :: mlapi_question_id(),
           date_created                              :: calendar:datetime(),
           item_id                                   :: mlapi_item_id(),
           seller_id                                 :: mlapi_user_id(),
