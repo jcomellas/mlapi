@@ -13,7 +13,7 @@
 
 %%-export([query/2, query_category/2, query_seller_id/2, query_seller_nick]).
 
--export([start/0, stop/0, request/1, request/2, get_env/0, get_env/1, get_env/2, to_string/1, to_binary/1]).
+-export([start/0, stop/0, do_get/1, do_get/2, get_env/0, get_env/1, get_env/2, to_string/1, to_binary/1]).
 %% Public APIs
 -export([applications/0, applications/1, application/1, application/2,
          catalog_products/2, catalog_products/3, catalog_product/2, catalog_product/3,
@@ -35,6 +35,7 @@
          item/1, item/2,
          picture/1, picture/2,
          question/1, question/2, questions/1, questions/2,
+         delete_question/2,
          trends/2, trends/3,
          local_geolocation/0, local_geolocation/1, geolocation/1, geolocation/2,
          search/2, search/3
@@ -50,7 +51,7 @@
          user_listing_types/2, user_listing_types/3,
          user_items/2, user_items/3
         ]).
-%% post_question/2, delete_question/2, post_answer/2, hide_questions/2,
+%% post_question/2, post_answer/2, hide_questions/2,
 
 -export([ejson_to_record/3, ejson_to_proplist/3, ejson_to_orddict/3, ejson_to_term/4,
          ejson_field_to_record_name/2,
@@ -84,6 +85,7 @@
 %% 62167219200 = calendar:datetime_to_gregorian_seconds({{1970,1,1},{0,0,0}}).
 -define(SECONDS_TO_UNIX_EPOCH, 62167219200).
 
+-define(ANSWERS,                 "/answers").
 -define(APPLICATIONS,            "/applications").
 -define(AVAILABLE_LISTING_TYPES, "/available_listing_types").
 -define(CARD_ISSUERS,            "/card_issuers").
@@ -96,10 +98,12 @@
 -define(CURRENCY_CONVERSIONS,    "/currency_conversions").
 -define(DOMAINS,                 "/domains").
 -define(GEOLOCATION,             "/geolocation").
+-define(HIDDEN,                  "/hidden").
 -define(ITEMS,                   "/items").
 -define(LISTING_EXPOSURES,       "/listing_exposures").
 -define(LISTING_PRICES,          "/listing_prices").
 -define(LISTING_TYPES,           "/listing_types").
+-define(MY,                      "/my").
 -define(NEIGHBORHOODS,           "/neighborhoods").
 -define(PAYMENT_METHODS,         "/payment_methods").
 -define(PAYMENT_TYPES,           "/payment_types").
@@ -123,33 +127,46 @@
 
 
 %% @doc Start the application and all its dependencies.
+-spec start() -> ok.
 start() ->
-    application:start(sasl),
-    application:start(mnesia),
-    application:start(crypto),
-    application:start(public_key),
-    application:start(ssl),
-    application:start(ibrowse),
-    application:start(bstr),
-    application:start(ejson),
-    application:start(kvc),
-    application:start(getopt),
-    %% application:start(eper),
-    application:start(mlapi).
+    start_deps(?APP).
+
+-spec start_deps(App :: atom()) -> ok.
+start_deps(App) ->
+    application:load(App),
+    {ok, Deps} = application:get_key(App, applications),
+    lists:foreach(fun start_deps/1, Deps),
+    start_app(App).
+
+-spec start_app(App :: atom()) -> ok.
+start_app(App) ->
+    case application:start(App) of
+        {error, {already_started, _}} -> ok;
+        ok                            -> ok
+    end.
 
 
-%% @doc Stop the application.
+%% @doc Stop the application and all its dependencies.
+-spec stop() -> ok.
 stop() ->
-    application:stop(mlapi),
-    %% application:stop(eper),
-    application:stop(getopt),
-    application:stop(kvc),
-    application:stop(ejson),
-    application:stop(bstr),
-    application:stop(ibrowse),
-    application:stop(ssl),
-    application:stop(public_key),
-    application:stop(crypto).
+    stop_deps(?APP).
+
+-spec stop_deps(App :: atom()) -> ok.
+stop_deps(App) ->
+    stop_app(App),
+    {ok, Deps} = application:get_key(App, applications),
+    lists:foreach(fun stop_deps/1, lists:reverse(Deps)).
+
+-spec stop_app(App :: atom()) -> ok.
+stop_app(kernel) ->
+    ok;
+stop_app(stdlib) ->
+    ok;
+stop_app(App) ->
+    case application:stop(App) of
+        {error, {not_started, _}} -> ok;
+        ok                        -> ok
+    end.
 
 
 %% @doc Retrieve all key/value pairs in the env for the specified app.
@@ -181,7 +198,7 @@ applications() ->
 
 -spec applications([option()]) -> response().
 applications(Options) ->
-    request(?APPLICATIONS, ?SET_RECORD(mlapi_application, Options)).
+    do_get(?APPLICATIONS, ?SET_RECORD(mlapi_application, Options)).
 
 -spec application(mlapi_application_id()) -> response().
 application(ApplicationId) ->
@@ -189,7 +206,7 @@ application(ApplicationId) ->
 
 -spec application(mlapi_application_id(), [option()]) -> response().
 application(ApplicationId, Options) ->
-    request(?APPLICATIONS "/" ++ to_string(ApplicationId), ?SET_RECORD(mlapi_application, Options)).
+    do_get(?APPLICATIONS "/" ++ to_string(ApplicationId), ?SET_RECORD(mlapi_application, Options)).
 
 
 -spec catalog_products(mlapi_site_id(), mlapi_catalog_product_filter()) -> response().
@@ -198,7 +215,7 @@ catalog_products(SiteId, Filter) ->
 
 -spec catalog_products(mlapi_site_id(), mlapi_catalog_product_filter(), [option()]) -> response().
 catalog_products(SiteId, Filter, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?CATALOG_PRODUCTS ?SEARCH ++ catalog_products_filter(Filter),
+    do_get(?SITES "/" ++ to_string(SiteId) ++ ?CATALOG_PRODUCTS ?SEARCH ++ catalog_products_filter(Filter),
             ?SET_RECORD(mlapi_catalog_product_search, Options)).
 
 catalog_products_filter([] = Filter) ->
@@ -222,7 +239,7 @@ catalog_product(SiteId, CatalogProductId) ->
 
 -spec catalog_product(mlapi_site_id(), mlapi_catalog_product_id(), [option()]) -> response().
 catalog_product(SiteId, CatalogProductId, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?CATALOG_PRODUCTS "/" ++ to_string(CatalogProductId),
+    do_get(?SITES "/" ++ to_string(SiteId) ++ ?CATALOG_PRODUCTS "/" ++ to_string(CatalogProductId),
             ?SET_RECORD(mlapi_catalog_product, Options)).
 
 
@@ -232,7 +249,7 @@ sites() ->
 
 -spec sites([option()]) -> response().
 sites(Options) ->
-    request(?SITES, ?SET_RECORD(mlapi_site, Options)).
+    do_get(?SITES, ?SET_RECORD(mlapi_site, Options)).
 
 -spec site(mlapi_site_id()) -> response().
 site(SiteId) ->
@@ -240,7 +257,7 @@ site(SiteId) ->
 
 -spec site(mlapi_site_id(), [option()]) -> response().
 site(SiteId, Options) ->
-    request(?SITES "/" ++ to_string(SiteId), ?SET_RECORD(mlapi_site_ext, Options)).
+    do_get(?SITES "/" ++ to_string(SiteId), ?SET_RECORD(mlapi_site_ext, Options)).
 
 
 -spec countries() -> response().
@@ -249,7 +266,7 @@ countries() ->
 
 -spec countries([option()]) -> response().
 countries(Options) ->
-    request(?COUNTRIES, ?SET_RECORD(mlapi_country, Options)).
+    do_get(?COUNTRIES, ?SET_RECORD(mlapi_country, Options)).
 
 -spec country(mlapi_country_id()) -> response().
 country(CountryId) ->
@@ -257,7 +274,7 @@ country(CountryId) ->
 
 -spec country(mlapi_country_id(), [option()]) -> response().
 country(CountryId, Options) ->
-    request(?COUNTRIES "/" ++ to_string(CountryId), ?SET_RECORD(mlapi_country_ext, Options)).
+    do_get(?COUNTRIES "/" ++ to_string(CountryId), ?SET_RECORD(mlapi_country_ext, Options)).
 
 
 -spec state(mlapi_state_id()) -> response().
@@ -266,7 +283,7 @@ state(StateId) ->
 
 -spec state(mlapi_state_id(), [option()]) -> response().
 state(StateId, Options) ->
-    request(?STATES "/" ++ to_string(StateId), ?SET_RECORD(mlapi_state_ext, Options)).
+    do_get(?STATES "/" ++ to_string(StateId), ?SET_RECORD(mlapi_state_ext, Options)).
 
 
 -spec city(mlapi_city_id()) -> response().
@@ -275,7 +292,7 @@ city(CityId) ->
 
 -spec city(mlapi_city_id(), [option()]) -> response().
 city(CityId, Options) ->
-    request(?CITIES "/" ++ to_string(CityId), ?SET_RECORD(mlapi_city_ext, Options)).
+    do_get(?CITIES "/" ++ to_string(CityId), ?SET_RECORD(mlapi_city_ext, Options)).
 
 
 -spec currencies() -> response().
@@ -284,7 +301,7 @@ currencies() ->
 
 -spec currencies([option()]) -> response().
 currencies(Options) ->
-    request(?CURRENCIES, ?SET_RECORD(mlapi_currency, Options)).
+    do_get(?CURRENCIES, ?SET_RECORD(mlapi_currency, Options)).
 
 -spec currency(mlapi_currency_id()) -> response().
 currency(CurrencyId) ->
@@ -292,7 +309,7 @@ currency(CurrencyId) ->
 
 -spec currency(mlapi_currency_id(), [option()]) -> response().
 currency(CurrencyId, Options) ->
-    request(?CURRENCIES "/" ++ to_string(CurrencyId), ?SET_RECORD(mlapi_currency_ext, Options)).
+    do_get(?CURRENCIES "/" ++ to_string(CurrencyId), ?SET_RECORD(mlapi_currency_ext, Options)).
 
 
 -spec currency_conversion([mlapi_currency_conversion_filter()]) -> response().
@@ -301,7 +318,7 @@ currency_conversion(Filter) ->
 
 -spec currency_conversion([mlapi_currency_conversion_filter()], [option()]) -> response().
 currency_conversion(Filter, Options) ->
-    request(?CURRENCY_CONVERSIONS ?SEARCH ++ currency_conversion_filter(Filter),
+    do_get(?CURRENCY_CONVERSIONS ?SEARCH ++ currency_conversion_filter(Filter),
             ?SET_RECORD(mlapi_currency_conversion, Options)).
 
 currency_conversion_filter([] = Filter) ->
@@ -327,7 +344,7 @@ listing_exposures(SiteId) ->
 
 -spec listing_exposures(mlapi_site_id(), [option()]) -> response().
 listing_exposures(SiteId, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_EXPOSURES, ?SET_RECORD(mlapi_listing_exposures, Options)).
+    do_get(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_EXPOSURES, ?SET_RECORD(mlapi_listing_exposures, Options)).
 
 -spec listing_exposure(mlapi_site_id(), mlapi_listing_exposure_id()) -> response().
 listing_exposure(SiteId, ListingExposureId) ->
@@ -335,7 +352,7 @@ listing_exposure(SiteId, ListingExposureId) ->
 
 -spec listing_exposure(mlapi_site_id(), mlapi_listing_exposure_id(), [option()]) -> response().
 listing_exposure(SiteId, ListingExposureId, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_EXPOSURES "/" ++ to_string(ListingExposureId),
+    do_get(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_EXPOSURES "/" ++ to_string(ListingExposureId),
             ?SET_RECORD(mlapi_listing_exposure, Options)).
 
 
@@ -345,7 +362,7 @@ listing_prices(SiteId, Filter) ->
 
 -spec listing_prices(mlapi_site_id(), mlapi_listing_price_filter(), [option()]) -> response().
 listing_prices(SiteId, Filter, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_PRICES ++ listing_prices_filter(Filter),
+    do_get(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_PRICES ++ listing_prices_filter(Filter),
             ?SET_RECORD(mlapi_listing_price, Options)).
 
 listing_prices_filter([] = Filter) ->
@@ -373,7 +390,7 @@ listing_types(SiteId) ->
 
 -spec listing_types(mlapi_site_id(), [option()]) -> response().
 listing_types(SiteId, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_TYPES, ?SET_RECORD(mlapi_listing_type, Options)).
+    do_get(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_TYPES, ?SET_RECORD(mlapi_listing_type, Options)).
 
 
 -spec payment_types() -> response().
@@ -382,7 +399,7 @@ payment_types() ->
 
 -spec payment_types([option()]) -> response().
 payment_types(Options) ->
-    request(?PAYMENT_TYPES, ?SET_RECORD(mlapi_payment_type, Options)).
+    do_get(?PAYMENT_TYPES, ?SET_RECORD(mlapi_payment_type, Options)).
 
 -spec payment_type(mlapi_payment_type_id()) -> response().
 payment_type(PaymentTypeId) ->
@@ -390,7 +407,7 @@ payment_type(PaymentTypeId) ->
 
 -spec payment_type(mlapi_payment_type_id(), [option()]) -> response().
 payment_type(PaymentTypeId, Options) ->
-    request(?PAYMENT_TYPES "/" ++ to_string(PaymentTypeId), ?SET_RECORD(mlapi_payment_type, Options)).
+    do_get(?PAYMENT_TYPES "/" ++ to_string(PaymentTypeId), ?SET_RECORD(mlapi_payment_type, Options)).
 
 
 -spec payment_methods(mlapi_site_id()) -> response().
@@ -399,7 +416,7 @@ payment_methods(SiteId) ->
 
 -spec payment_methods(mlapi_site_id(), [option()]) -> response().
 payment_methods(SiteId, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?PAYMENT_METHODS, ?SET_RECORD(mlapi_payment_method, Options)).
+    do_get(?SITES "/" ++ to_string(SiteId) ++ ?PAYMENT_METHODS, ?SET_RECORD(mlapi_payment_method, Options)).
 
 -spec payment_method(mlapi_site_id(), mlapi_payment_method_id()) -> response().
 payment_method(SiteId, PaymentMethodId) ->
@@ -407,7 +424,7 @@ payment_method(SiteId, PaymentMethodId) ->
 
 -spec payment_method(mlapi_site_id(), mlapi_payment_method_id(), [option()]) -> response().
 payment_method(SiteId, PaymentMethodId, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?PAYMENT_METHODS "/" ++ to_string(PaymentMethodId),
+    do_get(?SITES "/" ++ to_string(SiteId) ++ ?PAYMENT_METHODS "/" ++ to_string(PaymentMethodId),
             ?SET_RECORD(mlapi_payment_method_ext, Options)).
 
 
@@ -417,7 +434,7 @@ card_issuers(SiteId) ->
 
 -spec card_issuers(mlapi_site_id(), [option()]) -> response().
 card_issuers(SiteId, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?CARD_ISSUERS, ?SET_RECORD(mlapi_card_issuer, Options)).
+    do_get(?SITES "/" ++ to_string(SiteId) ++ ?CARD_ISSUERS, ?SET_RECORD(mlapi_card_issuer, Options)).
 
 -spec card_issuer(mlapi_site_id(), mlapi_card_issuer_id()) -> response().
 card_issuer(SiteId, CardIssuerId) ->
@@ -425,7 +442,7 @@ card_issuer(SiteId, CardIssuerId) ->
 
 -spec card_issuer(mlapi_site_id(), mlapi_card_issuer_id(), [option()]) -> response().
 card_issuer(SiteId, CardIssuerId, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?CARD_ISSUERS "/" ++ to_string(CardIssuerId),
+    do_get(?SITES "/" ++ to_string(SiteId) ++ ?CARD_ISSUERS "/" ++ to_string(CardIssuerId),
             ?SET_RECORD(mlapi_card_issuer_ext, Options)).
 
 
@@ -435,7 +452,7 @@ credit_level(CreditLevelId) ->
 
 -spec credit_level(mlapi_credit_level_id(), [option()]) -> response().
 credit_level(CreditLevelId, Options) ->
-    request(?USERS ?CREDIT_LEVELS "/" ++ to_string(CreditLevelId), ?SET_RECORD(mlapi_credit_level, Options)).
+    do_get(?USERS ?CREDIT_LEVELS "/" ++ to_string(CreditLevelId), ?SET_RECORD(mlapi_credit_level, Options)).
 
 
 -spec category(mlapi_category_id()) -> response().
@@ -444,7 +461,7 @@ category(CategoryId) ->
 
 -spec category(mlapi_category_id(), [option()]) -> response().
 category(CategoryId, Options) ->
-    request(?CATEGORIES "/" ++ to_string(CategoryId), ?SET_RECORD(mlapi_category, Options)).
+    do_get(?CATEGORIES "/" ++ to_string(CategoryId), ?SET_RECORD(mlapi_category, Options)).
 
 
 -spec domains() -> response().
@@ -453,7 +470,7 @@ domains() ->
 
 -spec domains([option()]) -> response().
 domains(Options) ->
-    request(?DOMAINS, ?SET_RECORD(mlapi_domain, Options)).
+    do_get(?DOMAINS, ?SET_RECORD(mlapi_domain, Options)).
 
 
 -spec domain(mlapi_domain_id()) -> response().
@@ -462,7 +479,7 @@ domain(DomainId) ->
 
 -spec domain(mlapi_domain_id(), [option()]) -> response().
 domain(DomainId, Options) ->
-    request(?DOMAINS "/" ++ to_string(DomainId), ?SET_RECORD(mlapi_domain, Options)).
+    do_get(?DOMAINS "/" ++ to_string(DomainId), ?SET_RECORD(mlapi_domain, Options)).
 
 
 -spec user(mlapi_user_id()) -> response().
@@ -471,7 +488,7 @@ user(UserId) ->
 
 -spec user(mlapi_user_id(), [option()]) -> response().
 user(UserId, Options) ->
-    request(?USERS "/" ++ to_string(UserId), ?SET_RECORD(mlapi_user, Options)).
+    do_get(?USERS "/" ++ to_string(UserId), ?SET_RECORD(mlapi_user, Options)).
 
 
 -spec item(mlapi_item_id()) -> response().
@@ -480,7 +497,7 @@ item(ItemId) ->
 
 -spec item(mlapi_item_id(), [option()]) -> response().
 item(ItemId, Options) ->
-    request(?ITEMS "/" ++ to_string(ItemId), ?SET_RECORD(mlapi_item, Options)).
+    do_get(?ITEMS "/" ++ to_string(ItemId), ?SET_RECORD(mlapi_item, Options)).
 
 
 -spec picture(mlapi_picture_id()) -> response().
@@ -489,7 +506,7 @@ picture(PictureId) ->
 
 -spec picture(mlapi_picture_id(), [option()]) -> response().
 picture(PictureId, Options) ->
-    request(?PICTURES "/" ++ to_string(PictureId), ?SET_RECORD(mlapi_picture, Options)).
+    do_get(?PICTURES "/" ++ to_string(PictureId), ?SET_RECORD(mlapi_picture, Options)).
 
 
 -spec question(mlapi_question_id()) -> response().
@@ -498,7 +515,7 @@ question(QuestionId) ->
 
 -spec question(mlapi_question_id(), [option()]) -> response().
 question(QuestionId, Options) ->
-    request(?QUESTIONS "/" ++ to_string(QuestionId), ?SET_RECORD(mlapi_question, Options)).
+    do_get(?QUESTIONS "/" ++ to_string(QuestionId), ?SET_RECORD(mlapi_question, Options)).
 
 
 -spec questions([mlapi_question_filter()]) -> response().
@@ -507,7 +524,7 @@ questions(Filter) ->
 
 -spec questions([mlapi_question_filter()], [option()]) -> response().
 questions(Filter, Options) ->
-    request(?QUESTIONS ?SEARCH ++ questions_filter(Filter), ?SET_RECORD(mlapi_question_result, Options)).
+    do_get(?QUESTIONS ?SEARCH ++ questions_filter(Filter), ?SET_RECORD(mlapi_question_result, Options)).
 
 questions_filter([] = Filter) ->
     Filter;
@@ -530,13 +547,26 @@ questions_filter([], Acc) ->
     "?" ++ string:join(lists:reverse(Acc), "&").
 
 
+delete_question(_AccessToken, QuestionId) ->
+    do_delete(?QUESTIONS "/" ++ to_string(QuestionId)).
+
+%% answer_question(AccessToken, QuestionId, Text) ->
+%%     do_post(?ANSWERS, [{question_id, QuestionId}, {text, Text}], [{format, ejson}]).
+
+%% hide_question(AccessToken, QuestionId) ->
+%%     do_post(?MY ?QUESTIONS ?HIDDEN, [{question_id, QuestionId}], [{format, ejson}]).
+
+%% hide_item_questions(AccessToken, ItemId) ->
+%%     do_post(?MY ?QUESTIONS ?HIDDEN, [{item_id, ItemId}], [{format, ejson}]).
+
+
 -spec trends(mlapi_site_id(), mlapi_trend_filter()) -> response().
 trends(SiteId, Filter) ->
     trends(SiteId, Filter, []).
 
 -spec trends(mlapi_site_id(), mlapi_trend_filter(), [option()]) -> response().
 trends(SiteId, Filter, Options) when is_list(Filter), is_list(Options) ->
-    request(?SITES "/" ++ SiteId ++ ?TRENDS ?SEARCH ++ trends_filter(Filter), ?SET_RECORD(mlapi_trend, Options)).
+    do_get(?SITES "/" ++ SiteId ++ ?TRENDS ?SEARCH ++ trends_filter(Filter), ?SET_RECORD(mlapi_trend, Options)).
 
 trends_filter([] = Filter) ->
     Filter;
@@ -557,7 +587,7 @@ local_geolocation() ->
 
 -spec local_geolocation([option()]) -> response().
 local_geolocation(Options) ->
-    request(?GEOLOCATION "/whereami", ?SET_RECORD(mlapi_geolocation, Options)).
+    do_get(?GEOLOCATION "/whereami", ?SET_RECORD(mlapi_geolocation, Options)).
 
 -spec geolocation(mlapi_ip_address()) -> response().
 geolocation(IpAddr) ->
@@ -565,7 +595,7 @@ geolocation(IpAddr) ->
 
 -spec geolocation(mlapi_ip_address(), [option()]) -> response().
 geolocation(IpAddr, Options) ->
-    request(?GEOLOCATION "/ip/" ++ to_string(IpAddr), ?SET_RECORD(mlapi_geolocation, Options)).
+    do_get(?GEOLOCATION "/ip/" ++ to_string(IpAddr), ?SET_RECORD(mlapi_geolocation, Options)).
 
 
 -spec search(mlapi_site_id(), mlapi_search_filter()) -> response().
@@ -574,7 +604,7 @@ search(SiteId, Filter) ->
 
 -spec search(mlapi_site_id(), mlapi_search_filter(), [option()]) -> response().
 search(SiteId, Filter, Options) ->
-    request(?SITES "/" ++ to_string(SiteId) ++ ?SEARCH ++ search_filter(Filter), ?SET_RECORD(mlapi_search_result, Options)).
+    do_get(?SITES "/" ++ to_string(SiteId) ++ ?SEARCH ++ search_filter(Filter), ?SET_RECORD(mlapi_search_result, Options)).
 
 search_filter([] = Filter) ->
     Filter;
@@ -605,7 +635,7 @@ my_archived_sales(AccessToken, Filter) ->
 -spec my_archived_sales(mlapi_access_token(), mlapi_sale_filter(), [option()]) -> response().
 my_archived_sales(AccessToken, Filter, Options) ->
     NewFilter = lists:keystore(access_token, 1, Filter, {access_token, AccessToken}),
-    request(?USERS "/me" ?SALES "/archived" ++ sales_filter(NewFilter), ?SET_RECORD(mlapi_sale, Options)).
+    do_get(?USERS "/me" ?SALES "/archived" ++ sales_filter(NewFilter), ?SET_RECORD(mlapi_sale, Options)).
 
 -spec my_active_sales(mlapi_access_token(), mlapi_sale_filter()) -> response().
 my_active_sales(AccessToken, Filter) ->
@@ -614,7 +644,7 @@ my_active_sales(AccessToken, Filter) ->
 -spec my_active_sales(mlapi_access_token(), mlapi_sale_filter(), [option()]) -> response().
 my_active_sales(AccessToken, Filter, Options) ->
     NewFilter = lists:keystore(access_token, 1, Filter, {access_token, AccessToken}),
-    request(?USERS "/me" ?SALES "/active" ++ sales_filter(NewFilter), ?SET_RECORD(mlapi_sale, Options)).
+    do_get(?USERS "/me" ?SALES "/active" ++ sales_filter(NewFilter), ?SET_RECORD(mlapi_sale, Options)).
 
 
 sales_filter([] = Filter) ->
@@ -638,7 +668,7 @@ my_orders(Args) ->
 
 -spec my_orders([mlapi_order_arg()], [option()]) -> response().
 my_orders(Args, Options) ->
-    request(?ORDERS ?SEARCH ++ orders_args(Args), ?SET_RECORD(mlapi_order_search, Options)).
+    do_get(?ORDERS ?SEARCH ++ orders_args(Args), ?SET_RECORD(mlapi_order_search, Options)).
 
 
 -spec my_archived_orders([mlapi_order_arg()]) -> response().
@@ -647,7 +677,7 @@ my_archived_orders(Args) ->
 
 -spec my_archived_orders([mlapi_order_arg()], [option()]) -> response().
 my_archived_orders(Args, Options) ->
-    request(?ORDERS ?SEARCH "/archived" ++ orders_args(Args), ?SET_RECORD(mlapi_order_search, Options)).
+    do_get(?ORDERS ?SEARCH "/archived" ++ orders_args(Args), ?SET_RECORD(mlapi_order_search, Options)).
 
 
 orders_args([] = Args) ->
@@ -685,7 +715,7 @@ my_order(OrderId, AccessToken) ->
 
 -spec my_order(mlapi_order_id(), mlapi_access_token(), [option()]) -> response().
 my_order(OrderId, AccessToken, Options) ->
-    request(?ORDERS "/" ++ to_string(OrderId) ++ "?access_token=" ++ AccessToken, ?SET_RECORD(mlapi_sale, Options)).
+    do_get(?ORDERS "/" ++ to_string(OrderId) ++ "?access_token=" ++ AccessToken, ?SET_RECORD(mlapi_sale, Options)).
 
 
 -spec my_sale(mlapi_sale_id(), mlapi_access_token()) -> response().
@@ -695,7 +725,7 @@ my_sale(SaleId, AccessToken) ->
 -spec my_sale(mlapi_sale_id(), mlapi_access_token(), [option()]) -> response().
 my_sale(SaleId, AccessToken, Options) ->
     Path = io_lib:format(?SALES "/~s?access_token=~s", [to_string(SaleId), url_encode(AccessToken)]),
-    request(Path, ?SET_RECORD(mlapi_sale, Options)).
+    do_get(Path, ?SET_RECORD(mlapi_sale, Options)).
 
 
 -spec my_user(mlapi_access_token()) -> response().
@@ -704,7 +734,7 @@ my_user(AccessToken) ->
 
 -spec my_user(mlapi_access_token(), [option()]) -> response().
 my_user(AccessToken, Options) ->
-    request(?USERS "/me?access_token=" ++ url_encode(AccessToken), ?SET_RECORD(mlapi_user, Options)).
+    do_get(?USERS "/me?access_token=" ++ url_encode(AccessToken), ?SET_RECORD(mlapi_user, Options)).
 
 
 -spec user_listing_types(mlapi_user_id(), mlapi_access_token()) -> response().
@@ -714,7 +744,7 @@ user_listing_types(UserId, AccessToken) ->
 -spec user_listing_types(mlapi_user_id(), mlapi_access_token(), [option()]) -> response().
 user_listing_types(UserId, AccessToken, Options) ->
     Path = io_lib:format(?USERS "/~s" ?AVAILABLE_LISTING_TYPES "?access_token=~s", [to_string(UserId), url_encode(AccessToken)]),
-    request(Path, ?SET_RECORD(mlapi_listing_type, Options)).
+    do_get(Path, ?SET_RECORD(mlapi_listing_type, Options)).
 
 
 -spec user_items(mlapi_user_id(), mlapi_access_token()) -> response().
@@ -724,17 +754,18 @@ user_items(UserId, AccessToken) ->
 -spec user_items(mlapi_user_id(), mlapi_access_token(), [option()]) -> response().
 user_items(UserId, AccessToken, Options) ->
     Path = io_lib:format(?USERS "/~s" ?ITEMS "/search?access_token=~s", [to_string(UserId), url_encode(AccessToken)]),
-    request(Path, ?SET_RECORD(mlapi_listing_type, Options)).
+    do_get(Path, ?SET_RECORD(mlapi_listing_type, Options)).
 
 
 
--spec request(url_path()) -> response().
-request(Path) ->
-    request(Path, []).
+-spec do_get(url_path()) -> response().
+do_get(Path) ->
+    do_get(Path, []).
 
--spec request(url_path(), [option()]) -> response().
-request(Path, Options) ->
-    case ibrowse:send_req(get_env(protocol, ?PROTOCOL) ++ "://" ++ get_env(host, ?HOST) ++ Path, [], get) of
+-spec do_get(url_path(), [option()]) -> response().
+do_get(Path, Options) ->
+    Url = url_from_path(Path),
+    case ibrowse:send_req(Url, [{'Accept', ?MIME_TYPE_JSON}], get, [], [{response_format, binary}]) of
         {ok, "200", Headers, Body} ->
             case lists:keyfind(?HEADER_CONTENT_TYPE, 1, Headers) of
                 {_ContentType, ?MIME_TYPE_JSON ++ _CharSet} ->
@@ -756,6 +787,23 @@ request(Path, Options) ->
         {ok, Code, _Headers, _Body} ->
             {error, response_reason(Code)};
 
+        {error, _Reason} = Error ->
+            Error
+    end.
+
+
+-spec do_delete(url_path()) -> ok | error().
+do_delete(Path) ->
+    do_delete(Path, []).
+
+-spec do_delete(url_path(), [option()]) -> response().
+do_delete(Path, _Options) ->
+    Url = url_from_path(Path),
+    case ibrowse:send_req(Url, [], delete, [], [{response_format, binary}]) of
+        {ok, "200", _Headers, _Body} ->
+            ok;
+        {ok, Code, _Headers, _Body} ->
+            {error, response_reason(Code)};
         {error, _Reason} = Error ->
             Error
     end.
@@ -1202,6 +1250,11 @@ site_country_map() ->
 -spec url_encode(string() | binary() | integer() | float() | atom()) -> string().
 url_encode(String) ->
     ibrowse_lib:url_encode(to_string(String)).
+
+
+-spec url_from_path(url_path()) -> mlapi_url().
+url_from_path(Path) ->
+    get_env(protocol, ?PROTOCOL) ++ "://" ++ get_env(host, ?HOST) ++ Path.
 
 
 -spec to_string(string() | binary() | integer() | float() | atom()) -> string().
