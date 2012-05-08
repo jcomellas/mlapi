@@ -27,8 +27,13 @@
 -type option()                                  :: option_name() | {option_name(), option_value()}.
 
 
--spec search(file:filename(), [mlapi_site_id()], [option()]) -> ok | {error, Reason :: term()}.
-search(Filename, [SiteId], Options) ->
+-spec search(file:filename() | file:io_device(), [mlapi_site_id()], [option()]) -> ok | {error, Reason :: term()}.
+search(Filename, Args, Options) when is_list(Filename) ->
+    {ok, File} = file:open(Filename, [write, binary]),
+    Result = search(File, Args, Options),
+    ok = file:close(File),
+    Result;
+search(File, [SiteId], Options) ->
     CacheArgs = filter_options(Options, [nickname, seller_id, category, q]),
     CacheOpts = filter_options(Options, [refresh]),
     FetchPage = fun (Offset, Limit) -> mlapi_cache:search(SiteId, [{offset, Offset}, {limit, Limit} | CacheArgs],
@@ -37,7 +42,7 @@ search(Filename, [SiteId], Options) ->
                     csv  -> fun encode_search_as_csv/2;
                     json -> fun encode_ejson/2
                 end,
-    fetch_paged_response(Filename, FetchPage, FormatDoc, [{paging_scheme, search} | Options]).
+    fetch_paged_response(File, FetchPage, FormatDoc, [{paging_scheme, search} | Options]).
 
 
 -spec encode_search_as_csv(mlapi_pager:position(), mlapi:ejson()) -> ok.
@@ -61,8 +66,13 @@ encode_search_as_csv(Doc) ->
     line_to_csv([kvc:path(Name, Doc) || Name <- ItemFieldNames]).
 
 
--spec my_orders(file:filename(), [], [option()]) -> ok | {error, Reason :: term()}.
-my_orders(Filename, [], Options) ->
+-spec my_orders(file:filename() | file:io_device(), [], [option()]) -> ok | {error, Reason :: term()}.
+my_orders(Filename, Args, Options) when is_list(Filename) ->
+    {ok, File} = file:open(Filename, [write, binary]),
+    Result = my_orders(File, Args, Options),
+    ok = file:close(File),
+    Result;
+my_orders(File, [], Options) ->
     CacheArgs = filter_options(Options, [access_token, feedback_status, payment_status, seller, shipping_status, sort]),
     CacheOpts = filter_options(Options, [refresh]),
     FetchPage = fun (Offset, Limit) -> mlapi_cache:my_orders([{offset, Offset}, {limit, Limit} | CacheArgs],
@@ -71,7 +81,7 @@ my_orders(Filename, [], Options) ->
                     csv  -> fun encode_order_as_csv/2;
                     json -> fun encode_ejson/2
                 end,
-    fetch_paged_response(Filename, FetchPage, FormatDoc, [{paging_scheme, orders} | Options]).
+    fetch_paged_response(File, FetchPage, FormatDoc, [{paging_scheme, orders} | Options]).
 
 
 -spec encode_order_as_csv(mlapi_pager:position(), mlapi:ejson()) -> ok.
@@ -131,16 +141,13 @@ encode_ejson(last, Doc) ->
     [ejson:encode(Doc), <<"\n]\n">>].
 
 
--spec fetch_paged_response(file:filename(), FetchPage :: fun(), FormatDoc :: fun(), [option()]) -> ok | {error, Reason :: term()}.
-fetch_paged_response(Filename, FetchPage, FormatDoc, Options) when is_function(FetchPage), is_function(FormatDoc) ->
+-spec fetch_paged_response(file:io_device(), FetchPage :: fun(), FormatDoc :: fun(), [option()]) -> ok | {error, Reason :: term()}.
+fetch_paged_response(File, FetchPage, FormatDoc, Options) when is_function(FetchPage), is_function(FormatDoc) ->
     PagingScheme = proplists:get_value(paging_scheme, Options),
     Offset       = proplists:get_value(offset, Options, ?DEFAULT_OFFSET),
     Limit        = proplists:get_value(limit, Options, ?DEFAULT_LIMIT),
-    {ok, File}   = file:open(Filename, [write, binary]),
     {ok, Pager}  = mlapi_pager:start_link([{paging_scheme, PagingScheme}, {fetch_page, FetchPage}, {offset, Offset}, {limit, Limit}]),
-    Result       = fetch_pages(File, Pager, FormatDoc),
-    file:close(File),
-    Result.
+    fetch_pages(File, Pager, FormatDoc).
 
 
 -spec fetch_pages(file:io_device(), Pager :: pid(), FormatDoc :: fun()) -> ok | {error, Reason :: term()}.
