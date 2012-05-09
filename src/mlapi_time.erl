@@ -93,7 +93,7 @@ iso8601_to_datetime(<<Year:4/binary, $-, Month:2/binary, $-, Day:2/binary, $T,
                   Offset ->
                       LocalSecs + Offset
               end,
-    calendar:gregorian_seconds_to_datetime(UtcSecs + round(Millisecs / 1000)).
+    calendar:gregorian_seconds_to_datetime(UtcSecs + round(bstr:to_integer(Millisecs) / 1000)).
 
 
 %% @doc Convert a date and time in the format returned by calendar:universal_time/0 to
@@ -125,7 +125,7 @@ iso8601_to_gregorian_seconds(<<Year:4/binary, $-, Month:2/binary, $-, Day:2/bina
                   Offset ->
                       LocalSecs + Offset
               end,
-    UtcSecs + round(Millisecs / 1000);
+    UtcSecs + round(bstr:to_integer(Millisecs) / 1000);
 iso8601_to_gregorian_seconds(Iso8601) ->
     calendar:datetime_to_gregorian_seconds(iso8601_to_datetime(Iso8601)).
 
