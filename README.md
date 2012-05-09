@@ -20,8 +20,8 @@ Requirements
 ============
 You will need a fairly recent version of [Erlang](http://www.erlang.org/) and
 [rebar](https://github.com/basho/rebar) installed in your path. So far it has
-only been tested with Erlang/OTP R14B03 on Ubuntu Linux 11.04 (Natty) but will
-probably work with previous releases of R14 on other platforms too.
+been tested with Erlang/OTP R14 and R15 on Ubuntu Linux 11.04, 11.10 and 12.04
+but will most probably work on other platforms too.
 
 Installation
 ============
@@ -30,7 +30,7 @@ following commands:
 
     git clone https://github.com/jcomellas/mlapi.git
     cd mlapi
-    make deps
+    make depends
     make
 
 That will download all the required Erlang dependencies and compile the project.
@@ -54,10 +54,11 @@ Now we're ready to rock. Keep in mind the following type specifications:
     -type ejson_key()         :: binary().
     -type ejson_value()       :: binary() | boolean() | integer() | float() | null.
     -type ejson()             :: {[{ejson_key(), ejson_value() | ejson()}]}.
-    -type proplist()          :: [proplists:property()].
-    -type format()            :: raw | ejson | proplist | orddict | record.
+    -type proplist()          :: [{Key :: atom(), Value :: term()}].
+    -type format()            :: ejson | proplist | record | dict | orddict | raw.
     -type option()            :: {format, format()} | {record, RecordName :: atom()} | refresh.
-    -type response()          :: binary() | ejson() | proplist() | orddict:orddict() | tuple() | error().
+    -type response_element()  :: ejson() | proplist() | tuple() | dict() | orddict:orddict() | binary().
+    -type response()          :: response_element() | [response_element()] | error().
 
 All of the available functions that retrieve information from [MLAPI](http://www.mercadolibre.io/)
 are very similar and follow a syntax like the following one:
@@ -83,8 +84,8 @@ where ``Format`` can be one of:
   <tr><td>ejson</td><td>returns the JSON document as decoded by the ejson Erlang library (see https://github.com/benoitc/ejson)</td></tr>
   <tr><td>proplist</td><td>returns the parsed JSON document as a property list (see http://www.erlang.org/doc/man/proplists.html)</td></tr>
   <tr><td>record</td><td>returns the parsed JSON document as the corresponding record as defined in the mlapi.hrl header file</td></tr>
-  <tr><td>orddict</td><td>returns the parsed JSON document as an orddict (see http://www.erlang.org/doc/man/orddict.html)</td></tr>
   <tr><td>dict</td><td>returns the parsed JSON document as an dict (see http://www.erlang.org/doc/man/dict.html)</td></tr>
+  <tr><td>orddict</td><td>returns the parsed JSON document as an orddict (see http://www.erlang.org/doc/man/orddict.html)</td></tr>
   <tr><td>raw</td><td>returns the unparsed binary with the JSON document</td></tr>
  </tbody>
 </table>
