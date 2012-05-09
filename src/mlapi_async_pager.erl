@@ -30,7 +30,10 @@
 -type server_name()                             :: local_name() | {local_name(), node()} | {global, global_name()}.
 -type server_ref()                              :: server_name() | pid().
 
--type arg()                                     :: {callback, fun()} | {fetch_page, fun()} |
+-type callback_fun()                            :: fun((mlapi_pager:position() | error, mlapi:ejson() | mlapi:error()) -> term()).
+-type fetch_page_fun()                          :: fun((mlapi_offset(), mlapi_limit()) -> mlapi:ejson() | mlapi:error()).
+
+-type arg()                                     :: {callback, callback_fun()} | {fetch_page, fetch_page_fun()} |
                                                    {offset, non_neg_integer()} | {limit, non_neg_integer()}.
 
 -record(state, {
@@ -38,8 +41,8 @@
           initial_offset                        :: non_neg_integer(),
           offset                                :: non_neg_integer(),
           limit                                 :: non_neg_integer(),
-          callback                              :: fun(),
-          fetch_page                            :: fun()
+          callback                              :: callback_fun(),
+          fetch_page                            :: fetch_page_fun()
          }).
 
 
@@ -59,7 +62,7 @@ start_link(ServerName, Args) when is_list(Args) ->
 
 
 %% @doc Retrieve the next page of results.
--spec next(server_ref()) -> mlapi:ejson() | mlapi:error().
+-spec next(server_ref()) -> ok.
 next(ServerRef) ->
     gen_server:cast(ServerRef, next).
 

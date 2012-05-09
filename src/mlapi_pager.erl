@@ -15,6 +15,7 @@
 
 %% API
 -export([start_link/1, start_link/2, next/1, stop/1]).
+-export([page_position/4]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
@@ -43,7 +44,7 @@
           initial_offset                        :: non_neg_integer(),
           offset                                :: non_neg_integer(),
           limit                                 :: non_neg_integer(),
-          next_page                             :: mlapi:ejson(),
+          next_page                             :: mlapi:ejson() | mlapi:error(),
           fetch_page                            :: fun()
          }).
 
@@ -64,7 +65,7 @@ start_link(ServerName, Args) when is_list(Args) ->
 
 
 %% @doc Retrieve the next page of results.
--spec next(server_ref()) -> mlapi:ejson() | mlapi:error().
+-spec next(server_ref()) -> {position(), mlapi:ejson()} | mlapi:error().
 next(ServerRef) ->
     gen_server:call(ServerRef, next, infinity).
 

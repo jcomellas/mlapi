@@ -14,7 +14,7 @@
 -export([init/0, init/1, init_metatable/1, init_table/2,
          create_tables/1, create_metatable/1, create_table/2,
          upgrade_metatable/0, upgrade_table/1, tables/0,
-         table_info/1, table_version/1, table_ttl/1,
+         table_info/1, table_version/1, table_time_to_live/1,
          last_update_to_datetime/1, current_time_in_gregorian_seconds/0
         ]).
 %% Public APIs
@@ -66,7 +66,13 @@
 -define(MONTH_IN_SECS, 2592000).
 -define(YEAR_IN_SECS, 31536000).
 %% Cache entries are kept for 1 hour by default (this can be overridden per table, see mlapi_metatable).
--define(DEFAULT_CACHE_TTL, ?HOUR_IN_SECS).
+-define(DEFAULT_CACHE_TIME_TO_LIVE, ?HOUR_IN_SECS).
+
+-record(table_info, {
+          table                                  :: table(),
+          version                                :: table_version(),
+          time_to_live                           :: time_to_live()
+         }).
 
 
 -spec init() -> ok | {aborted, Reason :: any()}.
@@ -77,7 +83,9 @@ init() ->
 -spec init([node()]) -> ok | no_return(). %% exit({aborted, Reason :: any()}).
 init(Nodes) ->
     init_metatable(Nodes),
-    lists:foreach(fun ({Table, Version, TimeToLive}) -> init_table(Table, Version, TimeToLive, Nodes) end, tables()).
+    lists:foreach(fun (#table_info{table = Table, version = Version, time_to_live = TimeToLive}) ->
+                          init_table(Table, Version, TimeToLive, Nodes)
+                  end, tables()).
 
 
 -spec init_metatable([node()]) -> ok | {aborted, Reason :: any()}.
@@ -126,7 +134,9 @@ init_table(Table, Version, TimeToLive, Nodes) ->
 -spec create_tables([node()]) -> ok | {aborted, Reason :: any()}.
 create_tables(Nodes) ->
     create_metatable(Nodes),
-    lists:foreach(fun ({Table, Version, TimeToLive}) -> create_table(Table, Version, TimeToLive, Nodes) end, tables()).
+    lists:foreach(fun (#table_info{table = Table, version = Version, time_to_live = TimeToLive}) ->
+                          create_table(Table, Version, TimeToLive, Nodes)
+                  end, tables()).
 
 
 -spec create_metatable([node()]) -> ok | {aborted, Reason :: any()}.
@@ -193,45 +203,43 @@ upgrade_table(Table, _OldVersion, _NewVersion, Fields) ->
     mnesia:transform_table(Table, ignore, Fields, Table).
 
 
--spec tables() -> [table()].
+-spec tables() -> [#table_info{}].
 tables() ->
     [
-     %% Table                 Version  Time-to-live
-     %% {mlapi_cached_list,            1, ?HOUR_IN_SECS},
-     {mlapi_application,            1, 3 * ?HOUR_IN_SECS},
-     {mlapi_card_issuer,            1, ?DAY_IN_SECS},
-     {mlapi_catalog_product,        1, ?WEEK_IN_SECS},
-     {mlapi_category,               1, ?WEEK_IN_SECS},
-     {mlapi_city,                   1, ?WEEK_IN_SECS},
-     {mlapi_country,                1, ?MONTH_IN_SECS},
-     {mlapi_credit_level,           1, ?DAY_IN_SECS},
-     {mlapi_currency,               1, ?MONTH_IN_SECS},
-     {mlapi_currency_conversion,    1, ?HOUR_IN_SECS},
-     {mlapi_domain,                 1, ?WEEK_IN_SECS},
-     {mlapi_geolocation,            1, ?WEEK_IN_SECS},
-     {mlapi_item,                   1, 30 * ?MIN_IN_SECS},
-     {mlapi_listing_exposure,       1, ?WEEK_IN_SECS},
-     {mlapi_listing_price,          1, ?DAY_IN_SECS},
-     {mlapi_listing_type,           1, ?WEEK_IN_SECS},
-     {mlapi_order,                  1, 10 * ?MIN_IN_SECS},
-     {mlapi_order_search,           1, 10 * ?MIN_IN_SECS},
-     {mlapi_payment_type,           1, ?DAY_IN_SECS},
-     {mlapi_payment_method,         1, ?DAY_IN_SECS},
-     {mlapi_picture,                1, ?WEEK_IN_SECS},
-     {mlapi_question,               1, 10 * ?MIN_IN_SECS},
-     {mlapi_sale,                   1, 10 * ?MIN_IN_SECS},
-     {mlapi_search_result,          1, 3 * ?HOUR_IN_SECS},
-     {mlapi_site,                   1, ?MONTH_IN_SECS},
-     {mlapi_state,                  1, ?WEEK_IN_SECS},
-     {mlapi_trend,                  1, ?HOUR_IN_SECS},
-     {mlapi_user,                   1, ?DAY_IN_SECS}
+     #table_info{table = mlapi_application,         version = 1, time_to_live = 3 * ?HOUR_IN_SECS},
+     #table_info{table = mlapi_card_issuer,         version = 1, time_to_live = ?DAY_IN_SECS},
+     #table_info{table = mlapi_catalog_product,     version = 1, time_to_live = ?WEEK_IN_SECS},
+     #table_info{table = mlapi_category,            version = 1, time_to_live = ?WEEK_IN_SECS},
+     #table_info{table = mlapi_city,                version = 1, time_to_live = ?WEEK_IN_SECS},
+     #table_info{table = mlapi_country,             version = 1, time_to_live = ?MONTH_IN_SECS},
+     #table_info{table = mlapi_credit_level,        version = 1, time_to_live = ?DAY_IN_SECS},
+     #table_info{table = mlapi_currency,            version = 1, time_to_live = ?MONTH_IN_SECS},
+     #table_info{table = mlapi_currency_conversion, version = 1, time_to_live = ?HOUR_IN_SECS},
+     #table_info{table = mlapi_domain,              version = 1, time_to_live = ?WEEK_IN_SECS},
+     #table_info{table = mlapi_geolocation,         version = 1, time_to_live = ?WEEK_IN_SECS},
+     #table_info{table = mlapi_item,                version = 1, time_to_live = 30 * ?MIN_IN_SECS},
+     #table_info{table = mlapi_listing_exposure,    version = 1, time_to_live = ?WEEK_IN_SECS},
+     #table_info{table = mlapi_listing_price,       version = 1, time_to_live = ?DAY_IN_SECS},
+     #table_info{table = mlapi_listing_type,        version = 1, time_to_live = ?WEEK_IN_SECS},
+     #table_info{table = mlapi_order,               version = 1, time_to_live = 10 * ?MIN_IN_SECS},
+     #table_info{table = mlapi_order_search,        version = 1, time_to_live = 10 * ?MIN_IN_SECS},
+     #table_info{table = mlapi_payment_type,        version = 1, time_to_live = ?DAY_IN_SECS},
+     #table_info{table = mlapi_payment_method,      version = 1, time_to_live = ?DAY_IN_SECS},
+     #table_info{table = mlapi_picture,             version = 1, time_to_live = ?WEEK_IN_SECS},
+     #table_info{table = mlapi_question,            version = 1, time_to_live = 10 * ?MIN_IN_SECS},
+     #table_info{table = mlapi_sale,                version = 1, time_to_live = 10 * ?MIN_IN_SECS},
+     #table_info{table = mlapi_search_result,       version = 1, time_to_live = 3 * ?HOUR_IN_SECS},
+     #table_info{table = mlapi_site,                version = 1, time_to_live = ?MONTH_IN_SECS},
+     #table_info{table = mlapi_state,               version = 1, time_to_live = ?WEEK_IN_SECS},
+     #table_info{table = mlapi_trend,               version = 1, time_to_live = ?HOUR_IN_SECS},
+     #table_info{table = mlapi_user,                version = 1, time_to_live = ?DAY_IN_SECS}
     ].
 
 
 -spec table_info(table()) -> {table_version(), time_to_live()} | undefined.
 table_info(Table) ->
-    case lists:keyfind(Table, 1, tables()) of
-        {Table, Version, TimeToLive} ->
+    case lists:keyfind(Table, #table_info.table, tables()) of
+        #table_info{version = Version, time_to_live = TimeToLive} ->
             {Version, TimeToLive};
         false ->
             undefined
@@ -239,21 +247,21 @@ table_info(Table) ->
 
 -spec table_version(table()) -> table_version().
 table_version(Table) ->
-    case lists:keyfind(Table, 1, tables()) of
-        {Table, Version, _TimeToLive} ->
+    case lists:keyfind(Table, #table_info.table, tables()) of
+        #table_info{version = Version} ->
             Version;
         false ->
             undefined
     end.
 
 
--spec table_ttl(table()) -> time_to_live().
-table_ttl(Table) ->
-    case lists:keyfind(Table, 1, tables()) of
-        {Table, _Version, TimeToLive} ->
+-spec table_time_to_live(table()) -> time_to_live().
+table_time_to_live(Table) ->
+    case lists:keyfind(Table, #table_info.table, tables()) of
+        #table_info{time_to_live = TimeToLive} ->
             TimeToLive;
         false ->
-            mlapi:get_env(cache_ttl)
+            mlapi:get_env(cache_time_to_live)
     end.
 
 -spec last_update_to_datetime(last_update()) -> calendar:datetime().
@@ -280,11 +288,11 @@ application(ApplicationId, Options) ->
              fun (NewOptions) -> mlapi:application(ApplicationId, NewOptions) end).
 
 
--spec catalog_products(mlapi_site_id(), mlapi_catalog_product_filter()) -> mlapi:response().
+-spec catalog_products(mlapi_site_id(), [mlapi_catalog_product_filter()]) -> mlapi:response().
 catalog_products(SiteId, Filter) ->
     catalog_products(SiteId, Filter, []).
 
--spec catalog_products(mlapi_site_id(), mlapi_catalog_product_filter(), [mlapi:option()]) -> mlapi:response().
+-spec catalog_products(mlapi_site_id(), [mlapi_catalog_product_filter()], [mlapi:option()]) -> mlapi:response().
 catalog_products(SiteId, Filter, Options) ->
     get_data(mlapi_catalog_product, mlapi_catalog_product_search, {mlapi:to_binary(SiteId), normalize_filter(Filter)}, Options,
              fun (NewOptions) -> mlapi:catalog_products(SiteId, Filter, NewOptions) end).
@@ -411,11 +419,11 @@ listing_exposure(SiteId, ListingExposureId, Options) ->
              fun (NewOptions) -> mlapi:listing_exposure(SiteId, ListingExposureId, NewOptions) end).
 
 
--spec listing_prices(mlapi_site_id(), mlapi_listing_price_filter()) -> mlapi:response().
+-spec listing_prices(mlapi_site_id(), [mlapi_listing_price_filter()]) -> mlapi:response().
 listing_prices(SiteId, Filter) ->
     listing_prices(SiteId, Filter, []).
 
--spec listing_prices(mlapi_site_id(), mlapi_listing_price_filter(), [mlapi:option()]) -> mlapi:response().
+-spec listing_prices(mlapi_site_id(), [mlapi_listing_price_filter()], [mlapi:option()]) -> mlapi:response().
 listing_prices(SiteId, Filter, Options) ->
     get_data(mlapi_listing_price, mlapi_listing_price, normalize_filter(Filter), Options,
              fun (NewOptions) -> mlapi:listing_prices(SiteId, Filter, NewOptions) end).
@@ -575,11 +583,11 @@ questions(Filter, Options) ->
              fun (NewOptions) -> mlapi:questions(Filter, NewOptions) end).
 
 
--spec trends(mlapi_site_id(), mlapi_trend_filter()) -> mlapi:response().
+-spec trends(mlapi_site_id(), [mlapi_trend_filter()]) -> mlapi:response().
 trends(SiteId, Filter) ->
     trends(SiteId, Filter, []).
 
--spec trends(mlapi_site_id(), mlapi_trend_filter(), [mlapi:option()]) -> mlapi:response().
+-spec trends(mlapi_site_id(), [mlapi_trend_filter()], [mlapi:option()]) -> mlapi:response().
 trends(SiteId, Filter, Options) ->
     get_data(mlapi_trend, mlapi_trend, {SiteId, normalize_filter(Filter)}, Options,
              fun (NewOptions) -> mlapi:trends(SiteId, Filter, NewOptions) end).
@@ -604,32 +612,32 @@ geolocation(IpAddr, Options) ->
              fun (NewOptions) -> mlapi:geolocation(IpAddr, NewOptions) end).
 
 
--spec search(mlapi_site_id(), mlapi_search_filter()) -> mlapi:response().
+-spec search(mlapi_site_id(), [mlapi_search_filter()]) -> mlapi:response().
 search(SiteId, Filter) ->
     search(SiteId, Filter, []).
 
--spec search(mlapi_site_id(), mlapi_search_filter(), [mlapi:option()]) -> mlapi:response().
+-spec search(mlapi_site_id(), [mlapi_search_filter()], [mlapi:option()]) -> mlapi:response().
 search(SiteId, Filter, Options) ->
     get_data(mlapi_search_result, mlapi_search_result, {SiteId, normalize_filter(Filter)}, Options,
              fun (NewOptions) -> mlapi:search(SiteId, Filter, NewOptions) end).
 
 
--spec my_archived_sales(mlapi_access_token(), mlapi_sale_filter()) -> mlapi:response().
+-spec my_archived_sales(mlapi_access_token(), [mlapi_sale_filter()]) -> mlapi:response().
 my_archived_sales(AccessToken, Filter) ->
     my_archived_sales(AccessToken, Filter, []).
 
--spec my_archived_sales(mlapi_access_token(), mlapi_sale_filter(), [mlapi:option()]) -> mlapi:response().
+-spec my_archived_sales(mlapi_access_token(), [mlapi_sale_filter()], [mlapi:option()]) -> mlapi:response().
 my_archived_sales(AccessToken, Filter, Options) ->
     NewFilter = lists:keystore(access_token, 1, Filter, {access_token, AccessToken}),
     get_data(mlapi_sale, mlapi_sale, {my_archived_sales, normalize_filter(NewFilter)}, Options,
              fun (NewOptions) -> mlapi:my_archived_sales(AccessToken, Filter, NewOptions) end).
 
 
--spec my_active_sales(mlapi_access_token(), mlapi_sale_filter()) -> mlapi:response().
+-spec my_active_sales(mlapi_access_token(), [mlapi_sale_filter()]) -> mlapi:response().
 my_active_sales(AccessToken, Filter) ->
     my_active_sales(AccessToken, Filter, []).
 
--spec my_active_sales(mlapi_access_token(), mlapi_sale_filter(), [mlapi:option()]) -> mlapi:response().
+-spec my_active_sales(mlapi_access_token(), [mlapi_sale_filter()], [mlapi:option()]) -> mlapi:response().
 my_active_sales(AccessToken, Filter, Options) ->
     NewFilter = lists:keystore(access_token, 1, Filter, {access_token, AccessToken}),
     get_data(mlapi_sale, mlapi_sale, {my_active_sales, normalize_filter(NewFilter)}, Options,
@@ -773,13 +781,13 @@ cache_entry(Table, Key) ->
     end.
 
 
--spec cache_ttl(table()) -> time_to_live().
-cache_ttl(Table) ->
+-spec cache_time_to_live(table()) -> time_to_live().
+cache_time_to_live(Table) ->
     case mnesia:dirty_read(mlapi_metatable, Table) of
         [#mlapi_metatable{time_to_live = TimeToLive}] ->
             TimeToLive;
         [] ->
-            mlapi:env(cache_ttl, ?DEFAULT_CACHE_TTL)
+            mlapi:get_env(cache_time_to_live, ?DEFAULT_CACHE_TIME_TO_LIVE)
     end.
 
 
@@ -788,12 +796,12 @@ is_cache_valid(_Table, undefined, _CurrentTime) ->
     %% The entry was never updated.
     false;
 is_cache_valid(Table, LastUpdate, CurrentTime) ->
-    LastUpdate + cache_ttl(Table) > CurrentTime.
+    LastUpdate + cache_time_to_live(Table) > CurrentTime.
 
 
 %% @doc Normalizes a question, trend or search filter by converting all the
 %%      values in the key/value pairs to binaries and sorting the property list.
--spec normalize_filter(mlapi_question_filter() | mlapi_trend_filter() | mlapi_search_filter()) -> [{atom(), binary()}].
+-spec normalize_filter([mlapi_question_filter()] | [mlapi_trend_filter()] | [mlapi_search_filter()]) -> [{atom(), binary()}].
 normalize_filter(Filter) when is_list(Filter)->
     normalize_filter(Filter, []).
 

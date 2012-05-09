@@ -45,7 +45,7 @@ search(File, [SiteId], Options) ->
     fetch_paged_response(File, FetchPage, FormatDoc, [{paging_scheme, search} | Options]).
 
 
--spec encode_search_as_csv(mlapi_pager:position(), mlapi:ejson()) -> ok.
+-spec encode_search_as_csv(mlapi_pager:position(), mlapi:ejson()) -> iolist().
 encode_search_as_csv(Position, Doc) when Position =:= first; Position =:= {first, last} ->
     Headers = [
                <<"ID">>, <<"Cantidad Vendida">>, <<"Precio">>, <<"Moneda">>,
@@ -84,7 +84,7 @@ my_orders(File, [], Options) ->
     fetch_paged_response(File, FetchPage, FormatDoc, [{paging_scheme, orders} | Options]).
 
 
--spec encode_order_as_csv(mlapi_pager:position(), mlapi:ejson()) -> ok.
+-spec encode_order_as_csv(mlapi_pager:position(), mlapi:ejson()) -> iolist().
 encode_order_as_csv(Position, Doc) when Position =:= first; Position =:= {first, last} ->
     Headers = [
                <<"ID">>, <<"Fecha Oferta">>,
@@ -141,7 +141,7 @@ encode_ejson(last, Doc) ->
     [ejson:encode(Doc), <<"\n]\n">>].
 
 
--spec fetch_paged_response(file:io_device(), FetchPage :: fun(), FormatDoc :: fun(), [option()]) -> ok | {error, Reason :: term()}.
+-spec fetch_paged_response(file:io_device(), FetchPage :: fun(), FormatDoc :: fun(), [option()]) -> ok | mlapi:error().
 fetch_paged_response(File, FetchPage, FormatDoc, Options) when is_function(FetchPage), is_function(FormatDoc) ->
     PagingScheme = proplists:get_value(paging_scheme, Options),
     Offset       = proplists:get_value(offset, Options, ?DEFAULT_OFFSET),
@@ -150,7 +150,7 @@ fetch_paged_response(File, FetchPage, FormatDoc, Options) when is_function(Fetch
     fetch_pages(File, Pager, FormatDoc).
 
 
--spec fetch_pages(file:io_device(), Pager :: pid(), FormatDoc :: fun()) -> ok | {error, Reason :: term()}.
+-spec fetch_pages(file:io_device(), Pager :: pid(), FormatDoc :: fun()) -> ok | mlapi:error().
 fetch_pages(File, Pager, FormatDoc) ->
     case mlapi_pager:next(Pager) of
         {error, _Reason} = Error ->

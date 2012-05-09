@@ -146,10 +146,9 @@ code_change(_OldVsn, State, _Extra) ->
 expired_keys(Table) ->
     Now = mlapi_cache:current_time_in_gregorian_seconds(),
     TimeToLive = time_to_live(Table),
-    MatchHead = #mlapi_cache{key = '$1', last_update = '$2', _ = '_'},
     Guard = {'<', '$2', Now - TimeToLive},
     Result = '$1',
-    mnesia:dirty_select(Table, [{MatchHead, [Guard], [Result]}]).
+    mnesia:dirty_select(Table, [{#mlapi_cache{key = '$1', last_update = '$2', _ = '_'}, [Guard], [Result]}]).
 
 
 -spec time_to_live(table()) -> time_to_live().

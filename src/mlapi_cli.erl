@@ -22,8 +22,6 @@
 -define(DEFAULT_LIMIT, 50).
 -define(DEFAULT_FORMAT, csv).
 
--type page_position()                           :: first | next | last | undefined.
-
 
 exec(CmdLine) ->
     OptSpecList = option_spec_list(),
@@ -102,7 +100,7 @@ fetch_pages(Pager, FormatLine, Acc0) ->
     end.
 
 
--spec format_lines(page_position(), FormatLine :: fun(), Lines :: list, Acc0 :: term()) -> iolist().
+-spec format_lines(mlapi_pager:page_position(), FormatLine :: fun(), Lines :: list, Acc0 :: term()) -> iolist().
 format_lines(Position, FormatLine, [Line | Tail], Acc) ->
     format_lines(Position, FormatLine, Tail, [FormatLine(Position, Line) | Acc]);
 format_lines(_Position, _FormatLine, [], Acc) ->
@@ -284,8 +282,10 @@ export_orders() ->
                           Filename = TargetDir ++ lists:flatten(io_lib:format("~s_~4.4.0w-~2.2.0w-~2.2.0w_~2.2.0w~2.2.0w.",
                                                                               [Nickname, Year, Month, Day, Hour, Min])),
                           io:format("Exporting orders for ~s to ~s~n", [Nickname, TargetDir]),
-                          mlapi_export:search(Filename ++ "json", [<<"MLA">>], [{nickname, Nickname}, {format, json}, {refresh, true}]),
-                          mlapi_export:search(Filename ++ "csv", [<<"MLA">>], [{nickname, Nickname}, {format, csv}])
+                          ok = mlapi_export:search(Filename ++ "json", [<<"MLA">>],
+                                                   [{nickname, Nickname}, {format, json}, {refresh, true}]),
+                          ok = mlapi_export:search(Filename ++ "csv", [<<"MLA">>],
+                                                   [{nickname, Nickname}, {format, csv}])
                   end, Sellers).
 
 

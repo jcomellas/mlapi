@@ -22,7 +22,7 @@
           table                                             :: table(),
           version                                           :: table_version(),
           time_to_live                                      :: time_to_live(),    %% in seconds
-          last_update                                       :: calendar:datetime(),
+          last_update                                       :: non_neg_integer(),
           reason                                            :: any()
          }).
 

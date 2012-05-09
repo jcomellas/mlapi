@@ -20,6 +20,7 @@
 %% Application callbacks
 %% ===================================================================
 
+-spec start(application:start_type(), [term()]) -> {ok, pid()}.
 start(_StartType, _StartArgs) ->
     %% Initialize the tables used for the Mnesia cache.
     mlapi_cache:init(mlapi:get_env(cache_nodes, [node()])),

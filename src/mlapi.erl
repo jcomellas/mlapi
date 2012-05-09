@@ -66,12 +66,13 @@
 -type ejson_key()         :: binary().
 -type ejson_value()       :: binary() | boolean() | integer() | float() | 'null'.
 -type ejson()             :: {[{ejson_key(), ejson_value() | ejson()}]}.
--type proplist()          :: [proplists:property()].
+-type proplist()          :: [{Key :: atom(), Value :: term()}].
 -type format()            :: ejson | proplist | record | dict | orddict | raw.
 -type date_format()       :: iso8601 | tuple | unix_epoch.
 -type option()            :: {format, format()} | {record, RecordName :: atom()} |
                              {date_format, date_format()} | {refresh, boolean()}.
--type response()          :: binary() | ejson() | proplist() | orddict:orddict() | tuple() | error().
+-type response_element()  :: ejson() | proplist() | tuple() | dict() | orddict:orddict() | binary().
+-type response()          :: response_element() | [response_element()] | error().
 
 
 -export_type([url_path/0, ejson/0, option/0, format/0, response/0, error/0]).
@@ -209,17 +210,18 @@ application(ApplicationId, Options) ->
     do_get(?APPLICATIONS "/" ++ to_string(ApplicationId), ?SET_RECORD(mlapi_application, Options)).
 
 
--spec catalog_products(mlapi_site_id(), mlapi_catalog_product_filter()) -> response().
+-spec catalog_products(mlapi_site_id(), [mlapi_catalog_product_filter()]) -> response().
 catalog_products(SiteId, Filter) ->
     catalog_products(SiteId, Filter, []).
 
--spec catalog_products(mlapi_site_id(), mlapi_catalog_product_filter(), [option()]) -> response().
+-spec catalog_products(mlapi_site_id(), [mlapi_catalog_product_filter()], [option()]) -> response().
 catalog_products(SiteId, Filter, Options) ->
     do_get(?SITES "/" ++ to_string(SiteId) ++ ?CATALOG_PRODUCTS ?SEARCH ++ catalog_products_filter(Filter),
             ?SET_RECORD(mlapi_catalog_product_search, Options)).
 
-catalog_products_filter([] = Filter) ->
-    Filter;
+-spec catalog_products_filter([mlapi_catalog_product_filter()]) -> string().
+catalog_products_filter([]) ->
+    "";
 catalog_products_filter(Filter) ->
     catalog_products_filter(Filter, []).
 
@@ -321,8 +323,8 @@ currency_conversion(Filter, Options) ->
     do_get(?CURRENCY_CONVERSIONS ?SEARCH ++ currency_conversion_filter(Filter),
             ?SET_RECORD(mlapi_currency_conversion, Options)).
 
-currency_conversion_filter([] = Filter) ->
-    Filter;
+currency_conversion_filter([]) ->
+    "";
 currency_conversion_filter(Filter) ->
     currency_conversion_filter(Filter, []).
 
@@ -356,17 +358,18 @@ listing_exposure(SiteId, ListingExposureId, Options) ->
             ?SET_RECORD(mlapi_listing_exposure, Options)).
 
 
--spec listing_prices(mlapi_site_id(), mlapi_listing_price_filter()) -> response().
+-spec listing_prices(mlapi_site_id(), [mlapi_listing_price_filter()]) -> response().
 listing_prices(SiteId, Filter) ->
     listing_prices(SiteId, Filter, []).
 
--spec listing_prices(mlapi_site_id(), mlapi_listing_price_filter(), [option()]) -> response().
+-spec listing_prices(mlapi_site_id(), [mlapi_listing_price_filter()], [option()]) -> response().
 listing_prices(SiteId, Filter, Options) ->
     do_get(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_PRICES ++ listing_prices_filter(Filter),
             ?SET_RECORD(mlapi_listing_price, Options)).
 
-listing_prices_filter([] = Filter) ->
-    Filter;
+-spec listing_prices_filter([mlapi_listing_price_filter()]) -> string().
+listing_prices_filter([]) ->
+    "";
 listing_prices_filter(Filter) ->
     listing_prices_filter(Filter, []).
 
@@ -526,8 +529,8 @@ questions(Filter) ->
 questions(Filter, Options) ->
     do_get(?QUESTIONS ?SEARCH ++ questions_filter(Filter), ?SET_RECORD(mlapi_question_result, Options)).
 
-questions_filter([] = Filter) ->
-    Filter;
+questions_filter([]) ->
+    "";
 questions_filter(Filter) ->
     questions_filter(Filter, []).
 
@@ -560,16 +563,17 @@ delete_question(_AccessToken, QuestionId) ->
 %%     do_post(?MY ?QUESTIONS ?HIDDEN, [{item_id, ItemId}], [{format, ejson}]).
 
 
--spec trends(mlapi_site_id(), mlapi_trend_filter()) -> response().
+-spec trends(mlapi_site_id(), [mlapi_trend_filter()]) -> response().
 trends(SiteId, Filter) ->
     trends(SiteId, Filter, []).
 
--spec trends(mlapi_site_id(), mlapi_trend_filter(), [option()]) -> response().
+-spec trends(mlapi_site_id(), [mlapi_trend_filter()], [option()]) -> response().
 trends(SiteId, Filter, Options) when is_list(Filter), is_list(Options) ->
     do_get(?SITES "/" ++ SiteId ++ ?TRENDS ?SEARCH ++ trends_filter(Filter), ?SET_RECORD(mlapi_trend, Options)).
 
-trends_filter([] = Filter) ->
-    Filter;
+-spec trends_filter([mlapi_trend_filter()]) -> string().
+trends_filter([]) ->
+    "";
 trends_filter(Filter) ->
     trends_filter(Filter, []).
 
@@ -598,19 +602,20 @@ geolocation(IpAddr, Options) ->
     do_get(?GEOLOCATION "/ip/" ++ to_string(IpAddr), ?SET_RECORD(mlapi_geolocation, Options)).
 
 
--spec search(mlapi_site_id(), mlapi_search_filter()) -> response().
+-spec search(mlapi_site_id(), [mlapi_search_filter()]) -> response().
 search(SiteId, Filter) ->
     search(SiteId, Filter, []).
 
--spec search(mlapi_site_id(), mlapi_search_filter(), [option()]) -> response().
+-spec search(mlapi_site_id(), [mlapi_search_filter()], [option()]) -> response().
 search(SiteId, Filter, Options) ->
     do_get(?SITES "/" ++ to_string(SiteId) ++ ?SEARCH ++ search_filter(Filter), ?SET_RECORD(mlapi_search_result, Options)).
 
-search_filter([] = Filter) ->
-    Filter;
+search_filter([]) ->
+    "";
 search_filter(Filter) ->
     search_filter(Filter, []).
 
+-spec search_filter([mlapi_search_filter()]) -> string().
 search_filter([{nickname, Nickname} | Tail], Acc) ->
     search_filter(Tail, ["nickname=" ++ url_encode(Nickname) | Acc]);
 search_filter([{seller_id, SellerId} | Tail], Acc) ->
@@ -627,28 +632,27 @@ search_filter([], Acc) ->
     "?" ++ string:join(lists:reverse(Acc), "&").
 
 
-
--spec my_archived_sales(mlapi_access_token(), mlapi_sale_filter()) -> response().
+-spec my_archived_sales(mlapi_access_token(), [mlapi_sale_filter()]) -> response().
 my_archived_sales(AccessToken, Filter) ->
     my_archived_sales(AccessToken, Filter, []).
 
--spec my_archived_sales(mlapi_access_token(), mlapi_sale_filter(), [option()]) -> response().
+-spec my_archived_sales(mlapi_access_token(), [mlapi_sale_filter()], [option()]) -> response().
 my_archived_sales(AccessToken, Filter, Options) ->
     NewFilter = lists:keystore(access_token, 1, Filter, {access_token, AccessToken}),
     do_get(?USERS "/me" ?SALES "/archived" ++ sales_filter(NewFilter), ?SET_RECORD(mlapi_sale, Options)).
 
--spec my_active_sales(mlapi_access_token(), mlapi_sale_filter()) -> response().
+-spec my_active_sales(mlapi_access_token(), [mlapi_sale_filter()]) -> response().
 my_active_sales(AccessToken, Filter) ->
     my_active_sales(AccessToken, Filter, []).
 
--spec my_active_sales(mlapi_access_token(), mlapi_sale_filter(), [option()]) -> response().
+-spec my_active_sales(mlapi_access_token(), [mlapi_sale_filter()], [option()]) -> response().
 my_active_sales(AccessToken, Filter, Options) ->
     NewFilter = lists:keystore(access_token, 1, Filter, {access_token, AccessToken}),
     do_get(?USERS "/me" ?SALES "/active" ++ sales_filter(NewFilter), ?SET_RECORD(mlapi_sale, Options)).
 
-
-sales_filter([] = Filter) ->
-    Filter;
+-spec sales_filter([mlapi_sale_filter()]) -> string().
+sales_filter([]) ->
+    "";
 sales_filter(Filter) ->
     sales_filter(Filter, []).
 
@@ -810,7 +814,7 @@ do_delete(Path, _Options) ->
 
 
 -spec ejson_to_term(ejson(), RecordName :: atom(), format(), date_format()) ->
-                           ejson() | orddict:orddict() | proplist() | tuple() | binary().
+                           ejson() | proplist() | tuple() | dict() | orddict:orddict() | binary().
 ejson_to_term(Doc, _RecordName, ejson, _DateFormat) ->
     Doc;
 ejson_to_term(Doc, RecordName, proplist, DateFormat) ->
@@ -894,8 +898,8 @@ ejson_to_orddict(Elements, RecordName, DateFormat) when is_list(Elements) ->
                   end, [], Elements)).
 
 -spec ejson_list_to_term(RecordName :: atom(), #json_helper{}, date_format(),
-                         [{binary(), any()}], tuple() | orddict:orddict() | proplist()) ->
-                                tuple() | orddict:orddict() | proplist().
+                         [{binary(), any()}], tuple() | proplist() | dict() | orddict:orddict()) ->
+                                proplist() | tuple() | dict() | orddict:orddict().
 ejson_list_to_term(RecordName, JsonHelperFun, DateFormat, [{Name, Value} | Tail], Acc) ->
     FieldName = binary_to_existing_atom(Name, utf8),
     %% Convert the value to a record if possible
