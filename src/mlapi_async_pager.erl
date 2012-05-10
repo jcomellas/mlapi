@@ -128,7 +128,7 @@ handle_cast(next, State) ->
                     Offset = kvc:path(<<"offset">>, Paging),
                     Limit = kvc:path(<<"limit">>, Paging),
                     Position = mlapi_pager:page_position(State, Offset, Total, Limit),
-                    io:format("Current paging node (~p): ~p~n", [Position, Paging]),
+                    %% io:format("Current paging node (~p): ~p~n", [Position, Paging]),
                     %% Return the result to the owner as soon as possible
                     (State#state.callback)(Position, Page),
                     if
