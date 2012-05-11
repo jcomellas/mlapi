@@ -242,7 +242,6 @@ export_orders() ->
                "4KRC",
                "ARKAAD",
                "ARMYTECH",
-               "BAIRES INSUMOS",
                "BLUE SKY_COMPUTACION",
                "COMPUDATASOFT",
                "COMPU-DELIVERY",
