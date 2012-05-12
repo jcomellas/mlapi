@@ -274,18 +274,31 @@ export_orders() ->
                "VIOLETA-DIGITAL",
                "XELLERS"
               ],
+
     {{Year, Month, Day}, {Hour, Min, _Sec}} = calendar:local_time(),
     TargetDir = lists:flatten(io_lib:format("data/~4.4.0w-~2.2.0w/~2.2.0w/", [Year, Month, Day])),
+    Suffix = lists:flatten(io_lib:format("_~4.4.0w-~2.2.0w-~2.2.0w_~2.2.0w~2.2.0w.", [Year, Month, Day, Hour, Min])),
     ok = filelib:ensure_dir(TargetDir),
+
+    io:format("Exporting orders to ~s~n", [TargetDir]),
     lists:foreach(fun (Nickname) ->
-                          Filename = TargetDir ++ lists:flatten(io_lib:format("~s_~4.4.0w-~2.2.0w-~2.2.0w_~2.2.0w~2.2.0w.",
-                                                                              [Nickname, Year, Month, Day, Hour, Min])),
-                          io:format("Exporting orders for ~s to ~s~n", [Nickname, TargetDir]),
-                          ok = mlapi_export:search(Filename ++ "json", [<<"MLA">>],
-                                                   [{nickname, Nickname}, {format, json}, {refresh, true}]),
-                          ok = mlapi_export:search(Filename ++ "csv", [<<"MLA">>],
-                                                   [{nickname, Nickname}, {format, csv}])
+                          Filename = TargetDir ++ Nickname ++ Suffix,
+                          export_user_orders(Nickname, Filename, [{"json", [{format, json}, {refresh, true}]},
+                                                                  {"csv", [{format, csv}]}])
                   end, Sellers).
+
+export_user_orders(Nickname, Filename, [{Extension, Options} | Tail]) ->
+    io:format("  ~s (~s) ", [Nickname, Extension]),
+    case mlapi_export:search(Filename ++ Extension, [<<"MLA">>], [{nickname, Nickname} | Options]) of
+        ok ->
+            io:format("ok~n", []),
+            export_user_orders(Nickname, Filename, Tail);
+        {error, {Reason, _Doc}} = Error ->
+            io:format("~s~n", [Reason]),
+            Error
+    end;
+export_user_orders(_Nickname, _Filename, []) ->
+    ok.
 
 
 benchmark(Fun, N) ->
