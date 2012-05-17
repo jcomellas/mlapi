@@ -80,8 +80,12 @@
 -define(APP, mlapi).
 -define(PROTOCOL, "https").
 -define(HOST, "api.mercadolibre.com").
+
+-define(HEADER_ACCEPT, "Accept").
 -define(HEADER_CONTENT_TYPE, "Content-Type").
+
 -define(MIME_TYPE_JSON, "application/json").
+
 %% Days between Jan 1, 0001 (beginning of the Gregorian calendar) and Jan 1, 1970 (Unix epoch) in seconds.
 %% 62167219200 = calendar:datetime_to_gregorian_seconds({{1970,1,1},{0,0,0}}).
 -define(SECONDS_TO_UNIX_EPOCH, 62167219200).
@@ -769,8 +773,8 @@ do_get(Path) ->
 -spec do_get(url_path(), [option()]) -> response().
 do_get(Path, Options) ->
     Url = url_from_path(Path),
-    case ibrowse:send_req(Url, [{'Accept', ?MIME_TYPE_JSON}], get, [], [{response_format, binary}]) of
-        {ok, "200", Headers, Body} ->
+    case ibrowse:send_req(Url, [{?HEADER_ACCEPT, ?MIME_TYPE_JSON}], get, [], [{response_format, binary}]) of
+        {ok, Code, Headers, Body} ->
             case lists:keyfind(?HEADER_CONTENT_TYPE, 1, Headers) of
                 {_ContentType, ?MIME_TYPE_JSON ++ _CharSet} ->
                     case proplists:get_value(format, Options, get_env(format, ejson)) of
@@ -779,7 +783,17 @@ do_get(Path, Options) ->
                         Format ->
                             DateFormat = proplists:get_value(date_format, Options, get_env(date_format, iso8601)),
                             try
-                                ejson_to_term(ejson:decode(Body), proplists:get_value(record, Options), Format, DateFormat)
+                                DecodedBody = ejson:decode(Body),
+                                case Code of
+                                    %% Only 2xx HTTP response codes are considered successful (is this correct?)
+                                    "2" ++ _Tail ->
+                                        ejson_to_term(DecodedBody, proplists:get_value(record, Options), Format, DateFormat);
+                                    _  ->
+                                        %% In case of errors, return the reason corresponding to the HTTP response code and
+                                        %% the error document returned by MLAPI.
+                                        ErrorInfo = ejson_to_term(DecodedBody, mlapi_error, Format, DateFormat),
+                                        {error, {response_reason(Code), ErrorInfo}}
+                                end
                             catch
                                 throw:Reason ->
                                     {error, Reason}
@@ -788,8 +802,6 @@ do_get(Path, Options) ->
                 InvalidContentType ->
                     {error, {invalid_content_type, InvalidContentType}}
             end;
-        {ok, Code, _Headers, _Body} ->
-            {error, response_reason(Code)};
 
         {error, _Reason} = Error ->
             Error

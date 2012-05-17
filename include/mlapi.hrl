@@ -126,6 +126,13 @@
                                              {shipping_status, mlapi_shipping_status_id()}.
 
 
+%% Generic error response
+-record(mlapi_error, {
+          message                                   :: binary(),
+          error                                     :: binary(),
+          status                                    :: non_neg_integer(),
+          cause                                     :: [term()]
+         }).
 
 -record(mlapi_application, {
           id                                        :: mlapi_application_id(),
