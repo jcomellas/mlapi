@@ -62,15 +62,19 @@
 -compile([{parse_transform, dynarec}]).
 
 -type url_path()          :: string().
+-type url_arg()           :: string() | binary().
 -type error()             :: {error, Reason :: atom() | {atom(), any()}}.
+-type json()              :: binary().
 -type ejson_key()         :: binary().
 -type ejson_value()       :: binary() | boolean() | integer() | float() | 'null'.
 -type ejson()             :: {[{ejson_key(), ejson_value() | ejson()}]}.
 -type proplist()          :: [{Key :: atom(), Value :: term()}].
 -type format()            :: ejson | proplist | record | dict | orddict | raw.
+-type attribute()         :: atom() | string() | binary().
 -type date_format()       :: iso8601 | tuple | unix_epoch.
 -type option()            :: {format, format()} | {record, RecordName :: atom()} |
-                             {date_format, date_format()} | {refresh, boolean()}.
+                             {attributes, [attribute()]} | {date_format, date_format()} |
+                             {refresh, boolean()}.
 -type response_element()  :: ejson() | proplist() | tuple() | dict() | orddict:orddict() | binary().
 -type response()          :: response_element() | [response_element()] | error().
 
@@ -214,29 +218,27 @@ application(ApplicationId, Options) ->
     do_get(?APPLICATIONS "/" ++ to_string(ApplicationId), ?SET_RECORD(mlapi_application, Options)).
 
 
--spec catalog_products(mlapi_site_id(), [mlapi_catalog_product_filter()]) -> response().
+-spec catalog_products(mlapi_site_id(), [mlapi_catalog_product_arg()]) -> response().
 catalog_products(SiteId, Filter) ->
     catalog_products(SiteId, Filter, []).
 
--spec catalog_products(mlapi_site_id(), [mlapi_catalog_product_filter()], [option()]) -> response().
+-spec catalog_products(mlapi_site_id(), [mlapi_catalog_product_arg()], [option()]) -> response().
 catalog_products(SiteId, Filter, Options) ->
-    do_get(?SITES "/" ++ to_string(SiteId) ++ ?CATALOG_PRODUCTS ?SEARCH ++ catalog_products_filter(Filter),
-            ?SET_RECORD(mlapi_catalog_product_search, Options)).
+    do_get(?SITES "/" ++ to_string(SiteId) ++ ?CATALOG_PRODUCTS ?SEARCH, catalog_products_args(Filter),
+           ?SET_RECORD(mlapi_catalog_product_search, Options)).
 
--spec catalog_products_filter([mlapi_catalog_product_filter()]) -> string().
-catalog_products_filter([]) ->
-    "";
-catalog_products_filter(Filter) ->
-    catalog_products_filter(Filter, []).
+-spec catalog_products_args([mlapi_catalog_product_arg()]) -> string().
+catalog_products_args(Filter) ->
+    catalog_products_args(Filter, []).
 
-catalog_products_filter([{domain, DomainId} | Tail], Acc) ->
-    catalog_products_filter(Tail, ["domain=" ++ to_string(DomainId) | Acc]);
-catalog_products_filter([{offset, Offset} | Tail], Acc) ->
-    catalog_products_filter(Tail, ["offset=" ++ to_string(Offset) | Acc]);
-catalog_products_filter([{limit, Limit} | Tail], Acc) ->
-    catalog_products_filter(Tail, ["limit=" ++ to_string(Limit) | Acc]);
-catalog_products_filter([], Acc) ->
-    "?" ++ string:join(lists:reverse(Acc), "&").
+catalog_products_args([{domain, DomainId} | Tail], Acc) ->
+    catalog_products_args(Tail, ["domain=" ++ to_string(DomainId) | Acc]);
+catalog_products_args([{offset, Offset} | Tail], Acc) ->
+    catalog_products_args(Tail, ["offset=" ++ to_string(Offset) | Acc]);
+catalog_products_args([{limit, Limit} | Tail], Acc) ->
+    catalog_products_args(Tail, ["limit=" ++ to_string(Limit) | Acc]);
+catalog_products_args([], Acc) ->
+    lists:reverse(Acc).
 
 
 -spec catalog_product(mlapi_site_id(), mlapi_catalog_product_id()) -> response().
@@ -246,7 +248,7 @@ catalog_product(SiteId, CatalogProductId) ->
 -spec catalog_product(mlapi_site_id(), mlapi_catalog_product_id(), [option()]) -> response().
 catalog_product(SiteId, CatalogProductId, Options) ->
     do_get(?SITES "/" ++ to_string(SiteId) ++ ?CATALOG_PRODUCTS "/" ++ to_string(CatalogProductId),
-            ?SET_RECORD(mlapi_catalog_product, Options)).
+           ?SET_RECORD(mlapi_catalog_product, Options)).
 
 
 -spec sites() -> response().
@@ -318,30 +320,28 @@ currency(CurrencyId, Options) ->
     do_get(?CURRENCIES "/" ++ to_string(CurrencyId), ?SET_RECORD(mlapi_currency_ext, Options)).
 
 
--spec currency_conversion([mlapi_currency_conversion_filter()]) -> response().
+-spec currency_conversion([mlapi_currency_conversion_arg()]) -> response().
 currency_conversion(Filter) ->
     currency_conversion(Filter, []).
 
--spec currency_conversion([mlapi_currency_conversion_filter()], [option()]) -> response().
+-spec currency_conversion([mlapi_currency_conversion_arg()], [option()]) -> response().
 currency_conversion(Filter, Options) ->
-    do_get(?CURRENCY_CONVERSIONS ?SEARCH ++ currency_conversion_filter(Filter),
+    do_get(?CURRENCY_CONVERSIONS ?SEARCH, currency_conversion_args(Filter),
             ?SET_RECORD(mlapi_currency_conversion, Options)).
 
-currency_conversion_filter([]) ->
-    "";
-currency_conversion_filter(Filter) ->
-    currency_conversion_filter(Filter, []).
+currency_conversion_args(Filter) ->
+    currency_conversion_args(Filter, []).
 
-currency_conversion_filter([{from, FromCurrencyId} | Tail], Acc) ->
-    currency_conversion_filter(Tail, ["from=" ++ to_string(FromCurrencyId) | Acc]);
-currency_conversion_filter([{to, ToCurrencyId} | Tail], Acc) ->
-    currency_conversion_filter(Tail, ["to=" ++ to_string(ToCurrencyId) | Acc]);
-currency_conversion_filter([{date, {{Year, Month, Day}, {Hour, Min, _Sec}}} | Tail], Acc) ->
+currency_conversion_args([{from, FromCurrencyId} | Tail], Acc) ->
+    currency_conversion_args(Tail, ["from=" ++ to_string(FromCurrencyId) | Acc]);
+currency_conversion_args([{to, ToCurrencyId} | Tail], Acc) ->
+    currency_conversion_args(Tail, ["to=" ++ to_string(ToCurrencyId) | Acc]);
+currency_conversion_args([{date, {{Year, Month, Day}, {Hour, Min, _Sec}}} | Tail], Acc) ->
     %% The conversion date must be formatted as: dd/MM/yyyy-HH:mm
     Arg = io_lib:format("date=~2.2.0w/~2.2.0w/~4.4.0w-~2.2.0w:~2.2.0w", [Day, Month, Year, Hour, Min]),
-    currency_conversion_filter(Tail, [Arg | Acc]);
-currency_conversion_filter([], Acc) ->
-    "?" ++ string:join(lists:reverse(Acc), "&").
+    currency_conversion_args(Tail, [Arg | Acc]);
+currency_conversion_args([], Acc) ->
+    lists:reverse(Acc).
 
 
 -spec listing_exposures(mlapi_site_id()) -> response().
@@ -362,33 +362,31 @@ listing_exposure(SiteId, ListingExposureId, Options) ->
             ?SET_RECORD(mlapi_listing_exposure, Options)).
 
 
--spec listing_prices(mlapi_site_id(), [mlapi_listing_price_filter()]) -> response().
+-spec listing_prices(mlapi_site_id(), [mlapi_listing_price_arg()]) -> response().
 listing_prices(SiteId, Filter) ->
     listing_prices(SiteId, Filter, []).
 
--spec listing_prices(mlapi_site_id(), [mlapi_listing_price_filter()], [option()]) -> response().
+-spec listing_prices(mlapi_site_id(), [mlapi_listing_price_arg()], [option()]) -> response().
 listing_prices(SiteId, Filter, Options) ->
-    do_get(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_PRICES ++ listing_prices_filter(Filter),
+    do_get(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_PRICES, listing_prices_args(Filter),
             ?SET_RECORD(mlapi_listing_price, Options)).
 
--spec listing_prices_filter([mlapi_listing_price_filter()]) -> string().
-listing_prices_filter([]) ->
-    "";
-listing_prices_filter(Filter) ->
-    listing_prices_filter(Filter, []).
+-spec listing_prices_args([mlapi_listing_price_args()]) -> string().
+listing_prices_args(Filter) ->
+    listing_prices_args(Filter, []).
 
-listing_prices_filter([{price, Price} | Tail], Acc) ->
-    listing_prices_filter(Tail, ["price=" ++ to_string(Price) | Acc]);
-listing_prices_filter([{listing_type_id, ListingTypeId} | Tail], Acc) ->
-    listing_prices_filter(Tail, ["listing_type_id=" ++ to_string(ListingTypeId) | Acc]);
-listing_prices_filter([{quantity, Quantity} | Tail], Acc) ->
-    listing_prices_filter(Tail, ["quantity=" ++ to_string(Quantity) | Acc]);
-listing_prices_filter([{category_id, CategoryId} | Tail], Acc) ->
-    listing_prices_filter(Tail, ["category_id=" ++ to_string(CategoryId) | Acc]);
-listing_prices_filter([{currency_id, CurrencyId} | Tail], Acc) ->
-    listing_prices_filter(Tail, ["cy_id=" ++ to_string(CurrencyId) | Acc]);
-listing_prices_filter([], Acc) ->
-    "?" ++ string:join(lists:reverse(Acc), "&").
+listing_prices_args([{price, Price} | Tail], Acc) ->
+    listing_prices_args(Tail, ["price=" ++ to_string(Price) | Acc]);
+listing_prices_args([{listing_type_id, ListingTypeId} | Tail], Acc) ->
+    listing_prices_args(Tail, ["listing_type_id=" ++ to_string(ListingTypeId) | Acc]);
+listing_prices_args([{quantity, Quantity} | Tail], Acc) ->
+    listing_prices_args(Tail, ["quantity=" ++ to_string(Quantity) | Acc]);
+listing_prices_args([{category_id, CategoryId} | Tail], Acc) ->
+    listing_prices_args(Tail, ["category_id=" ++ to_string(CategoryId) | Acc]);
+listing_prices_args([{currency_id, CurrencyId} | Tail], Acc) ->
+    listing_prices_args(Tail, ["cy_id=" ++ to_string(CurrencyId) | Acc]);
+listing_prices_args([], Acc) ->
+    lists:reverse(Acc).
 
 
 -spec listing_types(mlapi_site_id()) -> response().
@@ -525,33 +523,31 @@ question(QuestionId, Options) ->
     do_get(?QUESTIONS "/" ++ to_string(QuestionId), ?SET_RECORD(mlapi_question, Options)).
 
 
--spec questions([mlapi_question_filter()]) -> response().
+-spec questions([mlapi_question_arg()]) -> response().
 questions(Filter) ->
     questions(Filter, []).
 
--spec questions([mlapi_question_filter()], [option()]) -> response().
+-spec questions([mlapi_question_arg()], [option()]) -> response().
 questions(Filter, Options) ->
-    do_get(?QUESTIONS ?SEARCH ++ questions_filter(Filter), ?SET_RECORD(mlapi_question_result, Options)).
+    do_get(?QUESTIONS ?SEARCH, questions_args(Filter), ?SET_RECORD(mlapi_question_result, Options)).
 
-questions_filter([]) ->
-    "";
-questions_filter(Filter) ->
-    questions_filter(Filter, []).
+questions_args(Filter) ->
+    questions_args(Filter, []).
 
-questions_filter([{access_token, AccessToken} | Tail], Acc) ->
-    questions_filter(Tail, ["access_token=" ++ to_string(AccessToken) | Acc]);
-questions_filter([{item, ItemId} | Tail], Acc) ->
-    questions_filter(Tail, ["item=" ++ to_string(ItemId) | Acc]);
-questions_filter([{period, Period} | Tail], Acc) ->
-    questions_filter(Tail, ["period=" ++ to_string(Period) | Acc]);
-questions_filter([{status, Status} | Tail], Acc) ->
-    questions_filter(Tail, ["status=" ++ to_string(Status) | Acc]);
-questions_filter([{from, UserId} | Tail], Acc) ->
-    questions_filter(Tail, ["from=" ++ to_string(UserId) | Acc]);
-questions_filter([{seller, UserId} | Tail], Acc) ->
-    questions_filter(Tail, ["seller=" ++ to_string(UserId) | Acc]);
-questions_filter([], Acc) ->
-    "?" ++ string:join(lists:reverse(Acc), "&").
+questions_args([{access_token, AccessToken} | Tail], Acc) ->
+    questions_args(Tail, ["access_token=" ++ to_string(AccessToken) | Acc]);
+questions_args([{item, ItemId} | Tail], Acc) ->
+    questions_args(Tail, ["item=" ++ to_string(ItemId) | Acc]);
+questions_args([{period, Period} | Tail], Acc) ->
+    questions_args(Tail, ["period=" ++ to_string(Period) | Acc]);
+questions_args([{status, Status} | Tail], Acc) ->
+    questions_args(Tail, ["status=" ++ to_string(Status) | Acc]);
+questions_args([{from, UserId} | Tail], Acc) ->
+    questions_args(Tail, ["from=" ++ to_string(UserId) | Acc]);
+questions_args([{seller, UserId} | Tail], Acc) ->
+    questions_args(Tail, ["seller=" ++ to_string(UserId) | Acc]);
+questions_args([], Acc) ->
+    lists:reverse(Acc).
 
 
 delete_question(_AccessToken, QuestionId) ->
@@ -567,26 +563,24 @@ delete_question(_AccessToken, QuestionId) ->
 %%     do_post(?MY ?QUESTIONS ?HIDDEN, [{item_id, ItemId}], [{format, ejson}]).
 
 
--spec trends(mlapi_site_id(), [mlapi_trend_filter()]) -> response().
+-spec trends(mlapi_site_id(), [mlapi_trend_arg()]) -> response().
 trends(SiteId, Filter) ->
     trends(SiteId, Filter, []).
 
--spec trends(mlapi_site_id(), [mlapi_trend_filter()], [option()]) -> response().
+-spec trends(mlapi_site_id(), [mlapi_trend_arg()], [option()]) -> response().
 trends(SiteId, Filter, Options) when is_list(Filter), is_list(Options) ->
-    do_get(?SITES "/" ++ SiteId ++ ?TRENDS ?SEARCH ++ trends_filter(Filter), ?SET_RECORD(mlapi_trend, Options)).
+    do_get(?SITES "/" ++ SiteId ++ ?TRENDS ?SEARCH, trends_args(Filter), ?SET_RECORD(mlapi_trend, Options)).
 
--spec trends_filter([mlapi_trend_filter()]) -> string().
-trends_filter([]) ->
-    "";
-trends_filter(Filter) ->
-    trends_filter(Filter, []).
+-spec trends_args([mlapi_trend_arg()]) -> string().
+trends_args(Filter) ->
+    trends_args(Filter, []).
 
-trends_filter([{category, CategoryId} | Tail], Acc) ->
-    trends_filter(Tail, ["category=" ++ to_string(CategoryId) | Acc]);
-trends_filter([{limit, Limit} | Tail], Acc) ->
-    trends_filter(Tail, ["limit=" ++ to_string(Limit) | Acc]);
-trends_filter([], Acc) ->
-    "?" ++ string:join(lists:reverse(Acc), "&").
+trends_args([{category, CategoryId} | Tail], Acc) ->
+    trends_args(Tail, ["category=" ++ to_string(CategoryId) | Acc]);
+trends_args([{limit, Limit} | Tail], Acc) ->
+    trends_args(Tail, ["limit=" ++ to_string(Limit) | Acc]);
+trends_args([], Acc) ->
+    lists:reverse(Acc).
 
 
 -spec local_geolocation() -> response().
@@ -606,68 +600,64 @@ geolocation(IpAddr, Options) ->
     do_get(?GEOLOCATION "/ip/" ++ to_string(IpAddr), ?SET_RECORD(mlapi_geolocation, Options)).
 
 
--spec search(mlapi_site_id(), [mlapi_search_filter()]) -> response().
+-spec search(mlapi_site_id(), [mlapi_search_arg()]) -> response().
 search(SiteId, Filter) ->
     search(SiteId, Filter, []).
 
--spec search(mlapi_site_id(), [mlapi_search_filter()], [option()]) -> response().
+-spec search(mlapi_site_id(), [mlapi_search_arg()], [option()]) -> response().
 search(SiteId, Filter, Options) ->
-    do_get(?SITES "/" ++ to_string(SiteId) ++ ?SEARCH ++ search_filter(Filter), ?SET_RECORD(mlapi_search_result, Options)).
+    do_get(?SITES "/" ++ to_string(SiteId) ++ ?SEARCH, search_args(Filter), ?SET_RECORD(mlapi_search_result, Options)).
 
-search_filter([]) ->
-    "";
-search_filter(Filter) ->
-    search_filter(Filter, []).
+search_args(Filter) ->
+    search_args(Filter, []).
 
--spec search_filter([mlapi_search_filter()]) -> string().
-search_filter([{nickname, Nickname} | Tail], Acc) ->
-    search_filter(Tail, ["nickname=" ++ url_encode(Nickname) | Acc]);
-search_filter([{seller_id, SellerId} | Tail], Acc) ->
-    search_filter(Tail, ["seller_id=" ++ to_string(SellerId) | Acc]);
-search_filter([{category, CategoryId} | Tail], Acc) ->
-    search_filter(Tail, ["category=" ++ to_string(CategoryId) | Acc]);
-search_filter([{q, Query} | Tail], Acc) ->
-    search_filter(Tail, ["q=" ++ url_encode(Query) | Acc]);
-search_filter([{offset, Offset} | Tail], Acc) ->
-    search_filter(Tail, ["offset=" ++ to_string(Offset) | Acc]);
-search_filter([{limit, Limit} | Tail], Acc) ->
-    search_filter(Tail, ["limit=" ++ to_string(Limit) | Acc]);
-search_filter([], Acc) ->
-    "?" ++ string:join(lists:reverse(Acc), "&").
+-spec search_args([mlapi_search_arg()]) -> string().
+search_args([{nickname, Nickname} | Tail], Acc) ->
+    search_args(Tail, ["nickname=" ++ url_encode(Nickname) | Acc]);
+search_args([{seller_id, SellerId} | Tail], Acc) ->
+    search_args(Tail, ["seller_id=" ++ to_string(SellerId) | Acc]);
+search_args([{category, CategoryId} | Tail], Acc) ->
+    search_args(Tail, ["category=" ++ to_string(CategoryId) | Acc]);
+search_args([{q, Query} | Tail], Acc) ->
+    search_args(Tail, ["q=" ++ url_encode(Query) | Acc]);
+search_args([{offset, Offset} | Tail], Acc) ->
+    search_args(Tail, ["offset=" ++ to_string(Offset) | Acc]);
+search_args([{limit, Limit} | Tail], Acc) ->
+    search_args(Tail, ["limit=" ++ to_string(Limit) | Acc]);
+search_args([], Acc) ->
+    lists:reverse(Acc).
 
 
--spec my_archived_sales(mlapi_access_token(), [mlapi_sale_filter()]) -> response().
+-spec my_archived_sales(mlapi_access_token(), [mlapi_sale_arg()]) -> response().
 my_archived_sales(AccessToken, Filter) ->
     my_archived_sales(AccessToken, Filter, []).
 
--spec my_archived_sales(mlapi_access_token(), [mlapi_sale_filter()], [option()]) -> response().
+-spec my_archived_sales(mlapi_access_token(), [mlapi_sale_arg()], [option()]) -> response().
 my_archived_sales(AccessToken, Filter, Options) ->
     NewFilter = lists:keystore(access_token, 1, Filter, {access_token, AccessToken}),
-    do_get(?USERS "/me" ?SALES "/archived" ++ sales_filter(NewFilter), ?SET_RECORD(mlapi_sale, Options)).
+    do_get(?USERS "/me" ?SALES "/archived", sales_args(NewFilter), ?SET_RECORD(mlapi_sale, Options)).
 
--spec my_active_sales(mlapi_access_token(), [mlapi_sale_filter()]) -> response().
+-spec my_active_sales(mlapi_access_token(), [mlapi_sale_arg()]) -> response().
 my_active_sales(AccessToken, Filter) ->
     my_active_sales(AccessToken, Filter, []).
 
--spec my_active_sales(mlapi_access_token(), [mlapi_sale_filter()], [option()]) -> response().
+-spec my_active_sales(mlapi_access_token(), [mlapi_sale_args()], [option()]) -> response().
 my_active_sales(AccessToken, Filter, Options) ->
     NewFilter = lists:keystore(access_token, 1, Filter, {access_token, AccessToken}),
-    do_get(?USERS "/me" ?SALES "/active" ++ sales_filter(NewFilter), ?SET_RECORD(mlapi_sale, Options)).
+    do_get(?USERS "/me" ?SALES "/active", sales_args(NewFilter), ?SET_RECORD(mlapi_sale, Options)).
 
--spec sales_filter([mlapi_sale_filter()]) -> string().
-sales_filter([]) ->
-    "";
-sales_filter(Filter) ->
-    sales_filter(Filter, []).
+-spec sales_args([mlapi_sale_arg()]) -> string().
+sales_args(Filter) ->
+    sales_args(Filter, []).
 
-sales_filter([{access_token, AccessToken} | Tail], Acc) ->
-    sales_filter(Tail, ["access_token=" ++ to_string(AccessToken) | Acc]);
-sales_filter([{offset, Offset} | Tail], Acc) ->
-    sales_filter(Tail, ["offset=" ++ to_string(Offset) | Acc]);
-sales_filter([{limit, Limit} | Tail], Acc) ->
-    sales_filter(Tail, ["limit=" ++ to_string(Limit) | Acc]);
-sales_filter([], Acc) ->
-    "?" ++ string:join(lists:reverse(Acc), "&").
+sales_args([{access_token, AccessToken} | Tail], Acc) ->
+    sales_args(Tail, ["access_token=" ++ to_string(AccessToken) | Acc]);
+sales_args([{offset, Offset} | Tail], Acc) ->
+    sales_args(Tail, ["offset=" ++ to_string(Offset) | Acc]);
+sales_args([{limit, Limit} | Tail], Acc) ->
+    sales_args(Tail, ["limit=" ++ to_string(Limit) | Acc]);
+sales_args([], Acc) ->
+    lists:reverse(Acc).
 
 
 -spec my_orders([mlapi_order_arg()]) -> response().
@@ -676,7 +666,7 @@ my_orders(Args) ->
 
 -spec my_orders([mlapi_order_arg()], [option()]) -> response().
 my_orders(Args, Options) ->
-    do_get(?ORDERS ?SEARCH ++ orders_args(Args), ?SET_RECORD(mlapi_order_search, Options)).
+    do_get(?ORDERS ?SEARCH, orders_args(Args), ?SET_RECORD(mlapi_order_search, Options)).
 
 
 -spec my_archived_orders([mlapi_order_arg()]) -> response().
@@ -685,11 +675,9 @@ my_archived_orders(Args) ->
 
 -spec my_archived_orders([mlapi_order_arg()], [option()]) -> response().
 my_archived_orders(Args, Options) ->
-    do_get(?ORDERS ?SEARCH "/archived" ++ orders_args(Args), ?SET_RECORD(mlapi_order_search, Options)).
+    do_get(?ORDERS ?SEARCH "/archived", orders_args(Args), ?SET_RECORD(mlapi_order_search, Options)).
 
 
-orders_args([] = Args) ->
-    Args;
 orders_args(Args) ->
     orders_args(Args, []).
 
@@ -714,7 +702,7 @@ orders_args([{shipping_status, ShippingStatus} | Tail], Acc) ->
 orders_args([{sort, Sort} | Tail], Acc) ->
     orders_args(Tail, ["sort=" ++ to_string(Sort) | Acc]);
 orders_args([], Acc) ->
-    "?" ++ string:join(lists:reverse(Acc), "&").
+    lists:reverse(Acc).
 
 
 -spec my_order(mlapi_order_id(), mlapi_access_token()) -> response().
@@ -742,7 +730,7 @@ my_user(AccessToken) ->
 
 -spec my_user(mlapi_access_token(), [option()]) -> response().
 my_user(AccessToken, Options) ->
-    do_get(?USERS "/me?access_token=" ++ url_encode(AccessToken), ?SET_RECORD(mlapi_user, Options)).
+    do_get(?USERS "/me", ["access_token=" ++ url_encode(AccessToken)], ?SET_RECORD(mlapi_user, Options)).
 
 
 -spec user_listing_types(mlapi_user_id(), mlapi_access_token()) -> response().
@@ -751,8 +739,8 @@ user_listing_types(UserId, AccessToken) ->
 
 -spec user_listing_types(mlapi_user_id(), mlapi_access_token(), [option()]) -> response().
 user_listing_types(UserId, AccessToken, Options) ->
-    Path = io_lib:format(?USERS "/~s" ?AVAILABLE_LISTING_TYPES "?access_token=~s", [to_string(UserId), url_encode(AccessToken)]),
-    do_get(Path, ?SET_RECORD(mlapi_listing_type, Options)).
+    Path = ?USERS "/" ++ to_string(UserId) ++ ?AVAILABLE_LISTING_TYPES,
+    do_get(Path, ["?access_token=" ++ url_encode(AccessToken)], ?SET_RECORD(mlapi_listing_type, Options)).
 
 
 -spec user_items(mlapi_user_id(), mlapi_access_token()) -> response().
@@ -761,43 +749,41 @@ user_items(UserId, AccessToken) ->
 
 -spec user_items(mlapi_user_id(), mlapi_access_token(), [option()]) -> response().
 user_items(UserId, AccessToken, Options) ->
-    Path = io_lib:format(?USERS "/~s" ?ITEMS "/search?access_token=~s", [to_string(UserId), url_encode(AccessToken)]),
-    do_get(Path, ?SET_RECORD(mlapi_listing_type, Options)).
+    Path = ?USERS "/" ++ to_string(UserId) ++ ?ITEMS ?SEARCH,
+    do_get(Path, ["access_token=" ++ url_encode(AccessToken)], ?SET_RECORD(mlapi_listing_type, Options)).
 
 
 
 -spec do_get(url_path()) -> response().
 do_get(Path) ->
-    do_get(Path, []).
+    do_get(Path, [], []).
 
 -spec do_get(url_path(), [option()]) -> response().
 do_get(Path, Options) ->
-    Url = url_from_path(Path),
+    do_get(Path, [], Options).
+
+-spec do_get(url_path(), [url_arg()], [option()]) -> response().
+do_get(Path, Args, Options) ->
+    Url = build_url(Path, Args, Options),
     case ibrowse:send_req(Url, [{?HEADER_ACCEPT, ?MIME_TYPE_JSON}], get, [], [{response_format, binary}]) of
         {ok, Code, Headers, Body} ->
             case lists:keyfind(?HEADER_CONTENT_TYPE, 1, Headers) of
                 {_ContentType, ?MIME_TYPE_JSON ++ _CharSet} ->
-                    case proplists:get_value(format, Options, get_env(format, ejson)) of
-                        raw ->
-                            Body;
-                        Format ->
-                            DateFormat = proplists:get_value(date_format, Options, get_env(date_format, iso8601)),
-                            try
-                                DecodedBody = ejson:decode(Body),
-                                case Code of
-                                    %% Only 2xx HTTP response codes are considered successful (is this correct?)
-                                    "2" ++ _Tail ->
-                                        ejson_to_term(DecodedBody, proplists:get_value(record, Options), Format, DateFormat);
-                                    _  ->
-                                        %% In case of errors, return the reason corresponding to the HTTP response code and
-                                        %% the error document returned by MLAPI.
-                                        ErrorInfo = ejson_to_term(DecodedBody, mlapi_error, Format, DateFormat),
-                                        {error, {response_reason(Code), ErrorInfo}}
-                                end
-                            catch
-                                throw:Reason ->
-                                    {error, Reason}
-                            end
+                    Format = proplists:get_value(format, Options, get_env(format, ejson)),
+                    DateFormat = proplists:get_value(date_format, Options, get_env(date_format, iso8601)),
+                    try
+                        case Code of
+                            %% Only 2xx HTTP response codes are considered successful (is this correct?)
+                            "2" ++ _Tail ->
+                                json_to_term(Body, proplists:get_value(record, Options), Format, DateFormat);
+                            _  ->
+                                %% In case of errors, return the reason corresponding to the HTTP response code and
+                                %% the error document returned by MLAPI.
+                                {error, {response_reason(Code), json_to_term(Body, mlapi_error, Format, DateFormat)}}
+                        end
+                    catch
+                        throw:Reason ->
+                            {error, Reason}
                     end;
                 InvalidContentType ->
                     {error, {invalid_content_type, InvalidContentType}}
@@ -813,16 +799,38 @@ do_delete(Path) ->
     do_delete(Path, []).
 
 -spec do_delete(url_path(), [option()]) -> response().
-do_delete(Path, _Options) ->
-    Url = url_from_path(Path),
+do_delete(Path, Options) ->
+    Url = build_url(Path),
     case ibrowse:send_req(Url, [], delete, [], [{response_format, binary}]) of
-        {ok, "200", _Headers, _Body} ->
+        {ok, "2" ++ _Tail, _Headers, _Body} ->
             ok;
-        {ok, Code, _Headers, _Body} ->
-            {error, response_reason(Code)};
+        {ok, Code, Headers, Body} ->
+            case lists:keyfind(?HEADER_CONTENT_TYPE, 1, Headers) of
+                {_ContentType, ?MIME_TYPE_JSON ++ _CharSet} ->
+                    Format = proplists:get_value(format, Options, get_env(format, ejson)),
+                    DateFormat = proplists:get_value(date_format, Options, get_env(date_format, iso8601)),
+                    try
+                        %% In case of errors, return the reason corresponding to the HTTP response code and
+                        %% the error document returned by MLAPI.
+                        {error, {response_reason(Code), json_to_term(Body, mlapi_error, Format, DateFormat)}}
+                    catch
+                        throw:Reason ->
+                            {error, Reason}
+                    end;
+                InvalidContentType ->
+                    {error, {invalid_content_type, InvalidContentType}}
+            end;
         {error, _Reason} = Error ->
             Error
     end.
+
+
+-spec json_to_term(json(), RecordName :: atom(), format(), date_format()) ->
+                          ejson() | proplist() | tuple() | dict() | orddict:orddict() | binary().
+json_to_term(Json, _RecordName, raw, _DateFormat) ->
+    Json;
+json_to_term(Json, RecordName, Format, DateFormat) ->
+    ejson_to_term(ejson:decode(Json), RecordName, Format, DateFormat).
 
 
 -spec ejson_to_term(ejson(), RecordName :: atom(), format(), date_format()) ->
@@ -1285,9 +1293,27 @@ url_encode(String) ->
     ibrowse_lib:url_encode(to_string(String)).
 
 
--spec url_from_path(url_path()) -> mlapi_url().
-url_from_path(Path) ->
+-spec build_url(url_path()) -> mlapi_url().
+build_url(Path) ->
     get_env(protocol, ?PROTOCOL) ++ "://" ++ get_env(host, ?HOST) ++ Path.
+
+-spec build_url(url_path(), [url_arg()], [option()]) -> mlapi_url().
+build_url(Path, Args, Options) ->
+    %% Build the list of attributes that can act as a filter of the fields that
+    %% are returned within the response's JSON document.
+    Attrs = case lists:keyfind(attributes, 1, Options) of
+                     {attributes, AttrList} ->
+                         ["attributes=" ++ string:join([to_string(Attr) || Attr <- AttrList], ",")];
+                     false ->
+                         []
+                 end,
+    FullPath = case string:join(Args ++ Attrs, "&") of
+                   "" ->
+                       [Path];
+                   FullArgs ->
+                       [Path, $?, FullArgs]
+               end,
+    lists:flatten([get_env(protocol, ?PROTOCOL), "://", get_env(host, ?HOST) | FullPath]).
 
 
 -spec to_string(string() | binary() | integer() | float() | atom()) -> string().

@@ -100,23 +100,23 @@
 -type mlapi_user_type_id()                :: binary().    %% <<"car_dealer">> | <<"real_estate_agency">>,
                                                           %% <<"branch">> | <<"franchise">> | <<"normal">>
 
--type mlapi_catalog_product_filter()      :: {domain, mlapi_domain_id()} |
+-type mlapi_catalog_product_arg()         :: {domain, mlapi_domain_id()} |
                                              {offset, mlapi_offset()} | {limit, mlapi_limit()}.
--type mlapi_currency_conversion_filter()  :: {from, mlapi_currency_id()} | {to, mlapi_currency_id()} |
+-type mlapi_currency_conversion_arg()     :: {from, mlapi_currency_id()} | {to, mlapi_currency_id()} |
                                              {date, calendar:datetime()}.
--type mlapi_listing_price_filter()        :: {price, float()} | {listing_type_id, mlapi_listing_type_id()} |
+-type mlapi_listing_price_arg()           :: {price, float()} | {listing_type_id, mlapi_listing_type_id()} |
                                              {quantity, non_neg_integer()} |
                                              {category_id, mlapi_category_id()} | {currency_id, mlapi_currency_id()}.
--type mlapi_question_filter()             :: {item, mlapi_item_id()} | {period, non_neg_integer()} |
+-type mlapi_question_arg()                :: {item, mlapi_item_id()} | {period, non_neg_integer()} |
                                              {status, mlapi_question_status_id()} |
                                              {from, mlapi_user_id()} | {seller, mlapi_user_id()} |
                                              {access_token, mlapi_access_token()}.
--type mlapi_sale_filter()                 :: {access_token, mlapi_access_token()} |
+-type mlapi_sale_arg()                    :: {access_token, mlapi_access_token()} |
                                              {offset, mlapi_offset()} | {limit, mlapi_limit()}.
--type mlapi_search_filter()               :: {nickname, mlapi_user_name()} | {seller_id, mlapi_user_id()} |
+-type mlapi_search_arg()                  :: {nickname, mlapi_user_name()} | {seller_id, mlapi_user_id()} |
                                              {category, mlapi_category_id()} | {q, mlapi_query()} |
                                              {offset, mlapi_offset()} | {limit, mlapi_limit()}.
--type mlapi_trend_filter()                :: {category, mlapi_category_id()} | {limit, mlapi_limit()}.
+-type mlapi_trend_arg()                   :: {category, mlapi_category_id()} | {limit, mlapi_limit()}.
 
 -type mlapi_order_arg()                   :: {access_token, mlapi_access_token()} |
                                              {feedback_status, mlapi_feedback_status_id()} |
