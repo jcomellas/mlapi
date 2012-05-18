@@ -295,6 +295,9 @@ export_user_orders(Nickname, Filename, [{Extension, Options} | Tail]) ->
             export_user_orders(Nickname, Filename, Tail);
         {error, {Reason, _Doc}} = Error ->
             io:format("~s~n", [Reason]),
+            Error;
+        {error, Reason} = Error ->
+            io:format("~s~n", [Reason]),
             Error
     end;
 export_user_orders(_Nickname, _Filename, []) ->
