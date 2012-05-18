@@ -371,7 +371,7 @@ listing_prices(SiteId, Filter, Options) ->
     do_get(?SITES "/" ++ to_string(SiteId) ++ ?LISTING_PRICES, listing_prices_args(Filter),
             ?SET_RECORD(mlapi_listing_price, Options)).
 
--spec listing_prices_args([mlapi_listing_price_args()]) -> string().
+-spec listing_prices_args([mlapi_listing_price_arg()]) -> string().
 listing_prices_args(Filter) ->
     listing_prices_args(Filter, []).
 
@@ -641,7 +641,7 @@ my_archived_sales(AccessToken, Filter, Options) ->
 my_active_sales(AccessToken, Filter) ->
     my_active_sales(AccessToken, Filter, []).
 
--spec my_active_sales(mlapi_access_token(), [mlapi_sale_args()], [option()]) -> response().
+-spec my_active_sales(mlapi_access_token(), [mlapi_sale_arg()], [option()]) -> response().
 my_active_sales(AccessToken, Filter, Options) ->
     NewFilter = lists:keystore(access_token, 1, Filter, {access_token, AccessToken}),
     do_get(?USERS "/me" ?SALES "/active", sales_args(NewFilter), ?SET_RECORD(mlapi_sale, Options)).
