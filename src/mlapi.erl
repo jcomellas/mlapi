@@ -31,7 +31,7 @@
          credit_level/1, credit_level/2,
          category/1, category/2,
          domains/0, domains/1, domain/1, domain/2,
-         user/1, user/2,
+         user/1, user/2, user_by_nickname/1, user_by_nickname/2,
          item/1, item/2,
          picture/1, picture/2,
          question/1, question/2, questions/1, questions/2,
@@ -496,6 +496,15 @@ user(UserId, Options) ->
     do_get(?USERS "/" ++ to_string(UserId), ?SET_RECORD(mlapi_user, Options)).
 
 
+-spec user_by_nickname(mlapi_user_name()) -> response().
+user_by_nickname(Nickname) ->
+    user_by_nickname(Nickname, []).
+
+-spec user_by_nickname(mlapi_user_name(), [option()]) -> response().
+user_by_nickname(Nickname, Options) ->
+    do_get(?USERS ?SEARCH, ["nickname=" ++ to_string(Nickname)], ?SET_RECORD(mlapi_user, Options)).
+
+
 -spec item(mlapi_item_id()) -> response().
 item(ItemId) ->
     item(ItemId, []).
@@ -765,6 +774,7 @@ do_get(Path, Options) ->
 -spec do_get(url_path(), [url_arg()], [option()]) -> response().
 do_get(Path, Args, Options) ->
     Url = build_url(Path, Args, Options),
+    %% io:format("GET ~s~n", [Url]),
     case ibrowse:send_req(Url, [{?HEADER_ACCEPT, ?MIME_TYPE_JSON}], get, [], [{response_format, binary}]) of
         {ok, Code, Headers, Body} ->
             case lists:keyfind(?HEADER_CONTENT_TYPE, 1, Headers) of
