@@ -48,7 +48,7 @@ search(File, [SiteId], Options) ->
 -spec encode_search_as_csv(mlapi_pager:position(), mlapi:ejson()) -> iolist().
 encode_search_as_csv(Position, Doc) when Position =:= first; Position =:= {first, last} ->
     Headers = [
-               <<"ID">>, <<"Cantidad Vendida">>, <<"Precio">>, <<"Moneda">>,
+               <<"ID">>, <<"Cantidad Vendida">>, <<"Precio">>, <<"Moneda">>, <<"Vendedor">>,
                <<"Tipo Publicacion">>, <<"Titulo">>, <<"Subtitulo">>, <<"Vencimiento">>, <<"Permalink">>
               ],
     [line_to_csv(Headers), encode_search_as_csv(Doc)];
@@ -60,8 +60,8 @@ encode_search_as_csv(_Position, Doc) ->
 encode_search_as_csv(Doc) ->
     ItemFieldNames =
       [
-       <<"currency_id">>, <<"sold_quantity">>, <<"price">>, <<"currency_id">>, <<"listing_type_id">>,
-       <<"title">>, <<"subtitle">>, <<"stop_time">>, <<"permalink">>
+       <<"id">>, <<"sold_quantity">>, <<"price">>, <<"currency_id">>, <<"seller.id">>,
+       <<"listing_type_id">>, <<"title">>, <<"subtitle">>, <<"stop_time">>, <<"permalink">>
       ],
     line_to_csv([kvc:path(Name, Doc) || Name <- ItemFieldNames]).
 
