@@ -34,7 +34,7 @@
          credit_level/1, credit_level/2,
          category/1, category/2,
          domains/0, domains/1, domain/1, domain/2,
-         user/1, user/2,
+         user/1, user/2, user_by_nickname/1, user_by_nickname/2,
          item/1, item/2,
          picture/1, picture/2,
          question/1, question/2, questions/1, questions/2,
@@ -288,13 +288,13 @@ application(ApplicationId, Options) ->
              fun (NewOptions) -> mlapi:application(ApplicationId, NewOptions) end).
 
 
--spec catalog_products(mlapi_site_id(), [mlapi_catalog_product_filter()]) -> mlapi:response().
+-spec catalog_products(mlapi_site_id(), [mlapi_catalog_product_arg()]) -> mlapi:response().
 catalog_products(SiteId, Filter) ->
     catalog_products(SiteId, Filter, []).
 
--spec catalog_products(mlapi_site_id(), [mlapi_catalog_product_filter()], [mlapi:option()]) -> mlapi:response().
+-spec catalog_products(mlapi_site_id(), [mlapi_catalog_product_arg()], [mlapi:option()]) -> mlapi:response().
 catalog_products(SiteId, Filter, Options) ->
-    get_data(mlapi_catalog_product, mlapi_catalog_product_search, {mlapi:to_binary(SiteId), normalize_filter(Filter)}, Options,
+    get_data(mlapi_catalog_product, mlapi_catalog_product_search, {mlapi:to_binary(SiteId), normalize_args(Filter)}, Options,
              fun (NewOptions) -> mlapi:catalog_products(SiteId, Filter, NewOptions) end).
 
 -spec catalog_product(mlapi_site_id(), mlapi_catalog_product_id()) -> mlapi:response().
@@ -381,11 +381,11 @@ currency(CurrencyId, Options) ->
              fun (NewOptions) -> mlapi:currency(CurrencyId, NewOptions) end).
 
 
--spec currency_conversion([mlapi_currency_conversion_filter()]) -> mlapi:response().
+-spec currency_conversion([mlapi_currency_conversion_arg()]) -> mlapi:response().
 currency_conversion(Filter) ->
     currency_conversion(Filter, []).
 
--spec currency_conversion([mlapi_currency_conversion_filter()], [mlapi:option()]) -> mlapi:response().
+-spec currency_conversion([mlapi_currency_conversion_arg()], [mlapi:option()]) -> mlapi:response().
 currency_conversion(Filter, Options) ->
     NewFilter = case lists:keyfind(date, 1, Filter) of
                     {date, {Date, {Hour, Min, _Sec}}} ->
@@ -395,7 +395,7 @@ currency_conversion(Filter, Options) ->
                     false ->
                         Filter
                 end,
-    get_data(mlapi_currency_conversion, mlapi_currency_conversion, normalize_filter(NewFilter), Options,
+    get_data(mlapi_currency_conversion, mlapi_currency_conversion, normalize_args(NewFilter), Options,
              fun (NewOptions) -> mlapi:currency_conversion(Filter, NewOptions) end).
 
 
@@ -419,13 +419,13 @@ listing_exposure(SiteId, ListingExposureId, Options) ->
              fun (NewOptions) -> mlapi:listing_exposure(SiteId, ListingExposureId, NewOptions) end).
 
 
--spec listing_prices(mlapi_site_id(), [mlapi_listing_price_filter()]) -> mlapi:response().
+-spec listing_prices(mlapi_site_id(), [mlapi_listing_price_arg()]) -> mlapi:response().
 listing_prices(SiteId, Filter) ->
     listing_prices(SiteId, Filter, []).
 
--spec listing_prices(mlapi_site_id(), [mlapi_listing_price_filter()], [mlapi:option()]) -> mlapi:response().
+-spec listing_prices(mlapi_site_id(), [mlapi_listing_price_arg()], [mlapi:option()]) -> mlapi:response().
 listing_prices(SiteId, Filter, Options) ->
-    get_data(mlapi_listing_price, mlapi_listing_price, normalize_filter(Filter), Options,
+    get_data(mlapi_listing_price, mlapi_listing_price, normalize_args(Filter), Options,
              fun (NewOptions) -> mlapi:listing_prices(SiteId, Filter, NewOptions) end).
 
 
@@ -544,6 +544,16 @@ user(UserId, Options) ->
     get_data(mlapi_user, mlapi_user, mlapi:to_binary(UserId), Options, fun (NewOptions) -> mlapi:user(UserId, NewOptions) end).
 
 
+-spec user_by_nickname(mlapi_user_name()) -> mlapi:response().
+user_by_nickname(Nickname) ->
+    user_by_nickname(Nickname, []).
+
+-spec user_by_nickname(mlapi_user_name(), [mlapi:option()]) -> mlapi:response().
+user_by_nickname(Nickname, Options) ->
+    get_data(mlapi_user, mlapi_user, mlapi:to_binary(Nickname), Options,
+             fun (NewOptions) -> mlapi:user_by_nickname(Nickname, NewOptions) end).
+
+
 -spec item(mlapi_item_id()) -> mlapi:response().
 item(ItemId) ->
     item(ItemId, []).
@@ -573,23 +583,23 @@ question(QuestionId, Options) ->
              fun (NewOptions) -> mlapi:question(QuestionId, NewOptions) end).
 
 
--spec questions([mlapi_question_filter()]) -> mlapi:response().
+-spec questions([mlapi_question_arg()]) -> mlapi:response().
 questions(Filter) ->
     questions(Filter, []).
 
--spec questions([mlapi_question_filter()], [mlapi:option()]) -> mlapi:response().
+-spec questions([mlapi_question_arg()], [mlapi:option()]) -> mlapi:response().
 questions(Filter, Options) ->
-    get_data(mlapi_question, mlapi_question_result, normalize_filter(Filter), Options,
+    get_data(mlapi_question, mlapi_question_result, normalize_args(Filter), Options,
              fun (NewOptions) -> mlapi:questions(Filter, NewOptions) end).
 
 
--spec trends(mlapi_site_id(), [mlapi_trend_filter()]) -> mlapi:response().
+-spec trends(mlapi_site_id(), [mlapi_trend_arg()]) -> mlapi:response().
 trends(SiteId, Filter) ->
     trends(SiteId, Filter, []).
 
--spec trends(mlapi_site_id(), [mlapi_trend_filter()], [mlapi:option()]) -> mlapi:response().
+-spec trends(mlapi_site_id(), [mlapi_trend_arg()], [mlapi:option()]) -> mlapi:response().
 trends(SiteId, Filter, Options) ->
-    get_data(mlapi_trend, mlapi_trend, {SiteId, normalize_filter(Filter)}, Options,
+    get_data(mlapi_trend, mlapi_trend, {SiteId, normalize_args(Filter)}, Options,
              fun (NewOptions) -> mlapi:trends(SiteId, Filter, NewOptions) end).
 
 
@@ -612,35 +622,35 @@ geolocation(IpAddr, Options) ->
              fun (NewOptions) -> mlapi:geolocation(IpAddr, NewOptions) end).
 
 
--spec search(mlapi_site_id(), [mlapi_search_filter()]) -> mlapi:response().
+-spec search(mlapi_site_id(), [mlapi_search_arg()]) -> mlapi:response().
 search(SiteId, Filter) ->
     search(SiteId, Filter, []).
 
--spec search(mlapi_site_id(), [mlapi_search_filter()], [mlapi:option()]) -> mlapi:response().
+-spec search(mlapi_site_id(), [mlapi_search_arg()], [mlapi:option()]) -> mlapi:response().
 search(SiteId, Filter, Options) ->
-    get_data(mlapi_search_result, mlapi_search_result, {SiteId, normalize_filter(Filter)}, Options,
+    get_data(mlapi_search_result, mlapi_search_result, {SiteId, normalize_args(Filter)}, Options,
              fun (NewOptions) -> mlapi:search(SiteId, Filter, NewOptions) end).
 
 
--spec my_archived_sales(mlapi_access_token(), [mlapi_sale_filter()]) -> mlapi:response().
+-spec my_archived_sales(mlapi_access_token(), [mlapi_sale_arg()]) -> mlapi:response().
 my_archived_sales(AccessToken, Filter) ->
     my_archived_sales(AccessToken, Filter, []).
 
--spec my_archived_sales(mlapi_access_token(), [mlapi_sale_filter()], [mlapi:option()]) -> mlapi:response().
+-spec my_archived_sales(mlapi_access_token(), [mlapi_sale_arg()], [mlapi:option()]) -> mlapi:response().
 my_archived_sales(AccessToken, Filter, Options) ->
     NewFilter = lists:keystore(access_token, 1, Filter, {access_token, AccessToken}),
-    get_data(mlapi_sale, mlapi_sale, {my_archived_sales, normalize_filter(NewFilter)}, Options,
+    get_data(mlapi_sale, mlapi_sale, {my_archived_sales, normalize_args(NewFilter)}, Options,
              fun (NewOptions) -> mlapi:my_archived_sales(AccessToken, Filter, NewOptions) end).
 
 
--spec my_active_sales(mlapi_access_token(), [mlapi_sale_filter()]) -> mlapi:response().
+-spec my_active_sales(mlapi_access_token(), [mlapi_sale_arg()]) -> mlapi:response().
 my_active_sales(AccessToken, Filter) ->
     my_active_sales(AccessToken, Filter, []).
 
--spec my_active_sales(mlapi_access_token(), [mlapi_sale_filter()], [mlapi:option()]) -> mlapi:response().
+-spec my_active_sales(mlapi_access_token(), [mlapi_sale_arg()], [mlapi:option()]) -> mlapi:response().
 my_active_sales(AccessToken, Filter, Options) ->
     NewFilter = lists:keystore(access_token, 1, Filter, {access_token, AccessToken}),
-    get_data(mlapi_sale, mlapi_sale, {my_active_sales, normalize_filter(NewFilter)}, Options,
+    get_data(mlapi_sale, mlapi_sale, {my_active_sales, normalize_args(NewFilter)}, Options,
              fun (NewOptions) -> mlapi:my_active_sales(AccessToken, Filter, NewOptions) end).
 
 
@@ -650,7 +660,7 @@ my_orders(Args) ->
 
 -spec my_orders([mlapi_order_arg()], [mlapi:option()]) -> mlapi:response().
 my_orders(Args, Options) ->
-    get_data(mlapi_order_search, mlapi_order_search, {my_orders, normalize_filter(Args)}, Options,
+    get_data(mlapi_order_search, mlapi_order_search, {my_orders, normalize_args(Args)}, Options,
              fun (NewOptions) -> mlapi:my_orders(Args, NewOptions) end).
 
 
@@ -660,7 +670,7 @@ my_archived_orders(Args) ->
 
 -spec my_archived_orders([mlapi_order_arg()], [mlapi:option()]) -> mlapi:response().
 my_archived_orders(Args, Options) ->
-    get_data(mlapi_order_search, mlapi_order_search, {my_archived_orders, normalize_filter(Args)}, Options,
+    get_data(mlapi_order_search, mlapi_order_search, {my_archived_orders, normalize_args(Args)}, Options,
              fun (NewOptions) -> mlapi:my_archived_orders(Args, NewOptions) end).
 
 
@@ -801,13 +811,13 @@ is_cache_valid(Table, LastUpdate, CurrentTime) ->
 
 %% @doc Normalizes a question, trend or search filter by converting all the
 %%      values in the key/value pairs to binaries and sorting the property list.
--spec normalize_filter([mlapi_question_filter()] | [mlapi_trend_filter()] | [mlapi_search_filter()]) -> [{atom(), binary()}].
-normalize_filter(Filter) when is_list(Filter)->
-    normalize_filter(Filter, []).
+-spec normalize_args([mlapi_question_arg()] | [mlapi_trend_arg()] | [mlapi_search_arg()]) -> [{atom(), binary()}].
+normalize_args(Filter) when is_list(Filter)->
+    normalize_args(Filter, []).
 
-normalize_filter([{Key, Value} | Tail], Acc) ->
-    normalize_filter(Tail, [{Key, mlapi:to_binary(Value)} | Acc]);
-normalize_filter([], Acc) ->
+normalize_args([{Key, Value} | Tail], Acc) ->
+    normalize_args(Tail, [{Key, mlapi:to_binary(Value)} | Acc]);
+normalize_args([], Acc) ->
     lists:sort(Acc).
 
 
