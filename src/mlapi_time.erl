@@ -13,8 +13,8 @@
 
 -export([datetime_to_iso8601/1, iso8601_to_datetime/1,
          gregorian_seconds_to_iso8601/1, iso8601_to_gregorian_seconds/1,
-         epoch_to_iso8601/1, iso8601_to_epoch/1,
          datetime_to_epoch/1, universal_time_to_epoch/0, epoch_to_datetime/1,
+         epoch_to_iso8601/1, iso8601_to_epoch/1,
          timestamp_to_epoch/0, timestamp_to_epoch/1]).
 
 -export_type([datetime/0, epoch/0]).
@@ -47,7 +47,7 @@ datetime_to_iso8601({{Year, Month, Day}, {Hour, Min, Sec}}) ->
         is_float(Sec) ->
             TruncatedSec = trunc(Sec),
             Ss = bstr:lpad(bstr:from_integer(TruncatedSec), 2, $0),
-            Ms = bstr:lpad(bstr:from_integer(round((Sec - TruncatedSec) * 1000)), 3, $0),
+            Ms = bstr:lpad(bstr:from_integer(round((Sec - TruncatedSec) * 1000.0)), 3, $0),
             <<YYYY/binary, $-, MM/binary, $-, DD/binary, $T, Hh/binary, $:, Mm/binary, $:, Ss/binary, $., Ms/binary, $Z>>
     end.
 
@@ -55,37 +55,34 @@ datetime_to_iso8601({{Year, Month, Day}, {Hour, Min, Sec}}) ->
 %% @doc Convert a datetime in the ISO 8601 format to a date and time in the
 %%      format returned by calendar:universal_time/0.
 -spec iso8601_to_datetime(binary()) -> datetime().
-iso8601_to_datetime(<<Year:4/binary, $-, Month:2/binary, $-, Day:2/binary, $T,
-                       Hour:2/binary, $:, Min:2/binary, $:, Sec:2/binary, $., Millisecs:3/binary, $Z>>) ->
-    IntSec = bstr:to_integer(Sec),
-    FullSec = case Millisecs of
-                  <<"000">> -> IntSec;
-                  _         -> IntSec + bstr:to_integer(Millisecs) / 1000.0
-              end,
-    {{bstr:to_integer(Year), bstr:to_integer(Month), bstr:to_integer(Day)},
-     {bstr:to_integer(Hour), bstr:to_integer(Min), FullSec}};
-iso8601_to_datetime(<<Year:4/binary, $-, Month:2/binary, $-, Day:2/binary, $T,
-                       Hour:2/binary, $:, Min:2/binary, $:, Sec:2/binary, $Z>>) ->
-    {{bstr:to_integer(Year), bstr:to_integer(Month), bstr:to_integer(Day)},
-     {bstr:to_integer(Hour), bstr:to_integer(Min), bstr:to_integer(Sec)}};
-iso8601_to_datetime(<<Year:4/binary, $-, Month:2/binary, $-, Day:2/binary, $T,
-                       Hour:2/binary, $:, Min:2/binary, $:, Sec:2/binary, $., Millisecs:3/binary, Sign,
-                       TimezoneHour:2/binary, $:, TimezoneMin:2/binary>>) ->
-    LocalSecs = calendar:datetime_to_gregorian_seconds({{bstr:to_integer(Year), bstr:to_integer(Month), bstr:to_integer(Day)},
-                                                        {bstr:to_integer(Hour), bstr:to_integer(Min), bstr:to_integer(Sec)}}),
-    %% Convert the the seconds in the local timezone to UTC.
-    UtcSecs = case ((bstr:to_integer(TimezoneHour) * 60 + bstr:to_integer(TimezoneMin)) * 60) of
-                  Offset when Sign =:= $- ->
-                      LocalSecs - Offset;
-                  Offset ->
-                      LocalSecs + Offset
-              end,
-    {Date, {Hour, Min, Sec}} = Datetime = calendar:gregorian_seconds_to_datetime(UtcSecs),
-    case bstr:to_integer(Millisecs) of
-        0 ->
-            Datetime;
-        _ ->
-            {Date, {Hour, Min, Sec + Millisecs / 1000.0}}
+iso8601_to_datetime(<<YYYY:4/binary, $-, MM:2/binary, $-, DD:2/binary, $T,
+                      Hh:2/binary, $:, Mm:2/binary, $:, Ss:2/binary, Tail/binary>>) ->
+    Date1 = {bstr:to_integer(YYYY), bstr:to_integer(MM), bstr:to_integer(DD)},
+    Hour1 = bstr:to_integer(Hh),
+    Min1 = bstr:to_integer(Mm),
+    Sec1 = bstr:to_integer(Ss),
+
+    case Tail of
+        <<"Z">> ->
+            {Date1, {Hour1, Min1, Sec1}};
+        <<".000Z">> ->
+            {Date1, {Hour1, Min1, Sec1}};
+        <<$., Millisec:3/binary, $Z>> ->
+            {Date1, {Hour1, Min1, float(Sec1) + float(bstr:to_integer(Millisec)) / 1000.0}};
+        <<$., Millisec:3/binary, Sign, TimezoneHour:2/binary, $:, TimezoneMin:2/binary>> ->
+            LocalSec = calendar:datetime_to_gregorian_seconds({Date1, {Hour1, Min1, Sec1}}),
+            %% Convert the the seconds in the local timezone to UTC.
+            UtcSec = case ((bstr:to_integer(TimezoneHour) * 3600 + bstr:to_integer(TimezoneMin)) * 60) of
+                         Offset when Sign =:= $- -> LocalSec - Offset;
+                         Offset                  -> LocalSec + Offset
+                     end,
+            {Date, {Hour, Min, Sec}} = Datetime = calendar:gregorian_seconds_to_datetime(UtcSec),
+            case Millisec of
+                <<"000">> ->
+                    Datetime;
+                _ ->
+                    {Date, {Hour, Min, float(Sec) + float(bstr:to_integer(Millisec)) / 1000.0}}
+            end
     end.
 
 
@@ -110,36 +107,6 @@ iso8601_to_gregorian_seconds(Iso8601) ->
     calendar:datetime_to_gregorian_seconds(Datetime).
 
 
-%% @doc Convert a date and time as the number of seconds since the Unix epoch
-%%      (Jan 1, 1970, 00:00:00) with millisecond precision to a binary string
-%%      in the ISO 8601 format (e.g. "2012-02-15T14:39:15.539Z").
--spec epoch_to_iso8601(epoch()) -> binary().
-epoch_to_iso8601(Epoch) ->
-    TruncatedEpoch = trunc(Epoch),
-    Datetime = case calendar:gregorian_seconds_to_datetime(TruncatedEpoch + ?SECONDS_TO_UNIX_EPOCH) of
-                   {Date, {Hour, Min, Sec}} when is_float(Epoch) ->
-                       {Date, {Hour, Min, Sec + (Epoch - TruncatedEpoch)}};
-                   Value ->
-                       Value
-               end,
-    datetime_to_iso8601(Datetime).
-
-
-%% @doc Convert a date and time as binary string in the ISO 8601 format to the
-%%      number of seconds since the Unix epoch (Jan 1, 1970, 00:00:00) with
-%%      millisecond precision.
--spec iso8601_to_epoch(binary()) -> epoch().
-iso8601_to_epoch(Iso8601) ->
-    GregorianSecs = case iso8601_to_datetime(Iso8601) of
-                        {Date, {Hour, Min, Sec}} when is_float(Sec) ->
-                            TruncatedSec = trunc(Sec),
-                            calendar:datetime_to_gregorian_seconds({Date, {Hour, Min, TruncatedSec}}) + (Sec - TruncatedSec);
-                        Datetime ->
-                            calendar:datetime_to_gregorian_seconds(Datetime)
-                    end,
-    GregorianSecs - ?SECONDS_TO_UNIX_EPOCH.
-
-
 %% @doc Convert a datetime in the format returned by the calendar:universal_time/0 function
 %%      into a timestamp as a floating-point with the number of seconds since
 %%      the Unix Epoch (Jan 1, 1970, 00:00:00) and a precision of microseconds.
@@ -148,7 +115,8 @@ datetime_to_epoch({{_Year, _Month, _Day}, {_Hour, _Min, Sec}} = Datetime) when i
     calendar:datetime_to_gregorian_seconds(Datetime) - ?SECONDS_TO_UNIX_EPOCH;
 datetime_to_epoch({{_Year, _Month, _Day} = Date, {Hour, Min, Sec}}) when is_float(Sec) ->
     TruncatedSec = trunc(Sec),
-    float(calendar:datetime_to_gregorian_seconds({Date, {Hour, Min, TruncatedSec}}) - ?SECONDS_TO_UNIX_EPOCH) + (Sec - TruncatedSec).
+    Subsec = round((Sec - TruncatedSec) * 1000000.0) / 1000000.0,
+    float(calendar:datetime_to_gregorian_seconds({Date, {Hour, Min, TruncatedSec}}) - ?SECONDS_TO_UNIX_EPOCH) + Subsec.
 
 
 %% @doc Returns the date and time as a floating-point timestamp with
@@ -174,9 +142,25 @@ epoch_to_datetime(Epoch) ->
             Datetime;
         true ->
             %% Avoid floating point "errors"" by rounding decimals to microsecond precision.
-            FloatSec = round(Subsec * 1000000) / 1000000.0,
+            FloatSec = round(Subsec * 1000000.0) / 1000000.0,
             {Date, {Hour, Min, Sec + FloatSec}}
     end.
+
+
+%% @doc Convert a date and time as the number of seconds since the Unix epoch
+%%      (Jan 1, 1970, 00:00:00) with millisecond precision to a binary string
+%%      in the ISO 8601 format (e.g. "2012-02-15T14:39:15.539Z").
+-spec epoch_to_iso8601(epoch()) -> binary().
+epoch_to_iso8601(Epoch) ->
+    datetime_to_iso8601(epoch_to_datetime(Epoch)).
+
+
+%% @doc Convert a date and time as binary string in the ISO 8601 format to the
+%%      number of seconds since the Unix epoch (Jan 1, 1970, 00:00:00) with
+%%      millisecond precision.
+-spec iso8601_to_epoch(binary()) -> epoch().
+iso8601_to_epoch(Iso8601) ->
+    datetime_to_epoch(iso8601_to_datetime(Iso8601)).
 
 
 %% @doc Returns the current date and time as a floating-point timestamp with
@@ -216,5 +200,25 @@ gregorian_seconds_to_iso8601_test() ->
 iso8601_to_gregorian_seconds_test() ->
     GregorianSec = calendar:datetime_to_gregorian_seconds({{1950,2,22},{15,30,14}}),
     ?assertEqual(GregorianSec + 1, iso8601_to_gregorian_seconds(<<"1950-02-22T15:30:14.653Z">>)).
+
+datetime_to_epoch_test() ->
+    Datetime = {{2000,1,1},{10,20,30}},
+    Epoch = calendar:datetime_to_gregorian_seconds(Datetime) - ?SECONDS_TO_UNIX_EPOCH,
+    ?assertEqual(Epoch, datetime_to_epoch(Datetime)).
+
+epoch_to_datetime_test() ->
+    Datetime = {{2000,1,1},{10,20,30}},
+    Epoch = calendar:datetime_to_gregorian_seconds(Datetime) - ?SECONDS_TO_UNIX_EPOCH,
+    ?assertEqual(Datetime, epoch_to_datetime(Epoch)).
+
+epoch_to_iso8601_test() ->
+    Epoch = calendar:datetime_to_gregorian_seconds({{2011, 12, 31},{5,25,53}}) - ?SECONDS_TO_UNIX_EPOCH,
+    ?assertMatch(<<"2011-12-31T05:25:53Z">>, epoch_to_iso8601(Epoch)),
+    ?assertMatch(<<"2011-12-31T05:25:53.672Z">>, epoch_to_iso8601(Epoch + 0.672)).
+
+iso8601_to_epoch_test() ->
+    Epoch = calendar:datetime_to_gregorian_seconds({{1989, 7, 20},{20,30,21}}) - ?SECONDS_TO_UNIX_EPOCH,
+    ?assertEqual(Epoch, iso8601_to_epoch(<<"1989-07-20T20:30:21Z">>)),
+    ?assertEqual(Epoch + 0.217, iso8601_to_epoch(<<"1989-07-20T20:30:21.217Z">>)).
 
 -endif.
