@@ -49,7 +49,7 @@
 -type mlapi_state_id()                    :: mlapi_id().
 -type mlapi_timezone_id()                 :: mlapi_id().
 -type mlapi_user_id()                     :: mlapi_id() | integer().
--type mlapi_user_name()                   :: mlapi_id().
+-type mlapi_user_nickname()               :: mlapi_id().
 
 -type mlapi_access_token()                :: binary() | string().
 -type mlapi_email_address()               :: binary().
@@ -113,7 +113,7 @@
                                              {access_token, mlapi_access_token()}.
 -type mlapi_sale_arg()                    :: {access_token, mlapi_access_token()} |
                                              {offset, mlapi_offset()} | {limit, mlapi_limit()}.
--type mlapi_search_arg()                  :: {nickname, mlapi_user_name()} | {seller_id, mlapi_user_id()} |
+-type mlapi_search_arg()                  :: {nickname, mlapi_user_nickname()} | {seller_id, mlapi_user_id()} |
                                              {category, mlapi_category_id()} | {q, mlapi_query()} |
                                              {offset, mlapi_offset()} | {limit, mlapi_limit()}.
 -type mlapi_trend_arg()                   :: {category, mlapi_category_id()} | {limit, mlapi_limit()}.
@@ -840,7 +840,7 @@
 
 -record(mlapi_buyer, {
           id                                        :: mlapi_user_id(),
-          nickname                                  :: mlapi_user_name(),
+          nickname                                  :: mlapi_user_nickname(),
           first_name                                :: binary(),
           last_name                                 :: binary(),
           email                                     :: mlapi_email_address(),
@@ -907,7 +907,7 @@
 %% order records
 -record(mlapi_order_seller, {
           id                                        :: mlapi_user_id(),
-          nickname                                  :: mlapi_user_name(),
+          nickname                                  :: mlapi_user_nickname(),
           first_name                                :: binary(),
           last_name                                 :: binary(),
           email                                     :: mlapi_email_address(),

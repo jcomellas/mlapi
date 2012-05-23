@@ -544,11 +544,11 @@ user(UserId, Options) ->
     get_data(mlapi_user, mlapi_user, mlapi:to_binary(UserId), Options, fun (NewOptions) -> mlapi:user(UserId, NewOptions) end).
 
 
--spec user_by_nickname(mlapi_user_name()) -> mlapi:response().
+-spec user_by_nickname(mlapi_user_nickname()) -> mlapi:response().
 user_by_nickname(Nickname) ->
     user_by_nickname(Nickname, []).
 
--spec user_by_nickname(mlapi_user_name(), [mlapi:option()]) -> mlapi:response().
+-spec user_by_nickname(mlapi_user_nickname(), [mlapi:option()]) -> mlapi:response().
 user_by_nickname(Nickname, Options) ->
     get_data(mlapi_user, mlapi_user, mlapi:to_binary(Nickname), Options,
              fun (NewOptions) -> mlapi:user_by_nickname(Nickname, NewOptions) end).
