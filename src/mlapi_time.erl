@@ -15,7 +15,7 @@
          gregorian_seconds_to_iso8601/1, iso8601_to_gregorian_seconds/1,
          datetime_to_epoch/1, universal_time_to_epoch/0, epoch_to_datetime/1,
          epoch_to_iso8601/1, iso8601_to_epoch/1,
-         timestamp_to_epoch/0, timestamp_to_epoch/1]).
+         timestamp_to_epoch/0, timestamp_to_epoch/1, timestamp_to_datetime/1]).
 
 -export_type([datetime/0, epoch/0]).
 
@@ -175,11 +175,17 @@ timestamp_to_epoch() ->
 %%      erlang:now/0 ({Megasecs, Secs. Microsecs}) to a floating-point timestamp
 %%      with the number of seconds since the Unix Epoch (Jan 1, 1970, 00:00:00)
 %%      and a precision of microseconds.
--spec timestamp_to_epoch({Megasecs :: non_neg_integer(), Secs :: non_neg_integer(),
-                          Microsecs :: non_neg_integer()}) -> epoch().
+-spec timestamp_to_epoch(erlang:timestamp()) -> epoch().
 timestamp_to_epoch({Megasecs, Secs, Microsecs}) ->
     (Megasecs * 1000000 + Secs) + Microsecs / 1000000.0.
 
+
+%% @doc Converts the date and time in the format returned by os:timestamp/0 and
+%%      erlang:now/0 ({Megasecs, Secs. Microsecs}) to a datetime in the format
+%%      returned by the calendar:universal_time/0 function.
+-spec timestamp_to_datetime(erlang:timestamp()) -> datetime().
+timestamp_to_datetime(Timestamp) ->
+    epoch_to_datetime(timestamp_to_epoch(Timestamp)).
 
 
 -ifdef(TEST).
