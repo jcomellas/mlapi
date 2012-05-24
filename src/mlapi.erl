@@ -502,7 +502,7 @@ user_by_nickname(Nickname) ->
 
 -spec user_by_nickname(mlapi_user_nickname(), [option()]) -> response().
 user_by_nickname(Nickname, Options) ->
-    do_get(?USERS ?SEARCH, ["nickname=" ++ to_string(Nickname)], ?SET_RECORD(mlapi_user, Options)).
+    do_get(?USERS ?SEARCH, ["nickname=" ++ url_encode(Nickname)], ?SET_RECORD(mlapi_user, Options)).
 
 
 -spec item(mlapi_item_id()) -> response().
