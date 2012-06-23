@@ -68,8 +68,7 @@ init([]) ->
     Metatables = mnesia:dirty_match_object(mlapi_metatable, #mlapi_metatable{_ = '_'}),
     Timers = lists:foldl(fun (#mlapi_metatable{table = Table, time_to_live = TimeToLive}, Acc) ->
                                  %% Create timers to activate the scavenger for each of the tables
-                                 {ok, TimerRef} = timer:apply_interval(TimeToLive * 1000, ?SERVER, scavenge, [Table]),
-                                 [{Table, TimerRef} | Acc]
+                                 get_new_timer(Table, TimeToLive) ++ Acc
                          end, [], Metatables),
     {ok, #state{timers = lists:reverse(Timers)}}.
 
@@ -77,25 +76,15 @@ init([]) ->
 %% @private
 %% @doc Handle call messages.
 -spec handle_call(Request :: term(), From :: term(), #state{}) -> {reply, Reply :: term(), #state{}}.
-handle_call({reset_timer, Table}, _From, #state{timers = Timers} = State) ->
-    case lists:keyfind(Table, 1, State#state.timers) of
-        {Table, TimerRef} ->
-            %% Reset timer for preexisting table.
-            {ok, cancel} = timer:cancel(TimerRef),
-            {ok, NewTimerRef} = timer:apply_interval(time_to_live(Table) * 1000, ?SERVER, scavenge, [Table]),
-            NewTimers = lists:keyreplace(Table, 1, Timers, {Table, NewTimerRef}),
-            {reply, ok, State#state{timers = NewTimers}};
-        false ->
-            %% Reset timer for new table.
-            case mnesia:dirty_read(mlapi_metatable, Table) of
-                [#mlapi_metatable{time_to_live = TimeToLive}] ->
-                    {ok, NewTimerRef} = timer:apply_interval(TimeToLive * 1000, ?SERVER, scavenge, [Table]),
-                    NewTimers = [{Table, NewTimerRef} | Timers],
-                    {reply, ok, State#state{timers = NewTimers}};
-                [] ->
-                    {reply, {error, {invalid_table, Table}}, State}
-            end
-    end;
+handle_call({reset_timer, Table}, _From, #state{timers = Timers} = _State) ->
+    {Response, FinalTimers} = case mnesia:dirty_readread(mlapi_metatable, Table) of
+        [#mlapi_metatable{time_to_live = TimeToLive}] ->
+            {ok, update_timers(Table, TimeToLive, Timers)};
+        [] ->
+            {{error, {invalid_table, Table}}, Timers}
+    end, 
+    {reply, Response, FinalTimers};
+
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
@@ -159,3 +148,28 @@ time_to_live(Table) ->
         [] ->
             mlapi_cache:table_ttl(Table)
     end.
+
+%% @doc Deletes and recreates the timer for a given table in the timers list
+-spec update_timers(table(), time_to_live(), list()) -> list().
+update_timers(Table, TimeToLive, Timers) ->
+    Timers1 = cancel_old_timer(Table, Timers),
+    NewTimers =  get_new_timer(Table, TimeToLive),
+    NewTimers ++ Timers1.
+
+%% @doc Removes a timer entry from the list of timers
+-spec cancel_old_timer(table(), list()) -> list().
+cancel_old_timer(Table, Timers) ->
+    case lists:keytake(Table, 1, Timers) of
+        {value, {Table, TimerRef}, NewTimers} ->
+            timer:cancel(TimerRef),
+            NewTimers;
+        false ->
+            Timers
+    end.
+
+%% @doc Create timers to activate the scavenger for the table
+-spec get_new_timer(Table::table(), TimeToLive::time_to_live()) -> any().
+get_new_timer(Table, TimeToLive) ->
+    {ok, TimerRef} = timer:apply_interval(TimeToLive * 1000, ?SERVER, scavenge, [Table]),
+    [{Table, TimerRef}].
+
