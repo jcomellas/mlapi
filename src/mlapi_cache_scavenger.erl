@@ -20,7 +20,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--include("include/mlapi_cache.hrl").
+-include("../include/mlapi_cache.hrl").
 
 -define(SERVER, ?MODULE).
 
@@ -68,7 +68,7 @@ init([]) ->
     Metatables = mnesia:dirty_match_object(mlapi_metatable, #mlapi_metatable{_ = '_'}),
     Timers = lists:foldl(fun (#mlapi_metatable{table = Table, time_to_live = TimeToLive}, Acc) ->
                                  %% Create timers to activate the scavenger for each of the tables
-                                 {ok, TimerRef} = timer:send_interval(TimeToLive * 1000, {scavenge, Table}),
+                                 {ok, TimerRef} = timer:apply_interval(TimeToLive * 1000, ?SERVER, scavenge, [Table]),
                                  [{Table, TimerRef} | Acc]
                          end, [], Metatables),
     {ok, #state{timers = lists:reverse(Timers)}}.
@@ -82,14 +82,14 @@ handle_call({reset_timer, Table}, _From, #state{timers = Timers} = State) ->
         {Table, TimerRef} ->
             %% Reset timer for preexisting table.
             {ok, cancel} = timer:cancel(TimerRef),
-            {ok, NewTimerRef} = timer:send_interval(time_to_live(Table) * 1000, {scavenge, Table}),
+            {ok, NewTimerRef} = timer:apply_interval(time_to_live(Table) * 1000, ?SERVER, scavenge, [Table]),
             NewTimers = lists:keyreplace(Table, 1, Timers, {Table, NewTimerRef}),
             {reply, ok, State#state{timers = NewTimers}};
         false ->
             %% Reset timer for new table.
             case mnesia:dirty_read(mlapi_metatable, Table) of
                 [#mlapi_metatable{time_to_live = TimeToLive}] ->
-                    {ok, NewTimerRef} = timer:send_interval(TimeToLive * 1000, {scavenge, Table}),
+                    {ok, NewTimerRef} = timer:apply_interval(TimeToLive * 1000, ?SERVER, scavenge, [Table]),
                     NewTimers = [{Table, NewTimerRef} | Timers],
                     {reply, ok, State#state{timers = NewTimers}};
                 [] ->
