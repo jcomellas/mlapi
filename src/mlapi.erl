@@ -71,7 +71,7 @@
 -type proplist()          :: [{Key :: atom(), Value :: term()}].
 -type format()            :: ejson | proplist | record | dict | orddict | raw.
 -type attribute()         :: atom() | string() | binary().
--type date_format()       :: iso8601 | tuple | unix_epoch.
+-type date_format()       :: iso8601 | datetime | unix_epoch_seconds | gregorian_seconds.
 -type option()            :: {format, format()} | {record, RecordName :: atom()} |
                              {attributes, [attribute()]} | {date_format, date_format()} |
                              {refresh, boolean()}.
@@ -941,10 +941,12 @@ ejson_list_to_term(RecordName, JsonHelperFun, DateFormat, [{Name, Value} | Tail]
                         case DateFormat of
                             iso8601 ->
                                 Value;
-                            tuple ->
-                                iso_datetime_to_tuple(Value);
-                            unix_epoch ->
-                                calendar:datetime_to_gregorian_seconds(iso_datetime_to_tuple(Value)) - ?SECONDS_TO_UNIX_EPOCH
+                            datetime ->
+                                mlapi_time:iso8601_to_datetime(Value);
+                            unix_epoch_seconds ->
+                                mlapi_time:iso8601_to_epoch(Value);
+                            gregorian_seconds ->
+                                mlapi_time:iso8601_to_gregorian_seconds(Value)
                         end;
                     false ->
                         Value
