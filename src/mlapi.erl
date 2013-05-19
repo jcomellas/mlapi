@@ -71,10 +71,11 @@
 -type proplist()          :: [{Key :: atom(), Value :: term()}].
 -type format()            :: ejson | proplist | record | dict | orddict | raw.
 -type attribute()         :: atom() | string() | binary().
+-type id()                :: atom() | string() | binary().
 -type date_format()       :: iso8601 | datetime | unix_epoch_seconds | gregorian_seconds.
 -type option()            :: {format, format()} | {record, RecordName :: atom()} |
-                             {attributes, [attribute()]} | {date_format, date_format()} |
-                             {refresh, boolean()}.
+                             {attributes, [attribute()]} | {ids, [id()]} |
+                             {date_format, date_format()} | {refresh, boolean()}.
 -type response_element()  :: ejson() | proplist() | tuple() | dict() | orddict:orddict() | binary().
 -type response()          :: response_element() | [response_element()] | error().
 
@@ -775,7 +776,11 @@ do_get(Path, Options) ->
 do_get(Path, Args, Options) ->
     Url = build_url(Path, Args, Options),
     %% io:format("GET ~s~n", [Url]),
-    case ibrowse:send_req(Url, [{?HEADER_ACCEPT, ?MIME_TYPE_JSON}], get, [], [{response_format, binary}]) of
+    %% The MercadoLibre servers don't support TLS renegotiation and fail when
+    %% TLS v1.2 and TLS v1.1 are included as options
+    SslOptions = [{versions, [tlsv1, sslv3]}],
+    case ibrowse:send_req(Url, [{?HEADER_ACCEPT, ?MIME_TYPE_JSON}], get, [],
+                          [{response_format, binary}, {ssl_options, SslOptions}]) of
         {ok, Code, Headers, Body} ->
             case lists:keyfind(?HEADER_CONTENT_TYPE, 1, Headers) of
                 {_ContentType, ?MIME_TYPE_JSON ++ _CharSet} ->
