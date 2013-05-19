@@ -1324,7 +1324,13 @@ build_url(Path, Args, Options) ->
                      false ->
                          []
                  end,
-    FullPath = case string:join(Args ++ Attrs, "&") of
+    Ids = case lists:keyfind(ids, 1, Options) of
+              {ids, IdList} ->
+                  ["ids=" ++ string:join([to_string(Id) || Id <- IdList], ",")];
+              false ->
+                  []
+          end,
+    FullPath = case string:join(Args ++ Attrs + Ids, "&") of
                    "" ->
                        [Path];
                    FullArgs ->
