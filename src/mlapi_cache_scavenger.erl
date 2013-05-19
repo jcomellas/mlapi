@@ -61,7 +61,7 @@ reset_timer(Table) ->
 %% @private
 %% @doc Initializes the server registering timers to scavenge the cache Mnesia
 %%      tables according to each table's expiration time.
--spec init([]) -> {ok, #state{}}.
+-spec init([]) -> {ok, #state{}} | no_return().
 init([]) ->
     %% Retrieve the list of cache tables and create a timer for each of them
     %% using the table's time-to-live as the timer interval.
@@ -142,7 +142,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
--spec expired_keys(table()) -> [term()].
+-spec expired_keys(table()) -> [term()] | no_return().
 expired_keys(Table) ->
     Now = mlapi_cache:current_time_in_gregorian_seconds(),
     TimeToLive = time_to_live(Table),
@@ -157,5 +157,5 @@ time_to_live(Table) ->
         [#mlapi_metatable{time_to_live = TimeToLive}] ->
             TimeToLive;
         [] ->
-            mlapi_cache:table_ttl(Table)
+            mlapi_cache:table_time_to_live(Table)
     end.
