@@ -630,6 +630,8 @@ search_args([{category, CategoryId} | Tail], Acc) ->
     search_args(Tail, ["category=" ++ to_string(CategoryId) | Acc]);
 search_args([{q, Query} | Tail], Acc) ->
     search_args(Tail, ["q=" ++ url_encode(Query) | Acc]);
+search_args([{sort, SortKey} | Tail], Acc) ->
+    search_args(Tail, ["sort=" ++ url_encode(SortKey) | Acc]);
 search_args([{offset, Offset} | Tail], Acc) ->
     search_args(Tail, ["offset=" ++ to_string(Offset) | Acc]);
 search_args([{limit, Limit} | Tail], Acc) ->

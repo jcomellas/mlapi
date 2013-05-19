@@ -99,6 +99,7 @@
 -type mlapi_required()                    :: binary().    %% <<"required">> | <<"optional">>
 -type mlapi_user_type_id()                :: binary().    %% <<"car_dealer">> | <<"real_estate_agency">>,
                                                           %% <<"branch">> | <<"franchise">> | <<"normal">>
+-type mlapi_sort_key()                    :: binary() | string().
 
 -type mlapi_catalog_product_arg()         :: {domain, mlapi_domain_id()} |
                                              {offset, mlapi_offset()} | {limit, mlapi_limit()}.
@@ -114,7 +115,8 @@
 -type mlapi_sale_arg()                    :: {access_token, mlapi_access_token()} |
                                              {offset, mlapi_offset()} | {limit, mlapi_limit()}.
 -type mlapi_search_arg()                  :: {nickname, mlapi_user_nickname()} | {seller_id, mlapi_user_id()} |
-                                             {category, mlapi_category_id()} | {q, mlapi_query()} |
+                                             {category, mlapi_category_id()} | {sort, mlapi_sort_key()} |
+                                             {q, mlapi_query()} |
                                              {offset, mlapi_offset()} | {limit, mlapi_limit()}.
 -type mlapi_trend_arg()                   :: {category, mlapi_category_id()} | {limit, mlapi_limit()}.
 
