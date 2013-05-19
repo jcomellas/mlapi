@@ -781,7 +781,7 @@ get_fresh_data(Table, Key, Options, RefreshFun, CurrentTime) ->
     end.
 
 
--spec cache_entry(table(), table_key()) -> {last_update() | 'undefined', Data :: any() | 'undefined'}.
+-spec cache_entry(table(), table_key()) -> {last_update() | 'undefined', Data :: any() | 'undefined'} | no_return().
 cache_entry(Table, Key) ->
     case mnesia:dirty_read(Table, Key) of
         [#mlapi_cache{last_update = LastUpdate, data = Data}] ->
