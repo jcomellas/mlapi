@@ -1332,7 +1332,7 @@ build_url(Path, Args, Options) ->
               false ->
                   []
           end,
-    FullPath = case string:join(Args ++ Attrs + Ids, "&") of
+    FullPath = case string:join(Args ++ Attrs ++ Ids, "&") of
                    "" ->
                        [Path];
                    FullArgs ->
