@@ -22,12 +22,14 @@
 
 -type paging_scheme()                           :: search | orders.
 -type format()                                  :: json | csv.
--type option_name()                             :: paging_scheme | format | offset | limit.
--type option_value()                            :: paging_scheme() | format() | mlapi_offset() | mlapi_limit().
--type option()                                  :: option_name() | {option_name(), option_value()}.
+-type option()                                  :: {paging_scheme, paging_scheme()} |
+                                                   {include_nickname, boolean()} |
+                                                   {format, format()} |
+                                                   {offset, mlapi_offset()} |
+                                                   {limit, mlapi_limit()}.
 
 
--spec search(file:filename() | file:io_device(), [mlapi_site_id()], [option()]) -> ok | {error, Reason :: term()}.
+-spec search(file:filename() | file:io_device(), [mlapi_site_id()], [option()]) -> ok | {error, Reason :: term()} | no_return().
 search(Filename, Args, Options) when is_list(Filename) ->
     {ok, File} = file:open(Filename, [write, binary]),
     Result = search(File, Args, Options),
@@ -38,9 +40,15 @@ search(File, [SiteId], Options) ->
     CacheOpts = filter_options(Options, [refresh]),
     FetchPage = fun (Offset, Limit) -> mlapi_cache:search(SiteId, [{offset, Offset}, {limit, Limit} | CacheArgs],
                                                           [{format, ejson} | CacheOpts]) end,
-    FormatDoc = case proplists:get_value(format, Options) of
-                    csv  -> fun encode_search_as_csv/2;
-                    json -> fun encode_ejson/2
+    IncludeNickname = proplists:get_value(include_nickname, Options, false),
+    FormatDoc = case proplists:get_value(format, Options, json) of
+                    csv ->
+                        case IncludeNickname of
+                            true  -> fun encode_search_as_csv_with_nickname/2;
+                            false -> fun encode_search_as_csv/2
+                        end;
+                    json ->
+                        fun encode_ejson/2
                 end,
     fetch_paged_response(File, FetchPage, FormatDoc, [{paging_scheme, search} | Options]).
 
@@ -55,7 +63,6 @@ encode_search_as_csv(Position, Doc) when Position =:= first; Position =:= {first
 encode_search_as_csv(_Position, Doc) ->
     encode_search_as_csv(Doc).
 
-
 -spec encode_search_as_csv(mlapi:ejson()) -> iolist().
 encode_search_as_csv(Doc) ->
     ItemFieldNames =
@@ -64,6 +71,48 @@ encode_search_as_csv(Doc) ->
        <<"listing_type_id">>, <<"title">>, <<"subtitle">>, <<"stop_time">>, <<"permalink">>
       ],
     line_to_csv([kvc:path(Name, Doc) || Name <- ItemFieldNames]).
+
+
+%% @doc Return the CSV line corresponding to the JSON document to be exported
+%%      including the nickname corresponding to the seller ID
+-spec encode_search_as_csv_with_nickname(mlapi_pager:position(), mlapi:ejson()) -> iolist().
+encode_search_as_csv_with_nickname(Position, Doc) when Position =:= first; Position =:= {first, last} ->
+    Headers = [
+               <<"ID">>, <<"Cantidad Vendida">>, <<"Precio">>, <<"Moneda">>, <<"Vendedor">>, <<"ID Vendedor">>,
+               <<"Tipo Publicacion">>, <<"Titulo">>, <<"Subtitulo">>, <<"Vencimiento">>, <<"Permalink">>
+              ],
+    [line_to_csv(Headers), encode_search_as_csv_with_nickname(Doc)];
+encode_search_as_csv_with_nickname(_Position, Doc) ->
+    encode_search_as_csv_with_nickname(Doc).
+
+-spec encode_search_as_csv_with_nickname(mlapi:ejson()) -> iolist().
+encode_search_as_csv_with_nickname(Doc) ->
+    SellerId = kvc:path([<<"seller">>, <<"id">>], Doc),
+    Nickname = seller_nickname(SellerId),
+    Items =
+      [
+       kvc:path(<<"id">>, Doc), kvc:path(<<"sold_quantity">>, Doc),
+       kvc:path(<<"price">>, Doc), kvc:path(<<"currency_id">>, Doc),
+       Nickname, SellerId,
+       kvc:path(<<"listing_type_id">>, Doc), kvc:path(<<"title">>, Doc),
+       kvc:path(<<"subtitle">>, Doc), kvc:path(<<"stop_time">>, Doc),
+       kvc:path(<<"permalink">>, Doc)
+      ],
+    line_to_csv(Items).
+
+
+seller_nickname(SellerId) when is_integer(SellerId) ->
+    case mlapi_cache:user(SellerId) of
+        {error, _Reason} ->
+            <<>>;
+        User ->
+            case kvc:path(<<"nickname">>, User) of
+                Nickname when is_binary(Nickname) ->
+                    Nickname;
+                _Error ->
+                    <<>>
+            end
+    end.
 
 
 -spec my_orders(file:filename() | file:io_device(), [], [option()]) -> ok | {error, Reason :: term()}.
