@@ -731,8 +731,8 @@ get_data(Table, RecordName, Key, Options, RefreshFun) ->
     %% As we cache responses as raw JSON documents (binary) we need to remove
     %% the format from the list of Options and apply it manually before returning
     %% the response.
-    {Format, PartialOptions} = split_format_option(Options),
-    NewOptions = [{format, raw} | PartialOptions],
+    {OutputFormat, PartialOptions} = split_format_option(Options),
+    NewOptions = [{output_format, raw} | PartialOptions],
     Json = case lists:keyfind(refresh, 1, NewOptions) of
                {refresh, true} ->
                    get_fresh_data(Table, Key, NewOptions, RefreshFun, CurrentTime);
@@ -747,9 +747,10 @@ get_data(Table, RecordName, Key, Options, RefreshFun) ->
                    end
            end,
     case Json of
-        Json when is_binary(Json) andalso Format =/= raw ->
-            DateFormat = proplists:get_value(date_format, NewOptions, mlapi:get_env(date_format, iso8601)),
-            mlapi:ejson_to_term(jsx:decode(Json), RecordName, Format, DateFormat);
+        Json when is_binary(Json) andalso OutputFormat =/= raw ->
+            DateFormat = proplists:get_value(date_format, NewOptions, mlapi:get_env(date_format, datetime)),
+            mlapi_codec:decode(Json, [{record, RecordName}, {output_format, OutputFormat},
+                                      {date_format, DateFormat}]);
         _ ->
             %% Return either the raw JSON binary or the error returned by MLAPI
             Json
@@ -821,13 +822,13 @@ normalize_args([], Acc) ->
     lists:sort(Acc).
 
 
--spec split_format_option([mlapi:option()]) -> {mlapi:format(), [mlapi:option()]}.
+-spec split_format_option([mlapi:option()]) -> {mlapi:output_format(), [mlapi:option()]}.
 split_format_option(Options) ->
-    case lists:keytake(format, 1, Options) of
-        {value, {format, Format}, NewOptions} ->
-            {Format, NewOptions};
+    case lists:keytake(output_format, 1, Options) of
+        {value, {output_format, OutputFormat}, NewOptions} ->
+            {OutputFormat, NewOptions};
         false ->
-            {mlapi:get_env(default_format, ejson), Options}
+            {mlapi:get_env(output_format, proplist), Options}
     end.
 
 

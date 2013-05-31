@@ -63,19 +63,19 @@
 -type url_arg()           :: string() | binary().
 -type error()             :: {error, Reason :: atom() | {atom(), any()}}.
 -type proplist()          :: [{Key :: atom(), Value :: term()}].
--type format()            :: mlapi_codec:format().
+-type output_format()     :: mlapi_codec:output_format().
 -type json_term()         :: mlapi_codec:json_term().
 -type attribute()         :: atom() | string() | binary().
 -type id()                :: atom() | string() | binary().
 -type date_format()       :: iso8601 | datetime | unix_epoch_seconds | gregorian_seconds.
--type option()            :: {record, RecordName :: atom()} | {format, format()} |
+-type option()            :: {record, RecordName :: atom()} | {output_format, output_format()} |
                              {attributes, [attribute()]} | {ids, [id()]} |
                              {date_format, date_format()} | {refresh, boolean()}.
 -type response_element()  :: json_term() | proplist() | tuple() | dict() | orddict:orddict() | binary().
 -type response()          :: response_element() | [response_element()] | error().
 
 
--export_type([url_path/0, json_term/0, option/0, format/0, response/0, error/0]).
+-export_type([url_path/0, json_term/0, option/0, output_format/0, response/0, error/0]).
 
 -define(APP, mlapi).
 -define(PROTOCOL, "https").
@@ -559,13 +559,13 @@ delete_question(_AccessToken, QuestionId) ->
     do_delete(?QUESTIONS "/" ++ to_string(QuestionId)).
 
 %% answer_question(AccessToken, QuestionId, Text) ->
-%%     do_post(?ANSWERS, [{question_id, QuestionId}, {text, Text}], [{format, json_term}]).
+%%     do_post(?ANSWERS, [{question_id, QuestionId}, {text, Text}], [{output_format, json_term}]).
 
 %% hide_question(AccessToken, QuestionId) ->
-%%     do_post(?MY ?QUESTIONS ?HIDDEN, [{question_id, QuestionId}], [{format, json_term}]).
+%%     do_post(?MY ?QUESTIONS ?HIDDEN, [{question_id, QuestionId}], [{output_format, json_term}]).
 
 %% hide_item_questions(AccessToken, ItemId) ->
-%%     do_post(?MY ?QUESTIONS ?HIDDEN, [{item_id, ItemId}], [{format, json_term}]).
+%%     do_post(?MY ?QUESTIONS ?HIDDEN, [{item_id, ItemId}], [{output_format, json_term}]).
 
 
 -spec trends(mlapi_site_id(), [mlapi_trend_arg()]) -> response().
@@ -781,19 +781,19 @@ do_get(Path, Args, Options) ->
         {ok, Code, Headers, Body} ->
             case lists:keyfind(?HEADER_CONTENT_TYPE, 1, Headers) of
                 {_ContentType, ?MIME_TYPE_JSON ++ _CharSet} ->
-                    Format = proplists:get_value(format, Options, get_env(format, json_term)),
-                    DateFormat = proplists:get_value(date_format, Options, get_env(date_format, iso8601)),
+                    OutputFormat = proplists:get_value(output_format, Options, get_env(output_format, json_term)),
+                    DateFormat = proplists:get_value(date_format, Options, get_env(date_format, datetime)),
                     try
                         case Code of
                             %% Only 2xx HTTP response codes are considered successful (is this correct?)
                             "2" ++ _Tail ->
                                 mlapi_codec:decode(Body, [{record, proplists:get_value(record, Options)},
-                                                          {format, Format}, {date_format, DateFormat}]);
+                                                          {output_format, OutputFormat}, {date_format, DateFormat}]);
                             _  ->
                                 %% In case of errors, return the reason corresponding to the HTTP response code and
                                 %% the error document returned by MLAPI.
                                 {error, {response_reason(Code),
-                                         mlapi_codec:decode(Body, [{record, mlapi_error}, {format, Format},
+                                         mlapi_codec:decode(Body, [{record, mlapi_error}, {output_format, OutputFormat},
                                                                    {date_format, DateFormat}])}}
                         end
                     catch
@@ -822,13 +822,13 @@ do_delete(Path, Options) ->
         {ok, Code, Headers, Body} ->
             case lists:keyfind(?HEADER_CONTENT_TYPE, 1, Headers) of
                 {_ContentType, ?MIME_TYPE_JSON ++ _CharSet} ->
-                    Format = proplists:get_value(format, Options, get_env(format, json_term)),
+                    OutputFormat = proplists:get_value(output_format, Options, get_env(output_format, json_term)),
                     DateFormat = proplists:get_value(date_format, Options, get_env(date_format, iso8601)),
                     try
                         %% In case of errors, return the reason corresponding to the HTTP response code and
                         %% the error document returned by MLAPI.
                         {error, {response_reason(Code),
-                                 mlapi_codec:decode(Body, [{record, mlapi_error}, {format, Format},
+                                 mlapi_codec:decode(Body, [{record, mlapi_error}, {output_format, OutputFormat},
                                                            {date_format, DateFormat}])}}
                     catch
                         throw:Reason ->

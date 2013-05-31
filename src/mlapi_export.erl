@@ -39,7 +39,7 @@ search(File, [SiteId], Options) ->
     CacheArgs = filter_options(Options, [nickname, seller_id, category, q]),
     CacheOpts = filter_options(Options, [refresh]),
     FetchPage = fun (Offset, Limit) -> mlapi_cache:search(SiteId, [{offset, Offset}, {limit, Limit} | CacheArgs],
-                                                          [{format, json_term} | CacheOpts]) end,
+                                                          [{output_format, json_term}, {date_format, iso8601} | CacheOpts]) end,
     IncludeNickname = proplists:get_value(include_nickname, Options, false),
     FormatDoc = case proplists:get_value(format, Options, json) of
                     csv ->
@@ -125,7 +125,7 @@ my_orders(File, [], Options) ->
     CacheArgs = filter_options(Options, [access_token, feedback_status, payment_status, seller, shipping_status, sort]),
     CacheOpts = filter_options(Options, [refresh]),
     FetchPage = fun (Offset, Limit) -> mlapi_cache:my_orders([{offset, Offset}, {limit, Limit} | CacheArgs],
-                                                             [{format, json_term} | CacheOpts]) end,
+                                                             [{output_format, json_term}, {date_format, iso8601} | CacheOpts]) end,
     FormatDoc = case proplists:get_value(format, Options) of
                     csv  -> fun encode_order_as_csv/2;
                     json -> fun encode_ejson/2
