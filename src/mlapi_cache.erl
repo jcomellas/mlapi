@@ -34,8 +34,8 @@
          credit_level/1, credit_level/2,
          category/1, category/2,
          domains/0, domains/1, domain/1, domain/2,
-         user/1, user/2, user_by_nickname/1, user_by_nickname/2,
-         item/1, item/2,
+         user/1, user/2, users/1, users/2, user_by_nickname/1, user_by_nickname/2,
+         item/1, item/2, items/1, items/2,
          picture/1, picture/2,
          question/1, question/2, questions/1, questions/2,
          trends/2, trends/3,
@@ -543,6 +543,15 @@ user(UserId) ->
 user(UserId, Options) ->
     get_data(mlapi_user, mlapi_user, mlapi:to_binary(UserId), Options, fun (NewOptions) -> mlapi:user(UserId, NewOptions) end).
 
+-spec users([mlapi_user_id()]) -> mlapi:response().
+users(UserIds) ->
+    users(UserIds, []).
+
+-spec users([mlapi_user_id()], [mlapi:option()]) -> mlapi:response().
+users(UserIds, Options) ->
+    Key = [mlapi:to_binary(UserId) || UserId <- UserIds],
+    get_data(mlapi_user, mlapi_user, Key, Options, fun (NewOptions) -> mlapi:users(UserIds, NewOptions) end).
+
 
 -spec user_by_nickname(mlapi_user_nickname()) -> mlapi:response().
 user_by_nickname(Nickname) ->
@@ -561,6 +570,15 @@ item(ItemId) ->
 -spec item(mlapi_item_id(), [mlapi:option()]) -> mlapi:response().
 item(ItemId, Options) ->
     get_data(mlapi_item, mlapi_item, mlapi:to_binary(ItemId), Options, fun (NewOptions) -> mlapi:item(ItemId, NewOptions) end).
+
+-spec items([mlapi_item_id()]) -> mlapi:response().
+items(ItemIds) ->
+    items(ItemIds, []).
+
+-spec items([mlapi_item_id()], [mlapi:option()]) -> mlapi:response().
+items(ItemIds, Options) ->
+    Key = [mlapi:to_binary(ItemId) || ItemId <- ItemIds],
+    get_data(mlapi_item, mlapi_item, Key, Options, fun (NewOptions) -> mlapi:items(ItemIds, NewOptions) end).
 
 
 -spec picture(mlapi_picture_id()) -> mlapi:response().

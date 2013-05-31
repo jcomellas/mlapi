@@ -31,8 +31,8 @@
          credit_level/1, credit_level/2,
          category/1, category/2,
          domains/0, domains/1, domain/1, domain/2,
-         user/1, user/2, user_by_nickname/1, user_by_nickname/2,
-         item/1, item/2,
+         user/1, user/2, users/1, users/2, user_by_nickname/1, user_by_nickname/2,
+         item/1, item/2, items/1, items/2,
          picture/1, picture/2,
          question/1, question/2, questions/1, questions/2,
          delete_question/2,
@@ -492,6 +492,15 @@ user(UserId, Options) ->
     do_get(?USERS "/" ++ to_string(UserId), ?SET_RECORD(mlapi_user, Options)).
 
 
+-spec users([mlapi_user_id()]) -> response().
+users(UserIds) ->
+    users(UserIds, []).
+
+-spec users([mlapi_user_id()], [option()]) -> response().
+users(UserIds, Options) when is_list(UserIds) ->
+    do_get(?USERS, ?SET_RECORD(mlapi_user, [{ids, UserIds} | Options])).
+
+
 -spec user_by_nickname(mlapi_user_nickname()) -> response().
 user_by_nickname(Nickname) ->
     user_by_nickname(Nickname, []).
@@ -508,6 +517,15 @@ item(ItemId) ->
 -spec item(mlapi_item_id(), [option()]) -> response().
 item(ItemId, Options) ->
     do_get(?ITEMS "/" ++ to_string(ItemId), ?SET_RECORD(mlapi_item, Options)).
+
+
+-spec items([mlapi_item_id()]) -> response().
+items(ItemIds) ->
+    items(ItemIds, []).
+
+-spec items([mlapi_item_id()], [option()]) -> response().
+items(ItemIds, Options) when is_list(ItemIds) ->
+    do_get(?ITEMS, ?SET_RECORD(mlapi_item, [{ids, ItemIds} | Options])).
 
 
 -spec picture(mlapi_picture_id()) -> response().
