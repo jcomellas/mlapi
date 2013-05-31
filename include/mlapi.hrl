@@ -35,6 +35,7 @@
 -type mlapi_filter_id()                   :: mlapi_id().
 -type mlapi_item_id()                     :: mlapi_id().
 -type mlapi_item_variation_id()           :: mlapi_id().
+-type mlapi_listing_source_id()           :: mlapi_id().
 -type mlapi_locale_id()                   :: mlapi_id().
 -type mlapi_neighborhood_id()             :: mlapi_id().
 -type mlapi_order_id()                    :: mlapi_id().
@@ -590,9 +591,12 @@
 
 -record(mlapi_shipping, {
           profile_id,
+          mode,
           local_pick_up                             :: boolean(),
           free_shipping                             :: boolean(),
-          costs                                     :: #mlapi_shipping_costs{}
+          costs                                     :: #mlapi_shipping_costs{},
+          methods,
+          dimensions
          }).
 
 -record(mlapi_address, {
@@ -680,6 +684,7 @@
           coverage_areas = [],
           attributes = []                           :: [#mlapi_attribute{}],
           varying_attributes = []                   :: [#mlapi_varying_attribute{}],
+          listing_source                            :: mlapi_listing_source_id(),
           variations = []                           :: [#mlapi_item_variation{}],
           status                                    :: mlapi_item_status_id(),
           sub_status = [],
@@ -687,6 +692,7 @@
           catalog_product_id,
           seller_custom_field                       :: binary(),
           parent_item_id                            :: mlapi_item_id(),
+          automatic_relist                          :: boolean(),
           date_created                              :: calendar:datetime(),
           last_updated                              :: calendar:datetime()
          }).
