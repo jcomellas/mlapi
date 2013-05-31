@@ -53,9 +53,7 @@
         ]).
 %% post_question/2, post_answer/2, hide_questions/2,
 
--export([ejson_to_record/3, ejson_to_proplist/3, ejson_to_orddict/3, ejson_to_term/4,
-         ejson_field_to_record_name/2,
-         is_ejson_datetime_field/2, iso_datetime_to_tuple/1]).
+-export([iso_datetime_to_tuple/1]).
 -export([site_to_country/1, country_to_site/1]).
 
 -include("include/mlapi.hrl").
@@ -64,23 +62,20 @@
 -type url_path()          :: string().
 -type url_arg()           :: string() | binary().
 -type error()             :: {error, Reason :: atom() | {atom(), any()}}.
--type json()              :: binary().
--type ejson_key()         :: binary().
--type ejson_value()       :: binary() | boolean() | integer() | float() | 'null'.
--type ejson()             :: {[{ejson_key(), ejson_value() | ejson()}]}.
 -type proplist()          :: [{Key :: atom(), Value :: term()}].
--type format()            :: ejson | proplist | record | dict | orddict | raw.
+-type format()            :: mlapi_codec:format().
+-type json_term()         :: mlapi_codec:json_term().
 -type attribute()         :: atom() | string() | binary().
 -type id()                :: atom() | string() | binary().
 -type date_format()       :: iso8601 | datetime | unix_epoch_seconds | gregorian_seconds.
--type option()            :: {format, format()} | {record, RecordName :: atom()} |
+-type option()            :: {record, RecordName :: atom()} | {format, format()} |
                              {attributes, [attribute()]} | {ids, [id()]} |
                              {date_format, date_format()} | {refresh, boolean()}.
--type response_element()  :: ejson() | proplist() | tuple() | dict() | orddict:orddict() | binary().
+-type response_element()  :: json_term() | proplist() | tuple() | dict() | orddict:orddict() | binary().
 -type response()          :: response_element() | [response_element()] | error().
 
 
--export_type([url_path/0, ejson/0, option/0, format/0, response/0, error/0]).
+-export_type([url_path/0, json_term/0, option/0, format/0, response/0, error/0]).
 
 -define(APP, mlapi).
 -define(PROTOCOL, "https").
@@ -564,13 +559,13 @@ delete_question(_AccessToken, QuestionId) ->
     do_delete(?QUESTIONS "/" ++ to_string(QuestionId)).
 
 %% answer_question(AccessToken, QuestionId, Text) ->
-%%     do_post(?ANSWERS, [{question_id, QuestionId}, {text, Text}], [{format, ejson}]).
+%%     do_post(?ANSWERS, [{question_id, QuestionId}, {text, Text}], [{format, json_term}]).
 
 %% hide_question(AccessToken, QuestionId) ->
-%%     do_post(?MY ?QUESTIONS ?HIDDEN, [{question_id, QuestionId}], [{format, ejson}]).
+%%     do_post(?MY ?QUESTIONS ?HIDDEN, [{question_id, QuestionId}], [{format, json_term}]).
 
 %% hide_item_questions(AccessToken, ItemId) ->
-%%     do_post(?MY ?QUESTIONS ?HIDDEN, [{item_id, ItemId}], [{format, ejson}]).
+%%     do_post(?MY ?QUESTIONS ?HIDDEN, [{item_id, ItemId}], [{format, json_term}]).
 
 
 -spec trends(mlapi_site_id(), [mlapi_trend_arg()]) -> response().
@@ -786,17 +781,20 @@ do_get(Path, Args, Options) ->
         {ok, Code, Headers, Body} ->
             case lists:keyfind(?HEADER_CONTENT_TYPE, 1, Headers) of
                 {_ContentType, ?MIME_TYPE_JSON ++ _CharSet} ->
-                    Format = proplists:get_value(format, Options, get_env(format, ejson)),
+                    Format = proplists:get_value(format, Options, get_env(format, json_term)),
                     DateFormat = proplists:get_value(date_format, Options, get_env(date_format, iso8601)),
                     try
                         case Code of
                             %% Only 2xx HTTP response codes are considered successful (is this correct?)
                             "2" ++ _Tail ->
-                                json_to_term(Body, proplists:get_value(record, Options), Format, DateFormat);
+                                mlapi_codec:decode(Body, [{record, proplists:get_value(record, Options)},
+                                                          {format, Format}, {date_format, DateFormat}]);
                             _  ->
                                 %% In case of errors, return the reason corresponding to the HTTP response code and
                                 %% the error document returned by MLAPI.
-                                {error, {response_reason(Code), json_to_term(Body, mlapi_error, Format, DateFormat)}}
+                                {error, {response_reason(Code),
+                                         mlapi_codec:decode(Body, [{record, mlapi_error}, {format, Format},
+                                                                   {date_format, DateFormat}])}}
                         end
                     catch
                         throw:Reason ->
@@ -824,12 +822,14 @@ do_delete(Path, Options) ->
         {ok, Code, Headers, Body} ->
             case lists:keyfind(?HEADER_CONTENT_TYPE, 1, Headers) of
                 {_ContentType, ?MIME_TYPE_JSON ++ _CharSet} ->
-                    Format = proplists:get_value(format, Options, get_env(format, ejson)),
+                    Format = proplists:get_value(format, Options, get_env(format, json_term)),
                     DateFormat = proplists:get_value(date_format, Options, get_env(date_format, iso8601)),
                     try
                         %% In case of errors, return the reason corresponding to the HTTP response code and
                         %% the error document returned by MLAPI.
-                        {error, {response_reason(Code), json_to_term(Body, mlapi_error, Format, DateFormat)}}
+                        {error, {response_reason(Code),
+                                 mlapi_codec:decode(Body, [{record, mlapi_error}, {format, Format},
+                                                           {date_format, DateFormat}])}}
                     catch
                         throw:Reason ->
                             {error, Reason}
@@ -840,363 +840,6 @@ do_delete(Path, Options) ->
         {error, _Reason} = Error ->
             Error
     end.
-
-
--spec json_to_term(json(), RecordName :: atom(), format(), date_format()) ->
-                          ejson() | proplist() | tuple() | dict() | orddict:orddict() | binary().
-json_to_term(Json, _RecordName, raw, _DateFormat) ->
-    Json;
-json_to_term(Json, RecordName, Format, DateFormat) ->
-    ejson_to_term(ejson:decode(Json), RecordName, Format, DateFormat).
-
-
--spec ejson_to_term(ejson(), RecordName :: atom(), format(), date_format()) ->
-                           ejson() | proplist() | tuple() | dict() | orddict:orddict() | binary().
-ejson_to_term(Doc, _RecordName, ejson, _DateFormat) ->
-    Doc;
-ejson_to_term(Doc, RecordName, proplist, DateFormat) ->
-    ejson_to_proplist(Doc, RecordName, DateFormat);
-ejson_to_term(Doc, RecordName, record, DateFormat) ->
-    ejson_to_record(Doc, RecordName, DateFormat);
-ejson_to_term(Doc, RecordName, dict, DateFormat) ->
-    ejson_to_dict(Doc, RecordName, DateFormat);
-ejson_to_term(Doc, RecordName, orddict, DateFormat) ->
-    ejson_to_orddict(Doc, RecordName, DateFormat);
-ejson_to_term(Doc, _RecordName, raw, _DateFormat) ->
-    ejson:encode(Doc).
-
-
-%% @doc Convert a parsed JSON document or a list of documents into one or more known record.
--spec ejson_to_record(tuple() | [tuple()], Record :: atom() | tuple(), date_format()) -> tuple() | [tuple()].
-ejson_to_record({Elements}, RecordOrName, DateFormat) when is_list(Elements) ->
-    JsonHelperFun = #json_helper{
-      child_to_term = fun ejson_to_record/3,
-      append = fun (Name, Value, Record) -> set_value(Name, Value, Record) end,
-      finish = fun (Record) -> Record end
-     },
-    {RecordName, Record} = if
-                               is_tuple(RecordOrName) ->
-                                   {element(1, RecordOrName), RecordOrName};
-                               is_atom(RecordOrName) ->
-                                   {RecordOrName, new_record(RecordOrName)}
-                           end,
-    ejson_list_to_term(RecordName, JsonHelperFun, DateFormat, Elements, Record);
-ejson_to_record(Elements, RecordName, DateFormat) when is_list(Elements) ->
-    lists:reverse(
-      lists:foldl(fun (Element, Acc) ->
-                          [ejson_to_record(Element, new_record(RecordName), DateFormat) | Acc]
-                  end, [], Elements)).
-
-
-%% @doc Convert a parsed JSON document or a list of documents into one or more property lists.
--spec ejson_to_proplist(tuple() | [tuple()], RecordName :: atom(), date_format()) -> proplist() | [proplist()].
-ejson_to_proplist({Elements}, RecordName, DateFormat) when is_list(Elements) ->
-    JsonHelperFun = #json_helper{
-      child_to_term = fun ejson_to_proplist/3,
-      append = fun (Name, Value, Acc) -> [{Name, Value} | Acc] end,
-      finish = fun lists:reverse/1
-     },
-    ejson_list_to_term(RecordName, JsonHelperFun, DateFormat, Elements, []);
-ejson_to_proplist(Elements, RecordName, DateFormat) when is_list(Elements) ->
-    lists:reverse(
-      lists:foldl(fun (Element, Acc) ->
-                          [ejson_to_proplist(Element, RecordName, DateFormat) | Acc]
-                  end, [], Elements)).
-
-
-%% @doc Convert a parsed JSON document or a list of documents into one or more dictionaries.
--spec ejson_to_dict(tuple() | [tuple()], RecordName :: atom(), date_format()) -> dict() | [dict()].
-ejson_to_dict({Elements}, RecordName, DateFormat) when is_list(Elements) ->
-    JsonHelperFun = #json_helper{
-      child_to_term = fun ejson_to_dict/3,
-      append = fun dict:append/3,
-      finish = fun (Dict) -> Dict end
-     },
-    ejson_list_to_term(RecordName, JsonHelperFun, DateFormat, Elements, dict:new());
-ejson_to_dict(Elements, RecordName, DateFormat) when is_list(Elements) ->
-    lists:reverse(
-      lists:foldl(fun (Element, Acc) ->
-                          [ejson_to_dict(Element, RecordName, DateFormat) | Acc]
-                  end, [], Elements)).
-
-%% @doc Convert a parsed JSON document or a list of documents into one or more ordered dictionaries.
--spec ejson_to_orddict(tuple() | [tuple()], RecordName :: atom(), date_format()) -> orddict:orddict() | [orddict:orddict()].
-ejson_to_orddict({Elements}, RecordName, DateFormat) when is_list(Elements) ->
-    JsonHelperFun = #json_helper{
-      child_to_term = fun ejson_to_orddict/3,
-      append = fun orddict:append/3,
-      finish = fun (Dict) -> Dict end
-     },
-    ejson_list_to_term(RecordName, JsonHelperFun, DateFormat, Elements, orddict:new());
-ejson_to_orddict(Elements, RecordName, DateFormat) when is_list(Elements) ->
-    lists:reverse(
-      lists:foldl(fun (Element, Acc) ->
-                          [ejson_to_orddict(Element, RecordName, DateFormat) | Acc]
-                  end, [], Elements)).
-
--spec ejson_list_to_term(RecordName :: atom(), #json_helper{}, date_format(),
-                         [{binary(), any()}], tuple() | proplist() | dict() | orddict:orddict()) ->
-                                proplist() | tuple() | dict() | orddict:orddict().
-ejson_list_to_term(RecordName, JsonHelperFun, DateFormat, [{Name, Value} | Tail], Acc) ->
-    FieldName = binary_to_existing_atom(Name, utf8),
-    %% Convert the value to a record if possible
-    NewValue =
-        case ejson_field_to_record_name(RecordName, FieldName) of
-            undefined ->
-                case is_ejson_datetime_field(RecordName, FieldName) of
-                    true ->
-                        case DateFormat of
-                            iso8601 ->
-                                Value;
-                            datetime ->
-                                mlapi_time:iso8601_to_datetime(Value);
-                            unix_epoch_seconds ->
-                                mlapi_time:iso8601_to_epoch(Value);
-                            gregorian_seconds ->
-                                mlapi_time:iso8601_to_gregorian_seconds(Value)
-                        end;
-                    false ->
-                        Value
-                end;
-            ChildRecordName ->
-                if
-                    is_tuple(Value) orelse is_list(Value) ->
-                        (JsonHelperFun#json_helper.child_to_term)(Value, ChildRecordName, DateFormat);
-                    true ->
-                        Value
-                end
-        end,
-    ejson_list_to_term(RecordName, JsonHelperFun, DateFormat, Tail, (JsonHelperFun#json_helper.append)(FieldName, NewValue, Acc));
-ejson_list_to_term(_RecordName, JsonHelperFun, _DateFormat, [], Acc) ->
-    (JsonHelperFun#json_helper.finish)(Acc).
-
-
-%% @doc Return the record name for those JSON fields that can be converted to a known child record.
--spec ejson_field_to_record_name(ParentRecordName :: atom(), FieldName :: atom()) -> ChildRecordName :: atom() | undefined.
-ejson_field_to_record_name(mlapi_address, city) ->
-    mlapi_city;
-ejson_field_to_record_name(mlapi_address, country) ->
-    mlapi_country;
-ejson_field_to_record_name(mlapi_address, state) ->
-    mlapi_state;
-ejson_field_to_record_name(mlapi_buyer_reputation, transactions) ->
-    mlapi_buyer_transactions;
-ejson_field_to_record_name(mlapi_buyer_transactions, canceled) ->
-    mlapi_buyer_transaction_count;
-ejson_field_to_record_name(mlapi_buyer_transactions, unrated) ->
-    mlapi_buyer_transaction_count;
-ejson_field_to_record_name(mlapi_buyer_transactions, not_yet_rated) ->
-    mlapi_buyer_transaction_count;
-ejson_field_to_record_name(mlapi_catalog_product, pictures) ->
-    mlapi_catalog_product_picture;
-ejson_field_to_record_name(mlapi_catalog_product, specification) ->
-    mlapi_catalog_product_specification;
-ejson_field_to_record_name(mlapi_catalog_product, searchable_attributes) ->
-    mlapi_attribute;
-ejson_field_to_record_name(mlapi_catalog_product, user_reviews) ->
-    mlapi_user_review;
-ejson_field_to_record_name(mlapi_catalog_product_search, paging) ->
-    mlapi_paging;
-ejson_field_to_record_name(mlapi_catalog_product_search, results) ->
-    mlapi_catalog_product_search_result;
-ejson_field_to_record_name(mlapi_category, children_categories) ->
-    mlapi_child_category;
-ejson_field_to_record_name(mlapi_category, path_from_root) ->
-    mlapi_category_path;
-ejson_field_to_record_name(mlapi_category, settings) ->
-    mlapi_settings;
-ejson_field_to_record_name(mlapi_credit_level, exception_by_category) ->
-    mlapi_credit_exception_by_category;
-ejson_field_to_record_name(mlapi_country_ext, states) ->
-    mlapi_state;
-ejson_field_to_record_name(mlapi_domain, attributes) ->
-    mlapi_domain_attribute;
-ejson_field_to_record_name(mlapi_exceptions_by_card_issuer, card_issuer) ->
-    mlapi_card_issuer;
-ejson_field_to_record_name(mlapi_exceptions_by_card_issuer, payer_costs) ->
-    mlapi_payer_costs;
-ejson_field_to_record_name(mlapi_feedback, sent) ->
-    mlapi_feedback_issued;
-ejson_field_to_record_name(mlapi_feedback, received) ->
-    mlapi_feedback_issued;
-ejson_field_to_record_name(mlapi_filter, values) ->
-    mlapi_filter_value;
-ejson_field_to_record_name(mlapi_filter_value, path_from_root) ->
-    mlapi_category_path;
-ejson_field_to_record_name(mlapi_geo_information, location) ->
-    mlapi_location;
-ejson_field_to_record_name(mlapi_item, attributes) ->
-    mlapi_attribute;
-ejson_field_to_record_name(mlapi_item, city) ->
-    mlapi_city;
-ejson_field_to_record_name(mlapi_item, country) ->
-    mlapi_country;
-ejson_field_to_record_name(mlapi_item, descriptions) ->
-    mlapi_description;
-ejson_field_to_record_name(mlapi_item, geolocation) ->
-    mlapi_location;
-ejson_field_to_record_name(mlapi_item, non_mercado_pago_payment_methods) ->
-    mlapi_non_mercadopago_payment_method;
-ejson_field_to_record_name(mlapi_item, pictures) ->
-    mlapi_item_picture;
-ejson_field_to_record_name(mlapi_item, seller_address) ->
-    mlapi_address;
-ejson_field_to_record_name(mlapi_item, shipping) ->
-    mlapi_shipping;
-ejson_field_to_record_name(mlapi_item, state) ->
-    mlapi_state;
-ejson_field_to_record_name(mlapi_item, variations) ->
-    mlapi_item_variation;
-ejson_field_to_record_name(mlapi_item, varying_attributes) ->
-    mlapi_varying_attribute;
-ejson_field_to_record_name(mlapi_order, buyer) ->
-    mlapi_buyer;
-ejson_field_to_record_name(mlapi_order, feedback) ->
-    mlapi_feedback;
-ejson_field_to_record_name(mlapi_order, order_items) ->
-    mlapi_order_item;
-ejson_field_to_record_name(mlapi_order, payments) ->
-    mlapi_payment;
-ejson_field_to_record_name(mlapi_order, seller) ->
-    mlapi_order_seller;
-ejson_field_to_record_name(mlapi_order, shipping) ->
-    mlapi_order_shipping;
-ejson_field_to_record_name(mlapi_order_item, item) ->
-    mlapi_order_item_info;
-ejson_field_to_record_name(mlapi_order_search, available_filters) ->
-    mlapi_filter;
-ejson_field_to_record_name(mlapi_order_search, available_sorts) ->
-    mlapi_sort;
-ejson_field_to_record_name(mlapi_order_search, filters) ->
-    mlapi_filter;
-ejson_field_to_record_name(mlapi_order_search, paging) ->
-    mlapi_paging;
-ejson_field_to_record_name(mlapi_order_search, results) ->
-    mlapi_order;
-ejson_field_to_record_name(mlapi_order_search, sort) ->
-    mlapi_sort;
-ejson_field_to_record_name(mlapi_order_seller, phone) ->
-    mlapi_phone;
-ejson_field_to_record_name(mlapi_order_shipping, receiver_address) ->
-    mlapi_address;
-ejson_field_to_record_name(mlapi_picture, variations) ->
-    mlapi_picture_variation;
-ejson_field_to_record_name(mlapi_payment_method_ext, card_configuration) ->
-    mlapi_card_configuration;
-ejson_field_to_record_name(mlapi_payment_method_ext, exceptions_by_card_issuer) ->
-    mlapi_exceptions_by_card_issuer;
-ejson_field_to_record_name(mlapi_payment_method_ext, payer_costs) ->
-    mlapi_payer_costs;
-ejson_field_to_record_name(mlapi_question, answer) ->
-    mlapi_answer;
-ejson_field_to_record_name(mlapi_question_result, questions) ->
-    mlapi_question;
-ejson_field_to_record_name(mlapi_sale, buyer) ->
-    mlapi_buyer;
-ejson_field_to_record_name(mlapi_sale, order_items) ->
-    mlapi_sale_item;
-ejson_field_to_record_name(mlapi_sale, payment) ->
-    mlapi_payment;
-ejson_field_to_record_name(mlapi_sale, feedback) ->
-    mlapi_feedback;
-ejson_field_to_record_name(mlapi_sale, shipping) ->
-    mlapi_sale_shipping;
-ejson_field_to_record_name(mlapi_sale_shipping, receiver_address) ->
-    mlapi_address;
-ejson_field_to_record_name(mlapi_search_item, address) ->
-    mlapi_search_address;
-ejson_field_to_record_name(mlapi_search_item, attributes) ->
-    mlapi_attribute;
-ejson_field_to_record_name(mlapi_search_item, seller) ->
-    mlapi_seller;
-ejson_field_to_record_name(mlapi_search_item, installments) ->
-    mlapi_installment;
-ejson_field_to_record_name(mlapi_search_result, filters) ->
-    mlapi_filter;
-ejson_field_to_record_name(mlapi_search_result, available_filters) ->
-    mlapi_filter;
-ejson_field_to_record_name(mlapi_search_result, paging) ->
-    mlapi_paging;
-ejson_field_to_record_name(mlapi_search_result, results) ->
-    mlapi_search_item;
-ejson_field_to_record_name(mlapi_search_result, seller) ->
-    mlapi_seller;
-ejson_field_to_record_name(mlapi_search_result, sort) ->
-    mlapi_sort;
-ejson_field_to_record_name(mlapi_search_result, available_sorts) ->
-    mlapi_sort;
-ejson_field_to_record_name(mlapi_seller_reputation, transactions) ->
-    mlapi_seller_transactions;
-ejson_field_to_record_name(mlapi_seller_transactions, ratings) ->
-    mlapi_ratings;
-ejson_field_to_record_name(mlapi_shipping, costs) ->
-    mlapi_shipping_costs;
-ejson_field_to_record_name(mlapi_site_ext, categories) ->
-    mlapi_category_path;
-ejson_field_to_record_name(mlapi_site_ext, currencies) ->
-    mlapi_currency;
-ejson_field_to_record_name(mlapi_state_ext, cities) ->
-    mlapi_city;
-ejson_field_to_record_name(mlapi_user, identification) ->
-    mlapi_identification;
-ejson_field_to_record_name(mlapi_user, buyer_reputation) ->
-    mlapi_buyer_reputation;
-ejson_field_to_record_name(mlapi_user, phone) ->
-    mlapi_phone;
-ejson_field_to_record_name(mlapi_user, seller_reputation) ->
-    mlapi_seller_reputation;
-ejson_field_to_record_name(mlapi_user, status) ->
-    mlapi_user_status;
-ejson_field_to_record_name(mlapi_user, company) ->
-    mlapi_company;
-ejson_field_to_record_name(mlapi_user, credit) ->
-    mlapi_user_credit;
-ejson_field_to_record_name(mlapi_user_status, list) ->
-    mlapi_user_action_status;
-ejson_field_to_record_name(mlapi_user_status, buy) ->
-    mlapi_user_action_status;
-ejson_field_to_record_name(mlapi_user_status, sell) ->
-    mlapi_user_action_status;
-ejson_field_to_record_name(mlapi_user_review, stars_count) ->
-    mlapi_stars_count;
-ejson_field_to_record_name(_RecordName, geo_information) ->
-    mlapi_geo_information;
-ejson_field_to_record_name(_RecordName, _FieldName) ->
-    undefined.
-
-
-%% @doc Check whether a field of a record should be converted to a datetime.
--spec is_ejson_datetime_field(RecordName :: atom(), FieldName :: atom()) -> boolean().
-is_ejson_datetime_field(mlapi_feedback_issued, date_created) ->
-    true;
-is_ejson_datetime_field(mlapi_payment, date_created) ->
-    true;
-is_ejson_datetime_field(mlapi_sale, date_created) ->
-    true;
-is_ejson_datetime_field(mlapi_sale_shipping, date_created) ->
-    true;
-is_ejson_datetime_field(mlapi_shipping_costs, time) ->
-    true;
-is_ejson_datetime_field(mlapi_item, date_created) ->
-    true;
-is_ejson_datetime_field(mlapi_item, last_updated) ->
-    true;
-is_ejson_datetime_field(mlapi_item, start_time) ->
-    true;
-is_ejson_datetime_field(mlapi_item, stop_time) ->
-    true;
-is_ejson_datetime_field(mlapi_order, date_closed) ->
-    true;
-is_ejson_datetime_field(mlapi_order, date_created) ->
-    true;
-is_ejson_datetime_field(mlapi_order_shipping, date_created) ->
-    true;
-is_ejson_datetime_field(mlapi_search_item, stop_time) ->
-    true;
-is_ejson_datetime_field(mlapi_user, registration_date) ->
-    true;
-is_ejson_datetime_field(_RecordName, _FieldName) ->
-    false.
 
 
 %% @doc Convert a datetime in the ISO format to a UTC-based datetime tuple.

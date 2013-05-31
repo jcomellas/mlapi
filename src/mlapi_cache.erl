@@ -749,7 +749,7 @@ get_data(Table, RecordName, Key, Options, RefreshFun) ->
     case Json of
         Json when is_binary(Json) andalso Format =/= raw ->
             DateFormat = proplists:get_value(date_format, NewOptions, mlapi:get_env(date_format, iso8601)),
-            mlapi:ejson_to_term(ejson:decode(Json), RecordName, Format, DateFormat);
+            mlapi:ejson_to_term(jsx:decode(Json), RecordName, Format, DateFormat);
         _ ->
             %% Return either the raw JSON binary or the error returned by MLAPI
             Json
