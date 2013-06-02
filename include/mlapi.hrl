@@ -403,7 +403,7 @@
 
 -record(mlapi_user_action_status, {
           allow,
-          codes
+          codes,
           immediate_payment                         :: #mlapi_immediate_payment{}
          }).
 
@@ -451,7 +451,7 @@
 -record(mlapi_company, {
           corporate_name                            :: binary(),
           brand_name                                :: binary(),
-          identification                            :: binary(),
+          identification                            :: binary()
          }).
 
 -record(mlapi_user, {
