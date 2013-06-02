@@ -51,6 +51,8 @@
 -type mlapi_timezone_id()                 :: mlapi_id().
 -type mlapi_user_id()                     :: mlapi_id() | integer().
 -type mlapi_user_nickname()               :: mlapi_id().
+-type mlapi_user_tag_id()                 :: mlapi_id().
+-type mlapi_shipping_mode_id()            :: mlapi_id().
 
 -type mlapi_access_token()                :: binary() | string().
 -type mlapi_email_address()               :: binary().
@@ -389,6 +391,11 @@
           transactions                              :: #mlapi_seller_transactions{}
          }).
 
+-record(mlapi_immediate_payment, {
+          required                                  :: boolean(),
+          reasons                                   :: [binary()]
+         }).
+
 -record(mlapi_buyer_reputation, {
           canceled_transactions                     :: non_neg_integer(),
           transactions                              :: #mlapi_buyer_transactions{}
@@ -397,6 +404,7 @@
 -record(mlapi_user_action_status, {
           allow,
           codes
+          immediate_payment                         :: #mlapi_immediate_payment{}
          }).
 
 -record(mlapi_user_status, {
@@ -404,9 +412,12 @@
           list                                      :: #mlapi_user_action_status{},
           buy                                       :: #mlapi_user_action_status{},
           sell                                      :: #mlapi_user_action_status{},
+          billing                                   :: #mlapi_user_action_status{},
           mercadopago_tc_accepted                   :: boolean(),
           mercadopago_account_type                  :: mlapi_mercadopago_account_type_id(),
-          immediate_payment                         :: binary()
+          mercadoenvios                             :: binary(),
+          immediate_payment                         :: boolean(),
+          confirmed_email                           :: boolean()
          }).
 
 -record(mlapi_identification, {
@@ -427,8 +438,8 @@
          }).
 
 -record(mlapi_credit_exception_by_category, {
-        category_id                                 :: mlapi_category_id(),
-        limit                                       :: float()
+          category_id                                 :: mlapi_category_id(),
+          limit                                       :: float()
        }).
 
 -record(mlapi_credit_level, {
@@ -439,7 +450,8 @@
 
 -record(mlapi_company, {
           corporate_name                            :: binary(),
-          brand_name                                :: binary()
+          brand_name                                :: binary(),
+          identification                            :: binary(),
          }).
 
 -record(mlapi_user, {
@@ -452,17 +464,20 @@
           email                                     :: mlapi_email_address(),
           identification                            :: #mlapi_identification{},
           phone                                     :: #mlapi_phone{},
+          alternative_phone                         :: #mlapi_phone{},
           user_type                                 :: mlapi_user_type_id(),
+          tags                                      :: mlapi_user_tag_id(),
           logo,
           points = 0,
           site_id                                   :: mlapi_site_id(),
           permalink                                 :: mlapi_url(),
+          shipping_modes                            :: [mlapi_shipping_mode_id()],
           seller_experience                         :: mlapi_seller_experience_id(),
           seller_reputation                         :: #mlapi_seller_reputation{},
           buyer_reputation                          :: #mlapi_buyer_reputation{},
           status                                    :: #mlapi_user_status{},
-          credit                                    :: #mlapi_user_credit{},
-          company                                   :: #mlapi_company{}
+          company                                   :: #mlapi_company{},
+          credit                                    :: #mlapi_user_credit{}
          }).
 
 -record(mlapi_picture_variation, {

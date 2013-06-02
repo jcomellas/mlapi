@@ -398,13 +398,16 @@ child_record_name(mlapi_state_ext, cities)                             -> mlapi_
 child_record_name(mlapi_user, identification)                          -> mlapi_identification;
 child_record_name(mlapi_user, buyer_reputation)                        -> mlapi_buyer_reputation;
 child_record_name(mlapi_user, phone)                                   -> mlapi_phone;
+child_record_name(mlapi_user, alternative_phone)                       -> mlapi_phone;
 child_record_name(mlapi_user, seller_reputation)                       -> mlapi_seller_reputation;
 child_record_name(mlapi_user, status)                                  -> mlapi_user_status;
 child_record_name(mlapi_user, company)                                 -> mlapi_company;
 child_record_name(mlapi_user, credit)                                  -> mlapi_user_credit;
+child_record_name(mlapi_user_action_status, immediate_payment)         -> mlapi_immediate_payment;
 child_record_name(mlapi_user_status, list)                             -> mlapi_user_action_status;
 child_record_name(mlapi_user_status, buy)                              -> mlapi_user_action_status;
 child_record_name(mlapi_user_status, sell)                             -> mlapi_user_action_status;
+child_record_name(mlapi_user_status, billing)                          -> mlapi_user_action_status;
 child_record_name(mlapi_user_review, stars_count)                      -> mlapi_stars_count;
 child_record_name(_RecordName, geo_information)                        -> mlapi_geo_information;
 child_record_name(_RecordName, _FieldName)                             -> undefined.
