@@ -425,6 +425,18 @@
           identification_number
          }).
 
+-record(mlapi_address, {
+          id                                        :: mlapi_address_id(),
+          comment                                   :: binary(),
+          address                                   :: binary(),
+          zip_code                                  :: binary(),
+          city                                      :: #mlapi_city{},
+          state                                     :: #mlapi_state{},
+          country                                   :: #mlapi_country{},
+          latitude = 0.0                            :: float(),
+          longitude = 0.0                           :: float()
+         }).
+
 -record(mlapi_phone, {
           area_code,
           number,
@@ -463,6 +475,7 @@
           country_id                                :: mlapi_country_id(),
           email                                     :: mlapi_email_address(),
           identification                            :: #mlapi_identification{},
+          address                                   :: #mlapi_address{},
           phone                                     :: #mlapi_phone{},
           alternative_phone                         :: #mlapi_phone{},
           user_type                                 :: mlapi_user_type_id(),
@@ -477,6 +490,7 @@
           buyer_reputation                          :: #mlapi_buyer_reputation{},
           status                                    :: #mlapi_user_status{},
           company                                   :: #mlapi_company{},
+          secure_email                              :: mlapi_email_address(),
           credit                                    :: #mlapi_user_credit{}
          }).
 
@@ -612,18 +626,6 @@
           costs                                     :: #mlapi_shipping_costs{},
           methods,
           dimensions
-         }).
-
--record(mlapi_address, {
-          id                                        :: mlapi_address_id(),
-          comment                                   :: binary(),
-          address_line                              :: binary(),
-          zip_code                                  :: binary(),
-          city                                      :: #mlapi_city{},
-          state                                     :: #mlapi_state{},
-          country                                   :: #mlapi_country{},
-          latitude = 0.0                            :: float(),
-          longitude = 0.0                           :: float()
          }).
 
 -record(mlapi_attribute, {
